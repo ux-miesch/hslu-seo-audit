@@ -97,12 +97,19 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "message": f"Video mit Label: \"{label[:60]}\"",
             })
 
+    # Technische iframes die wir ignorieren (kein SEO-Relevanz)
+    IGNORE_IFRAME_DOMAINS = {"googletagmanager.com", "google.com/recaptcha", "doubleclick.net"}
+
     # ── IFRAMES (YouTube, Vimeo etc.) ──────────────────────────────────────
     iframes = soup.find_all("iframe")
     for iframe in iframes:
         src = iframe.get("src", "")
         title = iframe.get("title", "")
         aria_label = iframe.get("aria-label", "")
+
+        # Technische iframes überspringen
+        if any(domain in src for domain in IGNORE_IFRAME_DOMAINS):
+            continue
 
         iframe_data = {"src": src, "title": title}
         data["iframes"].append(iframe_data)
