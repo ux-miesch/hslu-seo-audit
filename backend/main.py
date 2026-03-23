@@ -6,12 +6,13 @@ from typing import List
 from crawler import fetch_page
 from checks.meta_texts import check_meta
 from checks.headings import check_headings
+from checks.broken_links import check_broken_links
 
 app = FastAPI(title="SEO Audit API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In Produktion einschränken
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -42,6 +43,7 @@ async def run_audit(request: AuditRequest):
     results = {}
     results["meta"] = check_meta(page["soup"], request.url)
     results["headings"] = check_headings(page["soup"])
+    results["broken_links"] = await check_broken_links(page["soup"], request.url)
 
     return AuditResponse(
         url=request.url,
