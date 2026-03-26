@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 from typing import Optional
-
+from whitelist import HEADING_DUPLICATES_WHITELIST  # NEU
 
 HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"]
 
@@ -12,17 +12,16 @@ def check_headings(soup: BeautifulSoup) -> dict:
     - Hierarchie korrekt (kein Sprung von H1 → H3)?
     - H1 nicht leer?
     - Überschriften nicht zu lang?
-    - Duplicate-Überschriften?
+    - Duplicate-Überschriften? (Whitelist wird berücksichtigt)
     """
     issues = []
     warnings = []
     passed = []
 
-    # Alle Überschriften in Dokumentreihenfolge sammeln
     headings = []
     for tag in soup.find_all(HEADING_TAGS):
         text = tag.get_text(strip=True)
-        level = int(tag.name[1])  # "h2" → 2
+        level = int(tag.name[1])
         headings.append({"level": level, "text": text, "tag": tag.name})
 
     data = {"headings": headings, "count": len(headings)}
@@ -72,7 +71,6 @@ def check_headings(soup: BeautifulSoup) -> dict:
     for i, heading in enumerate(headings):
         current_level = heading["level"]
 
-        # Erstes Heading sollte H1 sein
         if i == 0 and current_level != 1:
             warnings.append({
                 "code": "FIRST_HEADING_NOT_H1",
@@ -80,7 +78,6 @@ def check_headings(soup: BeautifulSoup) -> dict:
                 "severity": "warning",
             })
 
-        # Sprung prüfen (z.B. H1 → H3 überspringt H2)
         if prev_level > 0 and current_level > prev_level + 1:
             hierarchy_errors.append({
                 "from": f"h{prev_level}",
@@ -133,8 +130,12 @@ def check_headings(soup: BeautifulSoup) -> dict:
         passed.append({"code": "HEADINGS_LENGTH_OK", "message": "Alle Überschriften sind in akzeptabler Länge."})
 
     # ── DUPLICATE ÜBERSCHRIFTEN ────────────────────────────────────────────
-    texts = [h["text"].lower() for h in headings if h["text"]]
-    duplicates = {t for t in texts if texts.count(t) > 1}
+    # Whitelisted Begriffe werden von der Duplikat-Prüfung ausgenommen
+    texts = [h["text"].lower().strip() for h in headings if h["text"]]
+    duplicates = {
+        t for t in texts
+        if texts.count(t) > 1 and t not in HEADING_DUPLICATES_WHITELIST  # NEU
+    }
     if duplicates:
         for dup in duplicates:
             warnings.append({
