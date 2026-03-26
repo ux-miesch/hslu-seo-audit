@@ -2,10 +2,10 @@ services:
   - type: web
     name: seo-audit-api
     runtime: python
-    region: frankfurt  # EU-Region – näher an der Schweiz
+    region: frankfurt
     plan: free
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.11.9
