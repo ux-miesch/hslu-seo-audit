@@ -29,24 +29,38 @@ HEADING_DUPLICATES_WHITELIST = [
 
 # ── URL-Parameter Whitelist ────────────────────────────────────────────────
 # URLs die einen dieser Parameter enthalten werden beim Link-Check
-# nicht als defekt oder Redirect gemeldet – sie werden ignoriert.
+# nicht als defekt oder Redirect gemeldet.
 # Muster werden als Teilstring geprüft (case-insensitive).
 URL_PARAM_WHITELIST = [
-    "post_type=",        # WordPress interne Post-Type-Links
-    "p=",                # WordPress Preview-Links (?p=12345)
-    "page_id=",          # WordPress Seiten-ID
-    "preview=true",      # WordPress Vorschau
-    "replytocom=",       # WordPress Kommentar-Antworten
-    "doing_wp_cron",     # WordPress Cron-Jobs
-    "ver=",              # Asset-Versionierung
-    "utm_",              # Analytics-Parameter (utm_source, utm_medium etc.)
-    "fbclid=",           # Facebook Click ID
-    "gclid=",            # Google Click ID
-    "ref=",              # Referral-Parameter
-    "session=",          # Session-IDs
-    "token=",            # Token-Parameter
+    "post_type=",
+    "p=",
+    "page_id=",
+    "preview=true",
+    "replytocom=",
+    "doing_wp_cron",
+    "ver=",
+    "utm_",
+    "fbclid=",
+    "gclid=",
+    "ref=",
+    "session=",
+    "token=",
 ]
 
-# Platzhalter für spätere Erweiterungen
-# ALT_ATTRIBUTE_WHITELIST = []
-# KEYWORD_STOPWORDS = []
+# ── Alt-Attribute: Datei-Whitelist ─────────────────────────────────────────
+# Bilddateien die beim Alt-Attribut-Check ignoriert werden.
+# Eintragen: exakter Dateiname (nur Dateiname, nicht voller Pfad).
+# Vergleich erfolgt case-insensitive.
+#
+# Wann einen Dateinamen hier eintragen?
+# - Rein dekorative Grafiken die keinen inhaltlichen Mehrwert haben
+# - Icons und UI-Elemente (Pfeile, Trennlinien, Hintergründe)
+# - Technische Grafiken die nie beschriftet werden müssen
+#
+ALT_ATTRIBUTE_FILENAME_WHITELIST = [
+    "black-arrows.svg",
+    # Weitere Dateien hier ergänzen, z.B.:
+    # "icon-arrow-right.svg",
+    # "decorative-line.svg",
+    # "logo-bg.png",
+]
