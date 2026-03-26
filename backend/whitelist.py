@@ -58,7 +58,7 @@ URL_PARAM_WHITELIST = [
 # - Technische Grafiken die nie beschriftet werden müssen
 #
 ALT_ATTRIBUTE_FILENAME_WHITELIST = [
-    "black-arrows.svg",
+    "black-arrow.svg",
     # Weitere Dateien hier ergänzen, z.B.:
     # "icon-arrow-right.svg",
     # "decorative-line.svg",
