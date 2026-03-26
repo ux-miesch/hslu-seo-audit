@@ -1,0 +1,187 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.wrap{background:#ffffff;width:100%;font-family:'Verdana',sans-serif;}
+.header{background:#000000;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;min-height:60px;}
+.header-right{font-family:'Verdana',sans-serif;font-size:11px;color:#cccccc;white-space:nowrap;}
+.tabs{display:flex;border-bottom:2px solid #000000;background:#ffffff;}
+.tab{padding:13px 20px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;cursor:pointer;border:none;background:#ffffff;color:#000000;border-bottom:3px solid transparent;margin-bottom:-2px;transition:background 0.15s,color 0.15s;white-space:nowrap;}
+.tab.active{color:#000000;background:#ffffff;border-bottom:3px solid #77C5D8;}
+.tab:hover:not(.active){background:#000000 !important;color:#ffffff !important;}
+.tab:hover:not(.active) .tab-num{background:#ffffff !important;color:#000000 !important;}
+.tab-num{display:inline-block;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#000000;font-size:9px;font-weight:700;text-align:center;line-height:20px;margin-right:7px;}
+.tab.active .tab-num{background:#77C5D8;color:#ffffff;}
+.panel{display:none;padding:24px;background:#ffffff;}
+.panel.active{display:block;}
+.section-title{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000000;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e0e0e0;}
+label{font-family:'Verdana',sans-serif;font-size:11px;color:#000000;display:block;margin-bottom:4px;margin-top:12px;}
+input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-serif;font-size:11px;border:1px solid #bbbbbb;border-radius:2px;background:#ffffff;color:#000000;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+.mode-card{border:1.5px solid #dddddd;border-radius:2px;padding:14px;cursor:pointer;background:#ffffff;}
+.mode-card.selected{border-color:#77C5D8;background:#f0fafd;}
+.mode-card h4{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#000000;margin-bottom:4px;}
+.mode-card p{font-family:'Verdana',sans-serif;font-size:10px;color:#444444;line-height:1.5;}
+.mode-badge{display:inline-block;padding:2px 8px;font-size:9px;font-weight:700;border-radius:2px;margin-bottom:6px;}
+.badge-1{background:#77C5D8;color:#ffffff;}
+.badge-2{background:#ADCA2A;color:#ffffff;}
+.btn-primary{margin-top:20px;width:100%;padding:11px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;background:#000000;color:#ffffff;border:none;cursor:pointer;}
+.btn-primary:hover{background:#333333;}
+.kachel-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:20px;}
+.kachel{border-radius:2px;overflow:hidden;}
+.kachel-head{padding:8px 10px;font-family:'Verdana',sans-serif;font-size:10px;font-weight:700;color:#ffffff;}
+.kachel-body{background:#F0F0F0;padding:10px;font-family:'Verdana',sans-serif;font-size:10px;color:#000000;min-height:60px;}
+.check-row{padding:10px 0;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;gap:12px;}
+.check-name{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;flex:1;color:#000000;}
+.check-score{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;width:32px;text-align:right;color:#000000;}
+.score-bar{height:6px;background:#e0e0e0;border-radius:1px;overflow:hidden;flex:3;}
+.score-fill{height:100%;border-radius:1px;}
+.tag{display:inline-block;padding:2px 6px;font-size:9px;font-weight:700;border-radius:2px;margin:1px;}
+.tag-red{background:#fde8e8;color:#aa0000;}
+.tag-yellow{background:#fff8e1;color:#7a5c00;}
+.tag-green{background:#e8f5e9;color:#1b5e20;}
+.toggle-wrap{display:inline-flex;border:1px solid #000000;border-radius:2px;overflow:hidden;}
+.toggle-btn{padding:7px 16px;font-family:'Verdana',sans-serif;font-size:10px;font-weight:700;border:none;cursor:pointer;background:#ffffff;color:#000000;}
+.toggle-btn.active{background:#000000;color:#ffffff;}
+.ampel-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #e0e0e0;}
+.ampel-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+.ampel-name{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;flex:1;color:#000000;}
+.ampel-text{font-family:'Verdana',sans-serif;font-size:10px;color:#444444;flex:2;}
+.empfehlung{background:#F0F0F0;border-left:3px solid #77C5D8;padding:10px 12px;margin-bottom:8px;font-family:'Verdana',sans-serif;font-size:10px;color:#000000;line-height:1.5;}
+.empfehlung strong{font-weight:700;display:block;margin-bottom:2px;color:#000000;}
+.entscheid-box{margin-top:24px;border:2px solid #000000;padding:16px;text-align:center;background:#ffffff;}
+.entscheid-label{font-family:'Verdana',sans-serif;font-size:9px;font-weight:700;letter-spacing:1px;color:#555555;margin-bottom:6px;}
+.entscheid-value{font-family:'Verdana',sans-serif;font-size:20px;font-weight:700;color:#000000;}
+.entscheid-score{font-family:'Verdana',sans-serif;font-size:11px;color:#555555;margin-top:4px;}
+.info-bar{font-family:'Verdana',sans-serif;font-size:10px;color:#000000;margin-bottom:16px;padding:8px 10px;background:#F0F0F0;border-left:3px solid #77C5D8;}
+.detail-text{font-family:'Verdana',sans-serif;font-size:10px;padding:6px 0;border-bottom:1px solid #e0e0e0;}
+.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:9px;color:#555555;}
+.simple-view{display:none;}
+.simple-view.active{display:block;}
+.detail-view{display:none;}
+.detail-view.active{display:block;}
+</style>
+
+<div class="wrap">
+  <div class="header">
+    <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="Hslu Hochschule Luzern" style="height:34px;display:block;object-fit:contain;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
+    <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
+      <span style="font-family:'Verdana',sans-serif;font-size:26px;font-weight:700;color:#ffffff;letter-spacing:-1px;">HSLU</span>
+      <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#ffffff;line-height:1.3;">Hochschule<br>Luzern</span>
+    </div>
+    <div class="header-right">Seo Audit Tool</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(0)"><span class="tab-num">1</span>Audit starten</button>
+    <button class="tab" onclick="showTab(1)"><span class="tab-num">2</span>Analyse</button>
+    <button class="tab" onclick="showTab(2)"><span class="tab-num">3</span>Empfehlungen</button>
+  </div>
+
+  <div id="panel0" class="panel active">
+    <div class="section-title">Audit konfigurieren</div>
+    <label>Url der zu prüfenden Seite *</label>
+    <input type="text" placeholder="https://www.hslu.ch/beispielseite" />
+    <label style="margin-top:16px;">Seitentyp</label>
+    <div class="mode-grid">
+      <div class="mode-card selected" onclick="selectMode(this)">
+        <span class="mode-badge badge-1">Mode 1</span>
+        <h4>Content &amp; Autorität</h4>
+        <p>Themenautorität, E-E-A-T, Vertrauen aufbauen. Prüft Expertise, Quellen, Verlinkung und Struktur.</p>
+      </div>
+      <div class="mode-card" onclick="selectMode(this)">
+        <span class="mode-badge badge-2">Mode 2</span>
+        <h4>Conversion</h4>
+        <p>Nutzer zur Handlung führen. Prüft Cta, Kontakt, Ansprechpersonen und Trust-Signale.</p>
+      </div>
+    </div>
+    <label style="margin-top:16px;">Keywords (optional, kommagetrennt)</label>
+    <input type="text" placeholder="z.B. soziale arbeit, weiterbildung, luzern" />
+    <label>Sprache</label>
+    <select><option>de-CH</option><option>en-US</option></select>
+    <button class="btn-primary" onclick="showTab(1)">Audit starten →</button>
+  </div>
+
+  <div id="panel1" class="panel">
+    <div class="section-title">Analyse — 7 Checks</div>
+    <div class="kachel-grid">
+      <div class="kachel"><div class="kachel-head" style="background:#77C5D8;">Meta-Texte</div><div class="kachel-body">Score: <strong>72</strong><br>Title: 54 Zeichen ✓<br>Description: fehlt ✗</div></div>
+      <div class="kachel"><div class="kachel-head" style="background:#ADCA2A;">Überschriften</div><div class="kachel-body">Score: <strong>85</strong><br>H1: vorhanden ✓<br>Hierarchie: ok ✓</div></div>
+      <div class="kachel"><div class="kachel-head" style="background:#EE6A87;">Defekte Links</div><div class="kachel-body">Score: <strong>60</strong><br>3 × 404 intern ✗<br>2 × Redirect ⚠</div></div>
+      <div class="kachel"><div class="kachel-head" style="background:#FCC300;">Alt-Attribute</div><div class="kachel-body">Score: <strong>90</strong><br>12/13 Bilder ✓<br>1 fehlt ⚠</div></div>
+    </div>
+    <div class="check-row"><div class="check-name">Meta-Texte</div><div class="score-bar"><div class="score-fill" style="width:72%;background:#77C5D8;"></div></div><div class="check-score">72</div><span class="tag tag-red">1 Issue</span><span class="tag tag-yellow">1 Warning</span></div>
+    <div class="check-row"><div class="check-name">Überschriften</div><div class="score-bar"><div class="score-fill" style="width:85%;background:#ADCA2A;"></div></div><div class="check-score">85</div><span class="tag tag-green">Passed</span></div>
+    <div class="check-row"><div class="check-name">Defekte Links</div><div class="score-bar"><div class="score-fill" style="width:60%;background:#EE6A87;"></div></div><div class="check-score">60</div><span class="tag tag-red">3 Issues</span></div>
+    <div class="check-row"><div class="check-name">Alt-Attribute</div><div class="score-bar"><div class="score-fill" style="width:90%;background:#77C5D8;"></div></div><div class="check-score">90</div><span class="tag tag-yellow">1 Warning</span></div>
+    <div class="check-row"><div class="check-name">Rechtschreibung</div><div class="score-bar"><div class="score-fill" style="width:78%;background:#ADCA2A;"></div></div><div class="check-score">78</div><span class="tag tag-yellow">3 Warnings</span></div>
+    <div class="check-row"><div class="check-name">Keywords &amp; Semantik</div><div class="score-bar"><div class="score-fill" style="width:65%;background:#FCC300;"></div></div><div class="check-score">65</div><span class="tag tag-yellow">2 Warnings</span></div>
+    <div class="check-row"><div class="check-name">Url / Slug</div><div class="score-bar"><div class="score-fill" style="width:95%;background:#77C5D8;"></div></div><div class="check-score">95</div><span class="tag tag-green">Passed</span></div>
+  </div>
+
+  <div id="panel2" class="panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div class="section-title" style="margin:0;border:none;padding:0;">Empfehlungen</div>
+      <div class="toggle-wrap">
+        <button class="toggle-btn active" onclick="toggleView('simple',this)">Einfach</button>
+        <button class="toggle-btn" onclick="toggleView('detail',this)">Detail</button>
+      </div>
+    </div>
+    <div id="simple-view" class="simple-view active">
+      <div class="info-bar">Diese Seite wurde als <strong>Mode 1 – Content &amp; Autorität</strong> bewertet.</div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#cc0000;"></div><div class="ampel-name">Meta-Texte</div><div class="ampel-text">Meta-Description fehlt vollständig</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#4caf50;"></div><div class="ampel-name">Überschriften</div><div class="ampel-text">Struktur ist korrekt aufgebaut</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#cc0000;"></div><div class="ampel-name">Defekte Links</div><div class="ampel-text">3 interne Links führen ins Leere</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#f9a825;"></div><div class="ampel-name">Alt-Attribute</div><div class="ampel-text">1 Bild ohne Beschreibung</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#f9a825;"></div><div class="ampel-name">Rechtschreibung</div><div class="ampel-text">3 mögliche Fehler gefunden</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#f9a825;"></div><div class="ampel-name">Keywords</div><div class="ampel-text">Semantische Vielfalt ausbaufähig</div></div>
+      <div class="ampel-row"><div class="ampel-dot" style="background:#4caf50;"></div><div class="ampel-name">Url / Slug</div><div class="ampel-text">Url ist sauber und korrekt</div></div>
+      <div style="margin-top:20px;margin-bottom:8px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#000000;">Priorisierte Massnahmen</div>
+      <div class="empfehlung"><strong>1. Meta-Description ergänzen</strong>Füge eine Beschreibung von 70–160 Zeichen hinzu. Sie erscheint in den Suchergebnissen und beeinflusst, ob jemand auf die Seite klickt.</div>
+      <div class="empfehlung"><strong>2. Defekte Links reparieren</strong>3 interne Links führen zu Seiten die nicht mehr existieren. Das schadet der Glaubwürdigkeit und dem Ranking.</div>
+      <div class="empfehlung"><strong>3. Autorschaft sichtbar machen</strong>Für eine Content-Seite fehlt ein sichtbarer Autor mit Name und Funktion – das ist ein wichtiges Vertrauenssignal.</div>
+    </div>
+    <div id="detail-view" class="detail-view">
+      <div class="info-bar">Mode 1 – Content &amp; Autorität | Url: hslu.ch/beispielseite | de-CH</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;margin-bottom:8px;color:#000000;">Kritische Issues</div>
+      <div class="detail-text" style="color:#aa0000;">✗ Meta-Description fehlt (Check: meta_texts / score: 0)</div>
+      <div class="detail-text" style="color:#aa0000;">✗ 3 × interne 404-Links: /angebot, /team, /kontakt-alt</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;margin-top:14px;margin-bottom:8px;color:#000000;">Warnings</div>
+      <div class="detail-text" style="color:#7a5c00;">⚠ 1 Bild ohne alt-Attribut: hero-image.jpg</div>
+      <div class="detail-text" style="color:#7a5c00;">⚠ Keyword-Dichte «soziale arbeit»: 0.3% (Optimum: 0.5–3%)</div>
+      <div class="detail-text" style="color:#7a5c00;">⚠ Ttr: 0.41 – semantische Vielfalt ausbaufähig</div>
+      <div class="detail-text" style="color:#7a5c00;">⚠ Kein Autor sichtbar (Mode 1: E-E-A-T Signal)</div>
+      <div class="detail-text" style="color:#7a5c00;">⚠ Keine externen Quellen verlinkt (Mode 1: E-E-A-T Signal)</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;margin-top:14px;margin-bottom:8px;color:#000000;">Keyword-Analyse</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:10px;color:#444444;line-height:1.8;">Top-Keywords: soziale arbeit (0.3%), weiterbildung (1.2%), luzern (0.8%)<br>Ttr: 0.41 | Wörter: 842 | Keyword in Title: ✓ | in H1: ✓ | in Meta: —</div>
+    </div>
+    <div class="entscheid-box">
+      <div class="entscheid-label">Gesamtentscheid</div>
+      <div class="entscheid-value">🟡 Optimieren</div>
+      <div class="entscheid-score">Gesamtscore: 74 / 100</div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <span style="font-weight:700;color:#000000;">Hslu</span>
+    <span>Seo Audit Tool · hslu-seo-audit</span>
+    <span>Beta · März 2026</span>
+  </div>
+</div>
+
+<script>
+function showTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+function selectMode(el){
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function toggleView(view,btn){
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('simple-view').classList.toggle('active',view==='simple');
+  document.getElementById('detail-view').classList.toggle('active',view==='detail');
+}
+</script>
