@@ -1,18 +1,22 @@
 from bs4 import BeautifulSoup
-from typing import Optional
-from whitelist import HEADING_DUPLICATES_WHITELIST  # NEU
+from whitelist import HEADING_DUPLICATES_WHITELIST
 
-HEADING_TAGS = ["h1", "h2", "h3", "h4", "h5", "h6"]
+HEADING_TAGS = ["h1", "h2", "h3"]
 
 
 def check_headings(soup: BeautifulSoup) -> dict:
     """
     Prüft die Überschriftenstruktur einer Seite:
     - Genau eine H1 vorhanden?
-    - Hierarchie korrekt (kein Sprung von H1 → H3)?
     - H1 nicht leer?
+    - Mindestens eine H2 vorhanden? (nur H1 = Fehler)
+    - Hierarchie vollständig? (H3 ohne H2 = Fehler, H4 ohne H3 = Fehler)
     - Überschriften nicht zu lang?
-    - Duplicate-Überschriften? (Whitelist wird berücksichtigt)
+    - Duplikate? (Whitelist wird berücksichtigt)
+
+    Nicht mehr geprüft:
+    - Reihenfolge der Überschriften im Quellcode
+    - H4, H5, H6 (werden komplett ignoriert)
     """
     issues = []
     warnings = []
@@ -29,7 +33,7 @@ def check_headings(soup: BeautifulSoup) -> dict:
     if not headings:
         issues.append({
             "code": "NO_HEADINGS",
-            "message": "Keine Überschriften gefunden. Mindestens eine H1 ist erforderlich.",
+            "message": "Keine Überschriften gefunden. Mindestens eine H1 und eine H2 sind erforderlich.",
             "severity": "critical",
         })
         return _build_result(issues, warnings, passed, data)
@@ -64,45 +68,38 @@ def check_headings(soup: BeautifulSoup) -> dict:
                 "message": f"Genau eine H1 gefunden: \"{h1_text}\"",
             })
 
-    # ── HIERARCHIE PRÜFUNG ─────────────────────────────────────────────────
-    hierarchy_errors = []
-    prev_level = 0
+    # ── HIERARCHIE-VOLLSTÄNDIGKEIT ─────────────────────────────────────────
+    # Prüft ob übergeordnete Ebenen vorhanden sind – unabhängig von Reihenfolge.
+    # H3 braucht H2, H4 braucht H3 etc. Nur H1 ohne H2 ist ein Fehler.
+    levels_present = {h["level"] for h in headings}
 
-    for i, heading in enumerate(headings):
-        current_level = heading["level"]
-
-        if i == 0 and current_level != 1:
-            warnings.append({
-                "code": "FIRST_HEADING_NOT_H1",
-                "message": f"Erste Überschrift ist kein H1, sondern {heading['tag'].upper()}: \"{heading['text']}\"",
-                "severity": "warning",
-            })
-
-        if prev_level > 0 and current_level > prev_level + 1:
-            hierarchy_errors.append({
-                "from": f"h{prev_level}",
-                "to": heading["tag"],
-                "text": heading["text"],
-                "skipped": f"h{prev_level + 1}",
-            })
-
-        prev_level = current_level
-
-    if hierarchy_errors:
-        for err in hierarchy_errors:
-            warnings.append({
-                "code": "HEADING_HIERARCHY_SKIP",
-                "message": (
-                    f"Hierarchiesprung: Nach {err['from'].upper()} folgt {err['to'].upper()} "
-                    f"(übersprungen: {err['skipped'].upper()}). Überschrift: \"{err['text']}\""
-                ),
-                "severity": "warning",
-            })
+    # H2 zwingend erforderlich
+    if 2 not in levels_present:
+        issues.append({
+            "code": "H2_MISSING",
+            "message": "Keine H2-Überschrift gefunden. Eine Seite benötigt mindestens eine H2 zur Strukturierung des Inhalts.",
+            "severity": "critical",
+        })
     else:
         passed.append({
-            "code": "HEADING_HIERARCHY_OK",
-            "message": "Überschriftenhierarchie ist korrekt (keine Sprünge).",
+            "code": "H2_PRESENT",
+            "message": f"{len([h for h in headings if h['level'] == 2])} H2-Überschrift(en) gefunden.",
         })
+
+    # H3 nur erlaubt wenn H2 vorhanden
+    if 3 in levels_present and 2 not in levels_present:
+        issues.append({
+            "code": "H3_WITHOUT_H2",
+            "message": "H3-Überschriften gefunden, aber keine H2. H3 setzt eine übergeordnete H2 voraus.",
+            "severity": "critical",
+        })
+    elif 3 in levels_present and 2 in levels_present:
+        passed.append({
+            "code": "H3_OK",
+            "message": f"{len([h for h in headings if h['level'] == 3])} H3-Überschrift(en) korrekt unterhalb von H2.",
+        })
+
+
 
     # ── LEERE ÜBERSCHRIFTEN ────────────────────────────────────────────────
     empty_headings = [h for h in headings if not h["text"]]
@@ -129,12 +126,11 @@ def check_headings(soup: BeautifulSoup) -> dict:
     else:
         passed.append({"code": "HEADINGS_LENGTH_OK", "message": "Alle Überschriften sind in akzeptabler Länge."})
 
-    # ── DUPLICATE ÜBERSCHRIFTEN ────────────────────────────────────────────
-    # Whitelisted Begriffe werden von der Duplikat-Prüfung ausgenommen
+    # ── DUPLIKATE ──────────────────────────────────────────────────────────
     texts = [h["text"].lower().strip() for h in headings if h["text"]]
     duplicates = {
         t for t in texts
-        if texts.count(t) > 1 and t not in HEADING_DUPLICATES_WHITELIST  # NEU
+        if texts.count(t) > 1 and t not in HEADING_DUPLICATES_WHITELIST
     }
     if duplicates:
         for dup in duplicates:
