@@ -1,5 +1,12 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
+from whitelist import ALT_ATTRIBUTE_FILENAME_WHITELIST  # NEU
+
+
+def _is_whitelisted(src: str) -> bool:
+    """Prüft ob der Dateiname in der Whitelist steht (case-insensitive)."""
+    filename = src.split("?")[0].split("#")[0].split("/")[-1].lower()
+    return filename in [f.lower() for f in ALT_ATTRIBUTE_FILENAME_WHITELIST]
 
 
 def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
@@ -11,6 +18,8 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
     - <video> ohne aria-label oder title
     - <iframe> (YouTube etc.) ohne title
     - PDF-Links ohne beschreibenden Ankertext
+
+    Whitelisted Dateinamen (siehe whitelist.py) werden komplett ignoriert.
     """
     issues = []
     warnings = []
@@ -29,6 +38,10 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
         alt = img.get("alt")
         absolute_src = urljoin(base_url, src) if src else ""
 
+        # Whitelisted Dateien komplett überspringen
+        if _is_whitelisted(absolute_src or src):
+            continue
+
         img_data = {"src": absolute_src, "alt": alt}
         data["images"].append(img_data)
 
@@ -40,13 +53,9 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": absolute_src,
             })
         elif alt.strip() == "":
-            # Leeres alt = dekoratives Bild (erlaubt, aber notieren)
-            warnings.append({
-                "code": "IMG_EMPTY_ALT",
-                "message": f"Bild mit leerem alt (dekorativ?): {absolute_src}",
-                "severity": "info",
-                "src": absolute_src,
-            })
+            # Leeres alt = dekoratives Bild – wenn whitelisted, komplett ignorieren
+            # (Whitelist greift auch hier, nicht nur bei alt=None)
+            pass
         elif len(alt.strip()) < 5:
             warnings.append({
                 "code": "IMG_ALT_TOO_SHORT",
@@ -97,17 +106,15 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "message": f"Video mit Label: \"{label[:60]}\"",
             })
 
-    # Technische iframes die wir ignorieren (kein SEO-Relevanz)
+    # ── IFRAMES ───────────────────────────────────────────────────────────
     IGNORE_IFRAME_DOMAINS = {"googletagmanager.com", "google.com/recaptcha", "doubleclick.net"}
 
-    # ── IFRAMES (YouTube, Vimeo etc.) ──────────────────────────────────────
     iframes = soup.find_all("iframe")
     for iframe in iframes:
         src = iframe.get("src", "")
         title = iframe.get("title", "")
         aria_label = iframe.get("aria-label", "")
 
-        # Technische iframes überspringen
         if any(domain in src for domain in IGNORE_IFRAME_DOMAINS):
             continue
 
