@@ -115,7 +115,7 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
   </div>
 </div>
 
-<div class="wrap">
+<div class="wrap content-offset">
   <div id="panel0" class="panel active">
     <div class="section-title">Audit konfigurieren</div>
     <div id="active-modes" style="margin-bottom:12px;min-height:20px;"></div>
@@ -140,6 +140,7 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
       <div class="check-item selected" data-key="spelling" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Rechtschreibung</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).</div></div></div>
       <div class="check-item selected" data-key="keywords" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Keywords &amp; Semantik</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung in Title, H1 und Meta-Description.</div></div></div>
       <div class="check-item selected" data-key="url_slug" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Url / Slug</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Https, Url-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und Url-Tiefe (max. 5 Ebenen).</div></div></div>
+      <div class="check-item selected" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Zeigt alle Kampagnen-Tags der Seite an. Prüft via Google Tag Manager Api ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für Hslu-Seiten verfügbar.</div></div></div>
     </div>
     <div style="margin-top:20px;">
       <button id="start-btn" onclick="startAudit()" style="width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;">Audit starten →</button>
@@ -204,7 +205,7 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
   </div>
 
   <div class="footer-bar">
-    <span>hslu-seo-audit by Stefan Miesch</span>
+    <span>hslu-seo-audit by DMS</span>
     <span></span>
     <span id="footer-info"></span>
   </div>
@@ -212,7 +213,7 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
 
 <script>
 const VERSION='0.30';
-const BUILD_DATE='26.03.2026';
+const BUILD_DATE='270326-1523';
 const API_URL='http://localhost:8000';
 
 const MODES={
@@ -275,6 +276,7 @@ const CHECKS_META={
   spelling:{label:'Rechtschreibung',color:'#77C5D8'},
   keywords:{label:'Keywords & Semantik',color:'#ADCA2A'},
   url_slug:{label:'Url / Slug',color:'#EE6A87'},
+  sea:{label:'Kampagnen-Check',color:'#77C5D8'},
 };
 
 let currentWeights={};
@@ -492,7 +494,7 @@ async function startAudit(){
   const waitLine=addLog('Checks laufen, bitte warten...','wait');
 
   try{
-    const response=await fetch(API_URL+'/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,keywords,language,mode_weights:currentWeights})});
+    const response=await fetch(API_URL+'/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,keywords,language,mode_weights:currentWeights,run_sea:selected.includes('sea')})});
     if(!response.ok){const err=await response.json();throw new Error(err.detail||'Api-Fehler: '+response.status);}
     const data=await response.json();
     waitLine.classList.remove('pulsing');
@@ -628,12 +630,12 @@ function renderEmpfehlungen(results,selected,url){
     const r=results[key];if(!r)continue;
     const issues=r.issues||[],warnings=r.warnings||[],passed=r.passed||[];
     const dotColor=issues.length?'#c00':warnings.length?'#f9a825':'#4caf50';
-    const allMsg=[...issues,...warnings].map(m=>linkify(fixMsg(msgText(m))));
+    const allMsg=[...issues.map(m=>({t:'issue',m:linkify(fixMsg(msgText(m)))})),...warnings.map(m=>({t:'warn',m:linkify(fixMsg(msgText(m)))}))];
     const tip=CHECK_HELP[key]||'';
     const nameHTML='<span style="display:flex;align-items:center;gap:6px;">'+CHECKS_META[key].label+
       '<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">'+tip+'</div></div></span>';
     let statusHTML=allMsg.length
-      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li>'+m+'</li>').join('')+'</ul>'
+      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li style="color:'+(m.t==='issue'?'#aa0000':'#7a5c00')+';">'+m.m+'</li>').join('')+'</ul>'
       :'<div style="color:#1b5e20;margin-top:2px;">Keine Probleme gefunden</div>';
     const extraS=buildExtra(key,r,true);
     const extraD=buildExtra(key,r,false);
@@ -644,7 +646,7 @@ function renderEmpfehlungen(results,selected,url){
       (extra?'<div style="font-size:12px;color:#a00;margin-top:4px;">'+extra+'</div>':'')+
       '</div></div>';
     simpleHTML+=rowBase(extraS);
-    const passedHTML=passed.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;color:#1b5e20;">'+passed.map(p=>'<li>'+fixMsg(msgText(p))+'</li>').join('')+'</ul>':'';
+    const passedHTML=passed.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+passed.map(p=>'<li style="color:#1b5e20;">'+fixMsg(msgText(p))+'</li>').join('')+'</ul>':'';
     detailHTML+='<div class="ampel-row">'+
       '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
       '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
