@@ -140,7 +140,8 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
       <div class="check-item selected" data-key="spelling" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Rechtschreibung</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).</div></div></div>
       <div class="check-item selected" data-key="keywords" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Keywords &amp; Semantik</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung in Title, H1 und Meta-Description.</div></div></div>
       <div class="check-item selected" data-key="url_slug" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Url / Slug</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Https, Url-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und Url-Tiefe (max. 5 Ebenen).</div></div></div>
-      <div class="check-item selected" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Zeigt alle Kampagnen-Tags der Seite an. Prüft via Google Tag Manager Api ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für Hslu-Seiten verfügbar.</div></div></div>
+      <!-- SEA: per default DEAKTIVIERT -->
+      <div class="check-item" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb"><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Zeigt alle Kampagnen-Tags der Seite an. Prüft via Google Tag Manager Api ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für Hslu-Seiten verfügbar.</div></div></div>
     </div>
     <div style="margin-top:20px;">
       <button id="start-btn" onclick="startAudit()" style="width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;">Audit starten →</button>
@@ -212,8 +213,7 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
 </div>
 
 <script>
-const VERSION='0.30';
-const BUILD_DATE='270326-1523';
+const VERSION='260327-1604';
 const API_URL='http://localhost:8000';
 
 const MODES={
@@ -445,7 +445,12 @@ function resetAudit(){
   document.getElementById('audit-url').value='';
   document.getElementById('audit-keywords').value='';
   document.getElementById('audit-lang').selectedIndex=0;
-  document.querySelectorAll('#check-list .check-item').forEach(el=>{el.classList.add('selected');el.querySelector('.check-cb').checked=true;});
+  // SEA bleibt nach Reset deaktiviert
+  document.querySelectorAll('#check-list .check-item').forEach(el=>{
+    const isSea=el.dataset.key==='sea';
+    el.classList.toggle('selected',!isSea);
+    el.querySelector('.check-cb').checked=!isSea;
+  });
   document.getElementById('progress-wrap').classList.remove('active');
   document.getElementById('protocol-lines').innerHTML='';
   document.getElementById('error-box').style.display='none';
@@ -504,7 +509,6 @@ async function startAudit(){
     for(const key of selected){
       if(data.checks[key]){results[key]=data.checks[key];addLog('✓ '+CHECKS_META[key].label+' (Score: '+data.checks[key].score+')','done');}
     }
-    // Modus-Analyse immer übernehmen – unabhängig von selected
     if(data.checks['mode_analysis']){
       results['mode_analysis']=data.checks['mode_analysis'];
       addLog('✓ Modus-Analyse (Score: '+data.checks['mode_analysis'].score+')','done');
@@ -534,8 +538,8 @@ function msgText(m){return typeof m==='object'?m.message:m;}
 function fixMsg(msg){return msg.replace(/Wird von Google abgeschnitten/gi,'Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten').replace(/\(dekorativ\?\)/gi,'');}
 function linkify(text){return text.replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>');}
 function scoreToColor(s){if(s>=80)return '#ADCA2A';if(s>=60)return '#77C5D8';if(s>=40)return '#FCC300';return '#EE6A87';}
-function renderModeAnalysisKachel(container, r, showSchema){
-  if(!r) return;
+function renderModeAnalysisKachel(container,r,showSchema){
+  if(!r)return;
   const color=scoreToColor(r.score);
   const w=document.createElement('div');
   w.className='kachel-wrap';
@@ -548,8 +552,7 @@ function renderModeAnalysisKachel(container, r, showSchema){
     (modes?'<p style="color:#555;font-size:11px;">Aktive Modi: '+modes+'</p>':'');
   (r.warnings||[]).forEach(w=>{body+='<p style="color:#7a5c00;">⚠ '+fixMsg(msgText(w))+'</p>';});
   (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">✓ '+fixMsg(msgText(p))+'</p>';});
-  // Schema-Resultate nur in Detail-Ansicht
-  if(showSchema && r.data&&r.data.schema_results&&r.data.schema_results.length){
+  if(showSchema&&r.data&&r.data.schema_results&&r.data.schema_results.length){
     body+='<p style="font-weight:700;margin-top:8px;padding-top:6px;border-top:1px solid #e0e0e0;font-size:11px;">Schema.org</p>';
     r.data.schema_results.forEach(s=>{
       const col=s.ok?'#1b5e20':'#7a5c00';
@@ -574,12 +577,8 @@ function buildInfoBar(url,mode){
 
 function getMode(){
   const card=document.querySelector('#mode-cards .mode-card.selected');
-  if(card) return card.querySelector('.mode-badge').textContent.trim();
-  // Kein Preset aktiv – Prozentwerte ausgeben
-  return Object.entries(currentWeights)
-    .filter(([,v])=>v>0)
-    .map(([k,v])=>MODES[k].label+' '+v+'%')
-    .join(', ');
+  if(card)return card.querySelector('.mode-badge').textContent.trim();
+  return Object.entries(currentWeights).filter(([,v])=>v>0).map(([k,v])=>MODES[k].label+' '+v+'%').join(', ');
 }
 
 // ── Analyse rendern ───────────────────────────────────────────────────────
@@ -603,9 +602,8 @@ function renderAnalyse(results,selected,url){
     w.innerHTML=head+body;
     c.appendChild(w);
   }
-  // Modus-Analyse immer separat rendern – unabhängig von selected
   const ma=results['mode_analysis'];
-  if(ma) renderModeAnalysisKachel(c, ma, false);
+  if(ma)renderModeAnalysisKachel(c,ma,false);
 }
 
 // ── Extra-Details ─────────────────────────────────────────────────────────
@@ -622,9 +620,8 @@ function buildExtra(key,r,simple){
 function renderEmpfehlungen(results,selected,url){
   const allSelected=Object.keys(CHECKS_META).every(k=>selected.includes(k));
   const mode=getMode();
-  const date=new Date().toLocaleDateString('de-CH');
   const infoBar=buildInfoBar(url,mode);
-  let simpleHTML=infoBar, detailHTML=infoBar;
+  let simpleHTML=infoBar,detailHTML=infoBar;
 
   for(const key of selected){
     const r=results[key];if(!r)continue;
@@ -658,10 +655,9 @@ function renderEmpfehlungen(results,selected,url){
   document.getElementById('empfehlung-content').innerHTML=simpleHTML;
   document.getElementById('detail-content').innerHTML=detailHTML;
 
-  // Modus-Analyse in Tab 3 wie andere Checks darstellen
   const ma=results['mode_analysis'];
   if(ma){
-    const issues=ma.issues||[], warnings=ma.warnings||[], passed=ma.passed||[];
+    const issues=ma.issues||[],warnings=ma.warnings||[],passed=ma.passed||[];
     const dotColor=issues.length?'#c00':warnings.length?'#f9a825':'#4caf50';
     const allMsg=[...issues,...warnings].map(m=>linkify(fixMsg(msgText(m))));
     const nameHTML='<span style="display:flex;align-items:center;gap:6px;">Modus-Analyse'+
@@ -711,7 +707,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   buildModeCards();
   buildSliders();
   updateModeSelector();
-  document.getElementById('footer-info').textContent='Beta v'+VERSION+' · '+BUILD_DATE;
+  document.getElementById('footer-info').textContent='Beta v'+VERSION;
 });
 </script>
 </body>
