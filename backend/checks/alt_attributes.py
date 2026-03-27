@@ -1,11 +1,17 @@
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-from whitelist import ALT_ATTRIBUTE_FILENAME_WHITELIST  # NEU
+from urllib.parse import urljoin
+from whitelist import ALT_ATTRIBUTE_FILENAME_WHITELIST, ALT_ATTRIBUTE_EXTENSION_WHITELIST
 
 
 def _is_whitelisted(src: str) -> bool:
-    """Prüft ob der Dateiname in der Whitelist steht (case-insensitive)."""
-    filename = src.split("?")[0].split("#")[0].split("/")[-1].lower()
+    """Prüft ob Dateiname oder Dateierweiterung in der Whitelist steht."""
+    clean = src.split("?")[0].split("#")[0]
+    filename = clean.split("/")[-1].lower()
+    # Erweiterung prüfen
+    for ext in ALT_ATTRIBUTE_EXTENSION_WHITELIST:
+        if filename.endswith(ext.lower()):
+            return True
+    # Einzelne Dateinamen prüfen
     return filename in [f.lower() for f in ALT_ATTRIBUTE_FILENAME_WHITELIST]
 
 
