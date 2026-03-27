@@ -11,6 +11,7 @@ from checks.alt_attributes import check_alt_attributes
 from checks.spelling import check_spelling
 from checks.keywords import check_keywords
 from checks.url_slug import check_url_slug
+from checks.mode_analysis import check_mode_analysis
 
 app = FastAPI(title="SEO Audit API", version="0.2.0")
 
@@ -25,7 +26,13 @@ app.add_middleware(
 class AuditRequest(BaseModel):
     url: str
     keywords: List[str] = []
-    language: Optional[str] = None  # z.B. "de-CH", "fr", "en-US"
+    language: Optional[str] = None
+    mode_weights: Optional[dict] = {
+        "content": 60,
+        "conversion": 40,
+        "course": 0,
+        "event": 0,
+    }
 
 
 class AuditResponse(BaseModel):
@@ -41,7 +48,6 @@ def root():
 
 @app.post("/audit", response_model=AuditResponse)
 async def run_audit(request: AuditRequest):
-    # Seite abrufen
     page = await fetch_page(request.url)
     if page is None:
         raise HTTPException(
@@ -51,26 +57,18 @@ async def run_audit(request: AuditRequest):
 
     results = {}
 
-    # Check 1: Meta-Texte
     results["meta"] = check_meta(page["soup"], request.url)
-
-    # Check 2: Überschriftenstruktur
     results["headings"] = check_headings(page["soup"])
-
-    # Check 3: Defekte Links (async)
     results["broken_links"] = await check_broken_links(page["soup"], request.url)
-
-    # Check 4: Alt-Attribute
     results["alt_attributes"] = check_alt_attributes(page["soup"], request.url)
-
-    # Check 5: Rechtschreibung
     results["spelling"] = check_spelling(page["soup"], language=request.language)
-
-    # Check 6: Keywords & semantische Vielfalt
     results["keywords"] = check_keywords(page["soup"], keywords=request.keywords)
-
-    # Check 7: URL/Slug
     results["url_slug"] = check_url_slug(request.url)
+    results["mode_analysis"] = check_mode_analysis(
+        page["soup"],
+        request.url,
+        request.mode_weights or {},
+    )
 
     return AuditResponse(
         url=request.url,
