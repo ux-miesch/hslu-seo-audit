@@ -29,6 +29,15 @@ LINK_DOMAIN_WHITELIST = [
     "researchgate.net",   # Bekanntes Bot-Blocking
 ]
 
+# ── Alt-Attribute: Datei-Whitelist ─────────────────────────────────────────
+# Einzelne Bilddateien die beim Alt-Attribut-Check ignoriert werden.
+# SVG-Dateien werden generell in der Logik ignoriert (siehe alt_attributes.py).
+ALT_ATTRIBUTE_FILENAME_WHITELIST = [
+    "black-arrow.svg",
+    # Weitere Dateien hier ergänzen:
+    # "icon-arrow-right.svg",
+]
+
 # ── Alt-Attribute: Dateierweiterungen ignorieren ───────────────────────────
 # Alle Bilder mit diesen Endungen werden beim Alt-Attribut-Check übersprungen.
 ALT_ATTRIBUTE_EXTENSION_WHITELIST = [
