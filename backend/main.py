@@ -12,6 +12,7 @@ from checks.spelling import check_spelling
 from checks.keywords import check_keywords
 from checks.url_slug import check_url_slug
 from checks.mode_analysis import check_mode_analysis
+from checks.sea import check_sea
 
 app = FastAPI(title="SEO Audit API", version="0.2.0")
 
@@ -33,6 +34,7 @@ class AuditRequest(BaseModel):
         "course": 0,
         "event": 0,
     }
+    run_sea: bool = False
 
 
 class AuditResponse(BaseModel):
@@ -69,6 +71,8 @@ async def run_audit(request: AuditRequest):
         request.url,
         request.mode_weights or {},
     )
+    if request.run_sea:
+        results["sea"] = check_sea(page["soup"], request.url)
 
     return AuditResponse(
         url=request.url,

@@ -502,6 +502,11 @@ async function startAudit(){
     for(const key of selected){
       if(data.checks[key]){results[key]=data.checks[key];addLog('✓ '+CHECKS_META[key].label+' (Score: '+data.checks[key].score+')','done');}
     }
+    // Modus-Analyse immer übernehmen – unabhängig von selected
+    if(data.checks['mode_analysis']){
+      results['mode_analysis']=data.checks['mode_analysis'];
+      addLog('✓ Modus-Analyse (Score: '+data.checks['mode_analysis'].score+')','done');
+    }
     renderAnalyse(results,selected,url);
     renderEmpfehlungen(results,selected,url);
     addLog('✓ Audit abgeschlossen','done');
@@ -651,13 +656,39 @@ function renderEmpfehlungen(results,selected,url){
   document.getElementById('empfehlung-content').innerHTML=simpleHTML;
   document.getElementById('detail-content').innerHTML=detailHTML;
 
-  // Modus-Analyse immer in Tab 3 anhängen – unabhängig von selected
+  // Modus-Analyse in Tab 3 wie andere Checks darstellen
   const ma=results['mode_analysis'];
   if(ma){
-    const sc=document.getElementById('empfehlung-content');
-    const dc=document.getElementById('detail-content');
-    renderModeAnalysisKachel(sc, ma, false);
-    renderModeAnalysisKachel(dc, ma, true);
+    const issues=ma.issues||[], warnings=ma.warnings||[], passed=ma.passed||[];
+    const dotColor=issues.length?'#c00':warnings.length?'#f9a825':'#4caf50';
+    const allMsg=[...issues,...warnings].map(m=>linkify(fixMsg(msgText(m))));
+    const nameHTML='<span style="display:flex;align-items:center;gap:6px;">Modus-Analyse'+
+      '<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft inhaltliche Soft-Faktoren basierend auf dem aktiven Seitentyp.</div></div></span>';
+    let statusHTML=allMsg.length
+      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li>'+m+'</li>').join('')+'</ul>'
+      :'<div style="color:#1b5e20;margin-top:2px;">Alle Soft-Faktoren erfüllt</div>';
+    const passedHTML=passed.length
+      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;color:#1b5e20;">'+passed.map(p=>'<li>'+fixMsg(msgText(p))+'</li>').join('')+'</ul>'
+      :'';
+    const rowSimple='<div class="ampel-row">'+
+      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
+      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
+      '<div class="ampel-text">'+statusHTML+'</div>'+
+      '</div></div>';
+    const schemaHTML=ma.data&&ma.data.schema_results&&ma.data.schema_results.length
+      ?'<div style="font-size:11px;font-weight:700;margin-top:8px;color:#000;">Schema.org</div>'+
+        '<ul style="margin:4px 0 0 16px;line-height:1.8;">'+
+        ma.data.schema_results.map(s=>'<li style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' '+s.label+': '+s.message+'</li>').join('')+
+        '</ul>'
+      :'';
+    const rowDetail='<div class="ampel-row">'+
+      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
+      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
+      '<div class="ampel-text">'+statusHTML+'</div>'+
+      passedHTML+schemaHTML+
+      '</div></div>';
+    document.getElementById('empfehlung-content').innerHTML+=rowSimple;
+    document.getElementById('detail-content').innerHTML+=rowDetail;
   }
 
   if(allSelected){
