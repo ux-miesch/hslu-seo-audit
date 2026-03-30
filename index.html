@@ -12,7 +12,7 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;overflow-x:
 .main{margin-top:64px;min-height:calc(100vh - 64px);}
 
 /* Steps */
-.step{display:none;max-width:640px;margin:0 auto;padding:32px 24px 100px;}
+.step{display:none;max-width:640px;margin:0 auto;padding:32px 24px 40px;}
 .step.active{display:block;}
 .step-label{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa;text-transform:uppercase;margin-bottom:6px;}
 .step-title{font-family:'Verdana',sans-serif;font-size:20px;font-weight:700;color:#000;margin-bottom:24px;}
@@ -28,6 +28,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 .mode-card.selected{border-color:#77C5D8;background:#f0fafd;}
 .mode-badge{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;border-radius:2px;margin-bottom:6px;}
 .mode-desc{font-family:'Verdana',sans-serif;font-size:11px;color:#444;line-height:1.5;padding-top:6px;border-top:1px solid #e8e8e8;}
+.factor-badge{font-family:'Verdana',sans-serif;font-size:10px;padding:2px 7px;background:#F0F0F0;border:1px solid #e0e0e0;color:#000;display:inline-block;margin:2px;}
 
 /* Flyout */
 .flyout-trigger{display:flex;align-items:center;gap:6px;margin-top:20px;cursor:pointer;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;user-select:none;width:fit-content;}
@@ -54,17 +55,15 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 .tooltip{display:none;position:absolute;left:20px;top:-4px;width:240px;background:#000;color:#fff;font-family:'Verdana',sans-serif;font-size:11px;line-height:1.6;padding:10px 12px;border-radius:2px;z-index:200;}
 .help-icon:hover .tooltip{display:block;}
 
-/* Nav buttons */
-.nav-bar{background:#fff;border-top:1px solid #e0e0e0;padding:16px 0 0 0;display:flex;gap:10px;max-width:640px;margin:24px auto 0;}
+/* Nav buttons – direkt im Step-Fluss */
+.nav-bar{border-top:1px solid #e0e0e0;padding:20px 0 0 0;margin-top:28px;display:flex;gap:10px;}
 .btn-primary{flex:1;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
 .btn-primary:hover{background:#55a8bc;}
 .btn-secondary{flex:1;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#fff;color:#000;border:2px solid #000;cursor:pointer;}
 .btn-secondary:hover{background:#f0f0f0;}
-.btn-disabled{opacity:0.4;pointer-events:none;}
 
 /* Step 3 – Audit läuft */
 .audit-running{text-align:center;padding-top:48px;}
-.audit-icon{font-size:40px;margin-bottom:16px;}
 .audit-running-title{font-family:'Verdana',sans-serif;font-size:18px;font-weight:700;color:#000;margin-bottom:8px;}
 .audit-running-sub{font-family:'Verdana',sans-serif;font-size:13px;color:#555;margin-bottom:32px;}
 .protocol-wrap{text-align:left;background:#F0F0F0;border-left:3px solid #77C5D8;padding:12px;margin-top:8px;}
@@ -78,8 +77,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 .hslu-loader span:nth-child(3){background:#FCC300;animation-delay:0.3s;}
 .hslu-loader span:nth-child(4){background:#EE6A87;animation-delay:0.45s;}
 
-/* Ergebnis-Ansichten (Tabs 2+3 – später anpassen) */
-.result-wrap{max-width:640px;margin:0 auto;padding:32px 24px 100px;}
+/* Ergebnisse */
 .result-tabs{display:flex;border-bottom:2px solid #000;margin-bottom:24px;}
 .result-tab{padding:10px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#fff;color:#000;border-bottom:3px solid transparent;margin-bottom:-2px;}
 .result-tab.active{border-bottom:3px solid #77C5D8;}
@@ -110,8 +108,21 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 .audit-info-bar .info-value{font-weight:400;display:block;margin-bottom:4px;}
 .error-box{margin-top:16px;padding:12px;background:#fde8e8;border-left:3px solid #c00;font-family:'Verdana',sans-serif;font-size:13px;color:#a00;}
 .empty-state{font-family:'Verdana',sans-serif;font-size:13px;color:#555;}
-.factor-badge{font-family:'Verdana',sans-serif;font-size:10px;padding:2px 7px;background:#F0F0F0;border:1px solid #e0e0e0;color:#000;display:inline-block;margin:2px;}
-.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;}
+
+/* Aufgaben-Tab */
+.prio-group{margin-bottom:28px;}
+.prio-group-title{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e0e0e0;display:flex;align-items:center;gap:8px;}
+.aufgabe-item{border:1px solid #e0e0e0;border-radius:2px;margin-bottom:8px;overflow:hidden;}
+.aufgabe-head{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:#fff;}
+.aufgabe-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.aufgabe-body{flex:1;}
+.aufgabe-check{font-family:'Verdana',sans-serif;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+.aufgabe-title{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;margin-bottom:4px;}
+.aufgabe-why{font-family:'Verdana',sans-serif;font-size:12px;color:#555;line-height:1.6;margin-bottom:6px;}
+.aufgabe-action{font-family:'Verdana',sans-serif;font-size:12px;color:#000;line-height:1.6;background:#F0F0F0;padding:8px 10px;border-left:3px solid #77C5D8;margin-top:6px;}
+.aufgabe-link{display:inline-block;margin-top:8px;padding:5px 12px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#000;border:1.5px solid #000;text-decoration:none;border-radius:2px;}
+.aufgabe-link:hover{background:#000;color:#fff;}
+.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;margin-top:40px;}
 .footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
 @media(max-width:560px){.mode-grid{grid-template-columns:1fr;}}
 @media print{.header,.nav-bar,.result-tabs,.toggle-wrap,.footer-bar{display:none!important;}.result-panel{display:block!important;}}
@@ -137,19 +148,22 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
     <div class="step-title">Welche Seite soll geprüft werden?</div>
 
     <label>URL der zu prüfenden Seite *</label>
-    <input type="text" id="audit-url" placeholder="https://www.hslu.ch/beispielseite" onkeydown="if(event.key==='Enter')goStep2()">
+    <input type="text" id="audit-url" placeholder="https://www.hslu.ch/beispielseite">
 
     <label style="margin-top:20px;">Seitentyp</label>
     <div class="mode-grid" id="mode-cards"></div>
 
-    <!-- Flyout Einstellungen -->
     <div class="flyout-trigger" onclick="toggleFlyout()">
       <span class="flyout-arrow" id="flyout-arrow">▼</span>
       <span>Gewichtung anpassen</span>
     </div>
     <div class="flyout-body" id="flyout-body">
-      <div style="font-family:'Verdana',sans-serif;font-size:11px;color:#555;margin-bottom:14px;line-height:1.6;">Die Regler bestimmen wie stark jede Dimension in die Bewertung einfiesst. Die Summe bleibt immer 100%.</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:11px;color:#555;margin-bottom:14px;line-height:1.6;">Die Regler bestimmen wie stark jede Dimension in die Bewertung einfliesst. Die Summe bleibt immer 100%.</div>
       <div id="sliders-wrap"></div>
+    </div>
+
+    <div class="nav-bar">
+      <button class="btn-primary" onclick="navToStep2()">Weiter →</button>
     </div>
   </div>
 
@@ -175,7 +189,12 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
       <div class="check-item selected" data-key="url_slug" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>URL / Slug</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Https, URL-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und URL-Tiefe (max. 5 Ebenen).</div></div></div>
       <div class="check-item" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb"><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für HSLU-Seiten.</div></div></div>
     </div>
-    <div id="error-box" class="error-box" style="display:none;margin-top:16px;"></div>
+    <div id="error-box" class="error-box" style="display:none;"></div>
+
+    <div class="nav-bar">
+      <button class="btn-secondary" onclick="showStep(1)">← Zurück</button>
+      <button class="btn-primary" onclick="startAudit()">Audit starten →</button>
+    </div>
   </div>
 
   <!-- ── Schritt 3: Audit läuft ── -->
@@ -193,40 +212,30 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 
   <!-- ── Ergebnisse ── -->
   <div id="step-results" class="step">
-    <div class="result-wrap" style="padding:0;">
-      <div class="result-tabs">
-        <button class="result-tab active" onclick="showResultTab(0)">Analyse</button>
-        <button class="result-tab" onclick="showResultTab(1)">Empfehlungen</button>
+    <div class="result-tabs">
+      <button class="result-tab active" onclick="showResultTab(0)">Aufgaben</button>
+      <button class="result-tab" onclick="showResultTab(1)">Analyse</button>
+    </div>
+    <div id="result-panel0" class="result-panel active">
+      <div id="aufgaben-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div>
+      <div id="entscheid-box" class="entscheid-box" style="margin-top:24px;">
+        <div class="entscheid-label">Gesamtentscheid</div>
+        <div class="entscheid-value">🔴 Nicht möglich</div>
+        <div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>
       </div>
-      <div id="result-panel0" class="result-panel active">
-        <div id="analyse-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div>
+    </div>
+    <div id="result-panel1" class="result-panel">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button onclick="exportPDF()" style="padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;">↓ Als PDF exportieren</button>
       </div>
-      <div id="result-panel1" class="result-panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-          <div class="toggle-wrap">
-            <button class="toggle-btn active" id="btn-simple" onclick="toggleView('simple')">Einfach</button>
-            <button class="toggle-btn" id="btn-detail" onclick="toggleView('detail')">Detail</button>
-          </div>
-          <button onclick="exportPDF()" style="padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;">↓ Als PDF exportieren</button>
-        </div>
-        <div id="simple-view" style="display:block;"><div id="empfehlung-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
-        <div id="detail-view" style="display:none;"><div id="detail-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
-        <div id="entscheid-box" class="entscheid-box">
-          <div class="entscheid-label">Gesamtentscheid</div>
-          <div class="entscheid-value">🔴 Nicht möglich</div>
-          <div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>
-        </div>
-      </div>
+      <div id="analyse-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div>
+    </div>
+    <div class="nav-bar">
+      <button class="btn-secondary" onclick="resetAll()">← Neuer Audit</button>
     </div>
   </div>
 
 </div><!-- /main -->
-
-<!-- Nav-Bar (fixiert unten) -->
-<div class="nav-bar" id="nav-bar">
-  <button class="btn-secondary" id="btn-back" onclick="navBack()" style="display:none;">← Zurück</button>
-  <button class="btn-primary" id="btn-next" onclick="navNext()">Weiter →</button>
-</div>
 
 <div class="footer-bar">
   <span>hslu-seo-audit by DMS</span>
@@ -234,10 +243,8 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260330-1049';
+const VERSION='260330-1140';
 const API_URL='http://localhost:8000';
-
-let currentStep=1; // 1, 2, 3, 'results'
 
 const MODES={
   content:{label:'Content & Autorität',color:'#77C5D8',badgeStyle:'background:#77C5D8;color:#fff;',defaultW:60,desc:'Diese Seite soll Wissen vermitteln und Vertrauen aufbauen. Sie richtet sich an Menschen die sich informieren wollen. Wichtig ist dass klar wird wer hinter dem Inhalt steckt, dass Quellen angegeben sind und dass das Thema vollständig behandelt wird. Typisch: Fachbeiträge, Studiengangsseiten, Wissensseiten.',factors:['Autorenschaft sichtbar','Externe Quellenangaben','Interne Verlinkung','Semantische Breite','H2–H3 Struktur']},
@@ -254,40 +261,19 @@ function initWeights(){Object.keys(MODES).forEach(k=>{currentWeights[k]=MODES[k]
 
 // ── Steps ─────────────────────────────────────────────────────────────────
 function showStep(s){
-  ['step1','step2','step3','step-results'].forEach(id=>document.getElementById(id).classList.remove('active'));
-  document.getElementById(s==='results'?'step-results':'step'+s).classList.add('active');
+  document.querySelectorAll('.step').forEach(el=>el.classList.remove('active'));
+  const id=s==='results'?'step-results':'step'+s;
+  document.getElementById(id).classList.add('active');
   window.scrollTo(0,0);
-  const back=document.getElementById('btn-back');
-  const next=document.getElementById('btn-next');
-  const nav=document.getElementById('nav-bar');
-  // Verschiebe nav-bar in den aktiven Step
-  const activeStep=document.getElementById(s==='results'?'step-results':'step'+s);
-  activeStep.appendChild(nav);
-  nav.style.display='flex';
-  if(s===1){back.style.display='none';next.style.display='block';next.textContent='Weiter →';next.className='btn-primary';}
-  else if(s===2){back.style.display='block';next.style.display='block';next.textContent='Audit starten →';next.className='btn-primary';}
-  else if(s===3){nav.style.display='none';}
-  else if(s==='results'){back.style.display='block';back.textContent='← Neuer Audit';next.style.display='none';}
-  currentStep=s;
 }
 
-function navNext(){
-  if(currentStep===1){
-    const url=document.getElementById('audit-url').value.trim();
-    if(!url){alert('Bitte eine URL eingeben.');return;}
-    // Sprache automatisch erkennen
-    const detected=detectLang(url);
-    const sel=document.getElementById('audit-lang');
-    sel.value=detected;
-    document.getElementById('lang-detected').textContent='(automatisch erkannt)';
-    showStep(2);
-  } else if(currentStep===2){
-    startAudit();
-  }
-}
-function navBack(){
-  if(currentStep===2) showStep(1);
-  else if(currentStep==='results') resetAll();
+function navToStep2(){
+  const url=document.getElementById('audit-url').value.trim();
+  if(!url){alert('Bitte eine URL eingeben.');return;}
+  const detected=detectLang(url);
+  document.getElementById('audit-lang').value=detected;
+  document.getElementById('lang-detected').textContent='(automatisch erkannt)';
+  showStep(2);
 }
 
 // ── Flyout ────────────────────────────────────────────────────────────────
@@ -312,6 +298,7 @@ function buildModeCards(){
     c.appendChild(div);
   });
 }
+
 function selectModeCard(el,key){
   document.querySelectorAll('#mode-cards .mode-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
@@ -336,6 +323,7 @@ function buildSliders(){
     c.appendChild(row);
   });
 }
+
 function updateSlider(key,newVal){
   const oldVal=currentWeights[key];const diff=newVal-oldVal;if(diff===0)return;
   const others=Object.keys(MODES).filter(k=>k!==key);
@@ -370,14 +358,13 @@ function resetAll(){
   document.getElementById('audit-url').value='';
   document.getElementById('audit-keywords').value='';
   document.getElementById('audit-lang').selectedIndex=0;
+  document.getElementById('lang-detected').textContent='';
   document.querySelectorAll('#check-list .check-item').forEach(el=>{const sea=el.dataset.key==='sea';el.classList.toggle('selected',!sea);el.querySelector('.check-cb').checked=!sea;});
   document.getElementById('protocol-lines').innerHTML='';
   document.getElementById('error-box').style.display='none';
   document.getElementById('analyse-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
-  document.getElementById('empfehlung-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
-  document.getElementById('detail-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
+  document.getElementById('aufgaben-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   document.getElementById('entscheid-box').innerHTML='<div class="entscheid-label">Gesamtentscheid</div><div class="entscheid-value">🔴 Nicht möglich</div><div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>';
-  document.getElementById('nav-bar').style.display='flex';
   initWeights();buildSliders();buildModeCards();
   showStep(1);
 }
@@ -392,6 +379,15 @@ function addLog(text,type=''){
   el.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>'+text;
   document.getElementById('protocol-lines').appendChild(el);
   return el;
+}
+
+// ── Sprache erkennen ──────────────────────────────────────────────────────
+function detectLang(url){
+  if(/\/(de-ch|de_ch)/i.test(url)) return 'de-CH';
+  if(/\/(en-us|en_us)/i.test(url)) return 'en-US';
+  if(/\/de[\/\-_]/i.test(url)) return 'de-CH';
+  if(/\/en[\/\-_]/i.test(url)) return 'en-US';
+  return 'de-CH';
 }
 
 // ── Audit ─────────────────────────────────────────────────────────────────
@@ -418,13 +414,12 @@ async function startAudit(){
     if(data.checks['mode_analysis']){results['mode_analysis']=data.checks['mode_analysis'];addLog('✓ Modus-Analyse (Score: '+data.checks['mode_analysis'].score+')','done');}
     addLog('✓ Audit abgeschlossen','done');
     renderAnalyse(results,selected,url);
-    renderEmpfehlungen(results,selected,url);
+    renderAufgaben(results,selected,url);
     setTimeout(()=>showStep('results'),800);
   }catch(err){
     waitLine.classList.remove('pulsing');waitLine.style.color='#a00';
     waitLine.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>✗ Fehler beim Abrufen';
     addLog('✗ '+err.message,'error');
-    document.getElementById('nav-bar').style.display='flex';
     const eb=document.getElementById('error-box');
     eb.style.display='block';
     eb.innerHTML='<strong>Fehler:</strong> '+err.message+'<br><small>Ist das Backend gestartet?</small>';
@@ -433,15 +428,7 @@ async function startAudit(){
 }
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────
-function detectLang(url){
-  if(/\/(de-ch|de_ch|\/de\/)/i.test(url)) return 'de-CH';
-  if(/\/(en-us|en_us|\/en\/)/i.test(url)) return 'en-US';
-  if(/\/de[-_]/i.test(url)) return 'de-CH';
-  if(/\/en[-_]/i.test(url)) return 'en-US';
-  return 'de-CH'; // Fallback
-}
-
-return typeof m==='object'?m.message:m;}
+function msgText(m){return typeof m==='object'?m.message:m;}
 function fixMsg(msg){return msg.replace(/Wird von Google abgeschnitten/gi,'Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten').replace(/\(dekorativ\?\)/gi,'');}
 function linkify(text){return text.replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>');}
 function scoreToColor(s){if(s>=80)return '#ADCA2A';if(s>=60)return '#77C5D8';if(s>=40)return '#FCC300';return '#EE6A87';}
@@ -531,6 +518,130 @@ function renderEmpfehlungen(results,selected,url){
 }
 
 function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
+
+// ── Aufgaben rendern (Admin-Tab, nach Prio sortiert) ──────────────────────
+const ANLEITUNG_URL='https://hsluzern.sharepoint.com/';
+
+const AUFGABE_META={
+  meta:{
+    kritisch:{title:'Title oder Meta-Description fehlt / zu kurz',why:'Google zeigt diese Texte direkt in den Suchergebnissen. Fehlen sie, verlierst du Klicks.',action:'Ergänze einen aussagekräftigen Title (30–60 Zeichen) und eine Meta-Description (70–160 Zeichen) im CMS.'},
+    warnung:{title:'Meta-Texte vorhanden, aber verbesserungswürdig',why:'Zu lange oder doppelte Texte werden von Google abgeschnitten oder ignoriert.',action:'Kürze oder überarbeite Title und Description gemäss den Zeichenvorgaben.'},
+  },
+  headings:{
+    kritisch:{title:'H1-Überschrift fehlt oder mehrfach vorhanden',why:'Die H1 ist das wichtigste Inhaltssignal für Google. Sie sollte genau einmal vorkommen.',action:'Stelle sicher, dass die Seite genau eine H1 hat, die das Hauptthema der Seite beschreibt.'},
+    warnung:{title:'Überschriftenstruktur unvollständig',why:'Eine logische Struktur (H1 → H2 → H3) hilft Google, den Inhalt zu verstehen.',action:'Überprüfe die Reihenfolge der Überschriften und korrigiere Lücken oder Sprünge.'},
+  },
+  broken_links:{
+    kritisch:{title:'Defekte Links gefunden (404)',why:'Links die nicht funktionieren schaden der Nutzererfahrung und dem Google-Ranking.',action:'Entferne oder ersetze alle defekten Links. Interne 404-Fehler haben höchste Priorität.'},
+    warnung:{title:'Weiterleitungen oder nicht prüfbare Links',why:'Weiterleitungen verlangsamen die Seite minimal. Nicht prüfbare Links (Social Media) sind meistens kein Problem.',action:'Aktualisiere interne Links direkt auf die Ziel-URL, ohne Umweg über Weiterleitungen.'},
+  },
+  alt_attributes:{
+    kritisch:{title:'Bilder ohne Alt-Text gefunden',why:'Fehlende Alt-Texte sind ein Barrierefreiheitsproblem und verschlechtern die Bildsuche.',action:'Ergänze für jedes Bild einen kurzen, beschreibenden Alt-Text im CMS.'},
+    warnung:{title:'Einzelne Bilder ohne Alt-Text',why:'Auch wenige fehlende Alt-Texte zählen negativ – besonders bei wichtigen Bildern.',action:'Prüfe die aufgelisteten Bilder und ergänze fehlende Alt-Texte.'},
+  },
+  spelling:{
+    kritisch:{title:'Mehrere Rechtschreibfehler gefunden',why:'Fehler wirken unprofessionell und können das Vertrauen von Besucher:innen mindern.',action:'Korrigiere die gefundenen Fehler direkt im CMS. Die Liste findest du in der Analyse.'},
+    warnung:{title:'Einzelne mögliche Fehler gefunden',why:'Manche Treffer können auch Eigennamen oder Fachbegriffe sein – bitte manuell prüfen.',action:'Schau die Liste in der Analyse durch und korrigiere echte Fehler.'},
+  },
+  keywords:{
+    kritisch:{title:'Keywords kaum oder gar nicht auf der Seite vorhanden',why:'Ohne relevante Begriffe kann Google die Seite keinem Suchbegriff zuordnen.',action:'Verwende die wichtigsten Keywords natürlich im Text, in der H1 und in der Meta-Description.'},
+    warnung:{title:'Keyword-Dichte ausserhalb des optimalen Bereichs',why:'Zu wenige oder zu viele Wiederholungen verschlechtern das Ranking.',action:'Ziel ist eine Keyword-Dichte von 0.5–3%. Überarbeite den Text entsprechend.'},
+  },
+  url_slug:{
+    kritisch:{title:'URL-Probleme gefunden',why:'Lange, unlesbare oder fehlerhafte URLs sind schlecht für Google und für Nutzer:innen.',action:'Kürze die URL, entferne Sonderzeichen und Umlaute und halte die Tiefe unter 5 Ebenen.'},
+    warnung:{title:'URL könnte optimiert werden',why:'Kleinere URL-Probleme haben geringen aber messbaren Einfluss auf das Ranking.',action:'Prüfe die Hinweise in der Analyse und passe die URL wenn möglich an.'},
+  },
+  sea:{
+    kritisch:{title:'Keine Kampagnen-Tags gefunden',why:'Ohne Tracking-Tags können Kampagnen nicht ausgewertet werden.',action:'Prüfe ob Google Tag Manager korrekt eingebunden ist und die nötigen Tags aktiv sind.'},
+    warnung:{title:'Kampagnen-Tags teilweise vorhanden',why:'Unvollständiges Tracking kann zu Datenlücken in der Kampagnenauswertung führen.',action:'Überprüfe welche Tags fehlen und aktiviere sie im Tag Manager.'},
+  },
+  mode_analysis:{
+    kritisch:{title:'Wichtige Seitentyp-Anforderungen fehlen',why:'Die Seite erfüllt zentrale Kriterien für ihren Seitentyp nicht.',action:'Ergänze die fehlenden Elemente gemäss den Empfehlungen in der Analyse.'},
+    warnung:{title:'Seitentyp-Anforderungen teilweise erfüllt',why:'Einzelne Soft-Faktoren fehlen noch – das kostet Punkte bei der Bewertung.',action:'Schau die Modus-Analyse an und ergänze die fehlenden Elemente.'},
+  },
+};
+
+function renderAufgaben(results, selected, url){
+  const c=document.getElementById('aufgaben-content');
+  c.innerHTML=buildInfoBar(url,getMode());
+
+  // Alle Checks inkl. mode_analysis sammeln
+  const allKeys=[...selected,'mode_analysis'];
+
+  // Pro Check: Prio bestimmen (0=ok, 1=warnung, 2=kritisch)
+  const items=[];
+  for(const key of allKeys){
+    const r=results[key];if(!r)continue;
+    const issues=r.issues||[];
+    const warnings=r.warnings||[];
+    const prio=issues.length?2:warnings.length?1:0;
+    items.push({key,r,prio,issues,warnings});
+  }
+
+  // Nach Prio absteigend sortieren
+  items.sort((a,b)=>b.prio-a.prio);
+
+  // Gruppen aufbauen
+  const gruppen=[
+    {prio:2,emoji:'🔴',label:'Kritisch – sofort handeln',items:[]},
+    {prio:1,emoji:'🟡',label:'Optimieren – bei Gelegenheit',items:[]},
+    {prio:0,emoji:'✅',label:'Alles in Ordnung',items:[]},
+  ];
+  items.forEach(it=>gruppen.find(g=>g.prio===it.prio).items.push(it));
+
+  gruppen.forEach(gruppe=>{
+    if(!gruppe.items.length)return;
+    const grpEl=document.createElement('div');
+    grpEl.className='prio-group';
+    grpEl.innerHTML=`<div class="prio-group-title">${gruppe.emoji} ${gruppe.label}</div>`;
+
+    gruppe.items.forEach((it,idx)=>{
+      const meta=AUFGABE_META[it.key];
+      const metaEntry=meta?(it.prio===2?meta.kritisch:it.prio===1?meta.warnung:null):null;
+      const checkLabel=CHECKS_META[it.key]?CHECKS_META[it.key].label:(it.key==='mode_analysis'?'Modus-Analyse':it.key);
+      const dotColor=it.prio===2?'#c00':it.prio===1?'#f9a825':'#4caf50';
+
+      const item=document.createElement('div');
+      item.className='aufgabe-item';
+
+      let innerHTML=`<div class="aufgabe-head">
+        <div class="aufgabe-dot" style="background:${dotColor};margin-top:6px;"></div>
+        <div class="aufgabe-body">
+          <div class="aufgabe-check">${checkLabel}</div>`;
+
+      if(it.prio===0){
+        innerHTML+=`<div class="aufgabe-title" style="color:#1b5e20;">Keine Probleme gefunden</div>`;
+      } else if(metaEntry){
+        innerHTML+=`<div class="aufgabe-title">${metaEntry.title}</div>
+          <div class="aufgabe-why">${metaEntry.why}</div>
+          <div class="aufgabe-action"><strong>Was tun:</strong> ${metaEntry.action}</div>
+          <a class="aufgabe-link" href="${ANLEITUNG_URL}" target="_blank">→ Zur Anleitung</a>`;
+      } else {
+        // Fallback: Issues/Warnings direkt auflisten
+        const msgs=[...it.issues,...it.warnings].slice(0,3).map(m=>fixMsg(msgText(m))).join(' / ');
+        innerHTML+=`<div class="aufgabe-title">${msgs||'Probleme gefunden'}</div>
+          <a class="aufgabe-link" href="${ANLEITUNG_URL}" target="_blank">→ Zur Anleitung</a>`;
+      }
+
+      innerHTML+=`</div></div>`;
+      item.innerHTML=innerHTML;
+      grpEl.appendChild(item);
+    });
+
+    c.appendChild(grpEl);
+  });
+
+  // Gesamtentscheid
+  const allSel=Object.keys(CHECKS_META).every(k=>selected.includes(k));
+  if(allSel){
+    const avg=Math.round(selected.map(k=>(results[k]&&results[k].score)||0).reduce((a,b)=>a+b,0)/selected.length);
+    let decision,emoji;
+    if(avg>=85){decision='Ok';emoji='✅';}else if(avg>=65){decision='Optimieren';emoji='🟡';}else if(avg>=40){decision='Überarbeiten';emoji='🟠';}else{decision='Strategisch neu denken';emoji='🔴';}
+    document.getElementById('entscheid-box').innerHTML='<div class="entscheid-label">Gesamtentscheid</div><div class="entscheid-value">'+emoji+' '+decision+'</div><div class="entscheid-score">Gesamtscore: '+avg+' / 100</div>';
+  } else {
+    document.getElementById('entscheid-box').innerHTML='<div class="entscheid-label">Gesamtentscheid</div><div class="entscheid-value">🔴 Nicht möglich</div><div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>';
+  }
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────
 initWeights();
