@@ -1,41 +1,20 @@
 from bs4 import BeautifulSoup
-import re
+import httpx
 from typing import Optional
 
-# language_tool_python ist die beste Option für Deutsch/Französisch
-# Installation: pip install language_tool_python
-# Beim ersten Start wird das LanguageTool-JAR automatisch heruntergeladen (~200MB)
-# Java muss installiert sein: https://www.java.com
+LANGUAGETOOL_API = "https://api.languagetool.org/v2/check"
 
-try:
-    import language_tool_python
-    LANGUAGE_TOOL_AVAILABLE = True
-except ImportError:
-    LANGUAGE_TOOL_AVAILABLE = False
-
-
-# Elemente die wir beim Text-Extrahieren ignorieren
 IGNORE_TAGS = {
     "script", "style", "code", "pre", "noscript",
     "nav", "footer", "header", "meta", "link",
 }
 
-# Minimale Textlänge für Rechtschreibprüfung (kurze Snippets ignorieren)
 MIN_TEXT_LENGTH = 50
-
-# Maximale Anzahl Fehler die wir zurückgeben (Performance)
 MAX_ERRORS = 50
 
 
 def extract_main_text(soup: BeautifulSoup) -> list[dict]:
-    """
-    Extrahiert Textblöcke aus dem Hauptinhalt der Seite.
-    Ignoriert Navigation, Footer, Scripts etc.
-    Gibt Liste von {text, tag, context} zurück.
-    """
     blocks = []
-
-    # Hauptinhalt-Bereiche priorisieren
     main_selectors = ["main", "article", "[role='main']", ".content", "#content", ".post-content"]
     main_area = None
     for selector in main_selectors:
@@ -43,24 +22,16 @@ def extract_main_text(soup: BeautifulSoup) -> list[dict]:
         if main_area:
             break
 
-    # Fallback: ganzes body
     search_area = main_area or soup.find("body") or soup
 
     for tag in search_area.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "td", "th", "blockquote"]):
-        # Ignorierte Tags überspringen
         if any(parent.name in IGNORE_TAGS for parent in tag.parents):
             continue
-
         text = tag.get_text(separator=" ", strip=True)
-
-        # Zu kurze Texte überspringen
         if len(text) < MIN_TEXT_LENGTH:
             continue
-
-        # Nur sichtbarer Text (keine aria-hidden)
         if tag.get("aria-hidden") == "true":
             continue
-
         blocks.append({
             "text": text,
             "tag": tag.name,
@@ -71,10 +42,6 @@ def extract_main_text(soup: BeautifulSoup) -> list[dict]:
 
 
 def detect_language(soup: BeautifulSoup) -> str:
-    """
-    Erkennt die Sprache der Seite anhand des html lang-Attributs.
-    Fallback: de-CH
-    """
     html_tag = soup.find("html")
     if html_tag:
         lang = html_tag.get("lang", "").lower()
@@ -84,41 +51,23 @@ def detect_language(soup: BeautifulSoup) -> str:
             return "en-US"
         elif lang.startswith("it"):
             return "it"
-    return "de-CH"  # Standard: Schweizerdeutsch
+    return "de-CH"
 
 
 def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
-    """
-    Prüft die Rechtschreibung und Grammatik des Seitentexts.
-    Verwendet LanguageTool (unterstützt DE, FR, EN, IT).
-    """
     issues = []
     warnings = []
     passed = []
     data = {
         "language_detected": None,
-        "language_tool_available": LANGUAGE_TOOL_AVAILABLE,
+        "language_tool_available": True,
         "errors": [],
         "blocks_checked": 0,
     }
 
-    if not LANGUAGE_TOOL_AVAILABLE:
-        warnings.append({
-            "code": "SPELLING_UNAVAILABLE",
-            "message": (
-                "Rechtschreibprüfung nicht verfügbar. "
-                "Bitte installieren: pip install language_tool_python. "
-                "Hinweis: Erfordert Java (https://www.java.com)."
-            ),
-            "severity": "info",
-        })
-        return _build_result(issues, warnings, passed, data)
-
-    # Sprache erkennen
     detected_lang = language or detect_language(soup)
     data["language_detected"] = detected_lang
 
-    # Textblöcke extrahieren
     blocks = extract_main_text(soup)
     data["blocks_checked"] = len(blocks)
 
@@ -130,69 +79,60 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
         })
         return _build_result(issues, warnings, passed, data)
 
-    # LanguageTool initialisieren
-    try:
-        tool = language_tool_python.LanguageTool(detected_lang)
-    except Exception as e:
-        warnings.append({
-            "code": "SPELLING_TOOL_ERROR",
-            "message": f"LanguageTool konnte nicht gestartet werden: {str(e)}",
-            "severity": "warning",
-        })
-        return _build_result(issues, warnings, passed, data)
-
     all_errors = []
     error_count = 0
 
-    try:
+    with httpx.Client(timeout=15) as client:
         for block in blocks:
             if error_count >= MAX_ERRORS:
                 break
 
-            text = block["text"]
-
             try:
-                matches = tool.check(text)
-            except Exception:
-                continue
+                response = client.post(LANGUAGETOOL_API, data={
+                    "text": block["text"],
+                    "language": detected_lang,
+                })
+                response.raise_for_status()
+                result = response.json()
+            except Exception as e:
+                warnings.append({
+                    "code": "SPELLING_API_ERROR",
+                    "message": f"LanguageTool API nicht erreichbar: {str(e)}",
+                    "severity": "warning",
+                })
+                return _build_result(issues, warnings, passed, data)
 
-            for match in matches:
+            for match in result.get("matches", []):
                 if error_count >= MAX_ERRORS:
                     break
 
-                # Fehlertyp klassifizieren
-                rule_id = match.ruleId
-                category = match.category
+                rule = match.get("rule", {})
+                category = rule.get("category", {}).get("id", "")
 
-                # Reine Stil-Hinweise überspringen
                 if category in ("STYLE", "REDUNDANCY"):
                     continue
 
-                error_text = text[match.offset: match.offset + match.errorLength]
-                suggestions = match.replacements[:3]  # Max 3 Vorschläge
-
+                offset = match["offset"]
+                length = match["length"]
+                error_text = block["text"][offset:offset + length]
+                suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
                 severity = "critical" if category == "TYPOS" else "warning"
 
-                error_entry = {
+                all_errors.append({
                     "text": error_text,
-                    "message": match.message,
+                    "message": match.get("message", ""),
                     "suggestions": suggestions,
-                    "rule_id": rule_id,
+                    "rule_id": rule.get("id", ""),
                     "category": category,
                     "context": block["preview"],
                     "tag": block["tag"],
                     "severity": severity,
-                }
-                all_errors.append(error_entry)
+                })
                 error_count += 1
-
-    finally:
-        tool.close()
 
     data["errors"] = all_errors
     data["error_count"] = len(all_errors)
 
-    # Issues & Warnings aus Fehlern generieren
     for error in all_errors:
         entry = {
             "code": "SPELLING_ERROR",
