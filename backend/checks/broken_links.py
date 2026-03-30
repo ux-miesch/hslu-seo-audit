@@ -19,21 +19,22 @@ HEADERS = {
     "Sec-Fetch-Mode": "navigate",
     "Sec-Fetch-Site": "none",
     "Sec-Fetch-User": "?1",
+    # Neu: Chrome-Client-Hints – reduziert Bot-Erkennung
+    "sec-ch-ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"macOS"',
 }
 
 MAX_CONCURRENT = 10
 TIMEOUT = 10
 OK_CODES = set(range(200, 400))
 
-# Bot-blocking Status-Codes
 BOT_BLOCKED_CODES = {403, 999, 429}
 
-# Domains die Bots absichtlich blockieren – aus whitelist.py + interne Ergänzungen
 BOT_BLOCKED_DOMAINS = set(LINK_DOMAIN_WHITELIST) | {
     "twitter.com", "x.com", "academia.edu"
 }
 
-# Consent-Indikatoren: URLs oder Texte im Response die auf eine Consent-Wall hindeuten
 CONSENT_INDICATORS = [
     "consent", "cookie-wall", "cookiewall", "privacy-gate",
     "gdpr", "age-gate", "agegate", "paywall",
@@ -51,27 +52,20 @@ def is_bot_blocked(url: str, status_code: int) -> bool:
 
 
 def is_domain_whitelisted(url: str) -> bool:
-    """Prüft ob die Domain grundsätzlich übersprungen werden soll."""
     parsed = urlparse(url)
     domain = parsed.netloc.lower()
     return any(d in domain for d in BOT_BLOCKED_DOMAINS)
 
 
 def has_url_param_whitelisted(url: str) -> bool:
-    """Prüft ob die URL einen whitegelisteten Parameter enthält."""
     url_lower = url.lower()
     return any(p.lower() in url_lower for p in URL_PARAM_WHITELIST)
 
 
 def is_consent_blocked(url: str, response: httpx.Response) -> bool:
-    """
-    Erkennt ob eine Seite hinter einer Consent-Wall steckt.
-    Prüft finale URL und Response-Body auf bekannte Consent-Muster.
-    """
     final_url = str(response.url).lower()
     if any(indicator in final_url for indicator in CONSENT_INDICATORS):
         return True
-    # Schneller Body-Check (nur erste 2000 Zeichen)
     try:
         body = response.text[:2000].lower()
         consent_hits = sum(1 for ind in CONSENT_INDICATORS if ind in body)
@@ -88,14 +82,12 @@ async def check_single_url(
     semaphore: asyncio.Semaphore,
 ) -> dict:
     async with semaphore:
-        # Domain-Whitelist: überspringen
         if is_domain_whitelisted(url):
             return {
                 "url": url, "status_code": None, "ok": True,
                 "bot_blocked": True, "consent_blocked": False,
                 "final_url": url, "redirected": False, "error": None,
             }
-        # URL-Parameter-Whitelist: überspringen
         if has_url_param_whitelisted(url):
             return {
                 "url": url, "status_code": None, "ok": True,
@@ -108,7 +100,6 @@ async def check_single_url(
             ok = status_code in OK_CODES
             blocked = is_bot_blocked(url, status_code)
             consent = is_consent_blocked(url, response) if ok else False
-
             return {
                 "url": url,
                 "status_code": status_code,
@@ -131,7 +122,6 @@ def extract_links(soup: BeautifulSoup, base_url: str) -> list:
     links = []
     seen = set()
     parsed_base = urlparse(base_url)
-
     for tag in soup.find_all("a", href=True):
         href = tag["href"].strip()
         anchor_text = tag.get_text(strip=True) or "[kein Text]"
@@ -189,7 +179,6 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
         else:
             ok_links.append(enriched)
 
-    # Issues – defekte Links
     for link in broken:
         status_info = f"Status {link['status_code']}" if link["status_code"] else f"Fehler: {link.get('error', 'unbekannt')}"
         link_type = "intern" if link.get("is_internal") else "extern"
@@ -203,7 +192,6 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
             "error": link.get("error"),
         })
 
-    # Warnings – Weiterleitungen
     for link in redirected:
         warnings.append({
             "code": "REDIRECT",
@@ -212,7 +200,6 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
             "anchor_text": link.get("anchor_text"),
         })
 
-    # Warnings – Bot-geblockte Links
     if bot_blocked:
         warnings.append({
             "code": "BOT_BLOCKED",
@@ -221,7 +208,6 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
             "severity": "info",
         })
 
-    # Warnings – Consent-geblockte Links (eigene Kategorie)
     if consent_blocked:
         warnings.append({
             "code": "CONSENT_BLOCKED",
