@@ -7,27 +7,44 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;overflow-x:hidden;}
-.wrap{background:#fff;max-width:960px;margin:0 auto;width:100%;}
-.header{background:#000;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;min-height:60px;flex-wrap:wrap;gap:8px;}
+.header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;}
-.tabs{display:flex;border-bottom:2px solid #000;background:#fff;flex-wrap:wrap;}
-.tab{padding:11px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#fff;color:#000;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:background 0.15s,color 0.15s;}
-.tab.active{border-bottom:3px solid #77C5D8;}
-.tab:hover:not(.active){background:#000;color:#fff;}
-.tab:hover:not(.active) .tab-num{background:#fff;color:#000;}
-.tab-num{display:inline-block;width:20px;height:20px;border-radius:50%;background:#e0e0e0;color:#000;font-size:10px;font-weight:700;text-align:center;line-height:20px;margin-right:6px;}
-.tab.active .tab-num{background:#77C5D8;color:#fff;}
-.panel{display:none;padding:24px;}
-.panel.active{display:block;}
-.section-title{font-family:'Verdana',sans-serif;font-size:15px;font-weight:700;color:#000;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #e0e0e0;}
-label{font-family:'Verdana',sans-serif;font-size:13px;color:#000;display:block;margin-bottom:4px;margin-top:12px;}
-input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-serif;font-size:13px;border:1px solid #bbb;border-radius:2px;background:#fff;color:#000;}
-.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
-.mode-card{border:1.5px solid #ddd;border-radius:2px;padding:14px;cursor:pointer;background:#fff;transition:border-color 0.15s;}
+.main{margin-top:64px;min-height:calc(100vh - 64px);}
+
+/* Steps */
+.step{display:none;max-width:640px;margin:0 auto;padding:32px 24px 100px;}
+.step.active{display:block;}
+.step-label{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa;text-transform:uppercase;margin-bottom:6px;}
+.step-title{font-family:'Verdana',sans-serif;font-size:20px;font-weight:700;color:#000;margin-bottom:24px;}
+
+/* Inputs */
+label{font-family:'Verdana',sans-serif;font-size:13px;color:#000;display:block;margin-bottom:4px;margin-top:16px;}
+input[type=text],select{width:100%;padding:10px 12px;font-family:'Verdana',sans-serif;font-size:13px;border:1px solid #bbb;border-radius:2px;background:#fff;color:#000;}
+input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
+
+/* Mode cards */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+.mode-card{border:1.5px solid #ddd;border-radius:2px;padding:12px;cursor:pointer;background:#fff;transition:border-color 0.15s;}
 .mode-card.selected{border-color:#77C5D8;background:#f0fafd;}
-.mode-badge{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;border-radius:2px;margin-bottom:8px;}
-.mode-desc{font-family:'Verdana',sans-serif;font-size:11px;color:#444;line-height:1.6;padding-top:8px;border-top:1px solid #e0e0e0;}
-.checks-label{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;margin-top:20px;margin-bottom:10px;}
+.mode-badge{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;border-radius:2px;margin-bottom:6px;}
+.mode-desc{font-family:'Verdana',sans-serif;font-size:11px;color:#444;line-height:1.5;padding-top:6px;border-top:1px solid #e8e8e8;}
+
+/* Flyout */
+.flyout-trigger{display:flex;align-items:center;gap:6px;margin-top:20px;cursor:pointer;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;user-select:none;width:fit-content;}
+.flyout-trigger:hover{color:#555;}
+.flyout-arrow{display:inline-block;transition:transform 0.2s;font-size:10px;}
+.flyout-arrow.open{transform:rotate(180deg);}
+.flyout-body{display:none;margin-top:12px;border:1px solid #e0e0e0;border-radius:2px;padding:16px;background:#fafafa;}
+.flyout-body.open{display:block;}
+.slider-row{margin-bottom:16px;}
+.slider-row:last-child{margin-bottom:0;}
+.slider-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.slider-label{display:flex;align-items:center;gap:6px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;}
+.color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.slider-val{font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;}
+
+/* Checks */
+.checks-label{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;margin-top:24px;margin-bottom:10px;}
 .check-list{display:flex;flex-direction:column;gap:6px;}
 .check-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #ddd;border-radius:2px;background:#fff;cursor:pointer;user-select:none;}
 .check-item.selected{border-color:#77C5D8;background:#f0fafd;}
@@ -36,6 +53,42 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
 .help-icon:hover{border-color:#77C5D8;color:#77C5D8;}
 .tooltip{display:none;position:absolute;left:20px;top:-4px;width:240px;background:#000;color:#fff;font-family:'Verdana',sans-serif;font-size:11px;line-height:1.6;padding:10px 12px;border-radius:2px;z-index:200;}
 .help-icon:hover .tooltip{display:block;}
+
+/* Nav buttons */
+.nav-bar{background:#fff;border-top:1px solid #e0e0e0;padding:16px 0 0 0;display:flex;gap:10px;max-width:640px;margin:24px auto 0;}
+.btn-primary{flex:1;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
+.btn-primary:hover{background:#55a8bc;}
+.btn-secondary{flex:1;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#fff;color:#000;border:2px solid #000;cursor:pointer;}
+.btn-secondary:hover{background:#f0f0f0;}
+.btn-disabled{opacity:0.4;pointer-events:none;}
+
+/* Step 3 – Audit läuft */
+.audit-running{text-align:center;padding-top:48px;}
+.audit-icon{font-size:40px;margin-bottom:16px;}
+.audit-running-title{font-family:'Verdana',sans-serif;font-size:18px;font-weight:700;color:#000;margin-bottom:8px;}
+.audit-running-sub{font-family:'Verdana',sans-serif;font-size:13px;color:#555;margin-bottom:32px;}
+.protocol-wrap{text-align:left;background:#F0F0F0;border-left:3px solid #77C5D8;padding:12px;margin-top:8px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.pulsing{animation:blink 1s step-start infinite;color:#7a5c00;font-weight:700;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-12px);}}
+.hslu-loader{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 24px;}
+.hslu-loader span{display:inline-block;width:14px;height:14px;border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+.hslu-loader span:nth-child(1){background:#77C5D8;animation-delay:0s;}
+.hslu-loader span:nth-child(2){background:#ADCA2A;animation-delay:0.15s;}
+.hslu-loader span:nth-child(3){background:#FCC300;animation-delay:0.3s;}
+.hslu-loader span:nth-child(4){background:#EE6A87;animation-delay:0.45s;}
+
+/* Ergebnis-Ansichten (Tabs 2+3 – später anpassen) */
+.result-wrap{max-width:640px;margin:0 auto;padding:32px 24px 100px;}
+.result-tabs{display:flex;border-bottom:2px solid #000;margin-bottom:24px;}
+.result-tab{padding:10px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#fff;color:#000;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.result-tab.active{border-bottom:3px solid #77C5D8;}
+.result-tab:hover:not(.active){background:#f0f0f0;}
+.result-panel{display:none;}
+.result-panel.active{display:block;}
+.toggle-wrap{display:inline-flex;border:1px solid #000;border-radius:2px;overflow:hidden;margin-bottom:16px;}
+.toggle-btn{padding:7px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#000;}
+.toggle-btn.active{background:#000;color:#fff;}
 .kachel-wrap{border-radius:2px;overflow:hidden;border:1px solid #e0e0e0;margin-bottom:12px;}
 .kachel-head{padding:9px 12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
 .kachel-help{width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.7);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:rgba(255,255,255,0.9);cursor:pointer;flex-shrink:0;position:relative;}
@@ -43,15 +96,8 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
 .kachel-body{background:#F0F0F0;padding:12px;font-family:'Verdana',sans-serif;font-size:12px;color:#000;}
 .kachel-body p{padding:4px 0;border-bottom:1px solid #e0e0e0;line-height:1.5;}
 .kachel-body p:last-child{border-bottom:none;}
-.toggle-wrap{display:inline-flex;border:1px solid #000;border-radius:2px;overflow:hidden;}
-.toggle-btn{padding:7px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;border:none;cursor:pointer;background:#fff;color:#000;}
-.toggle-btn.active{background:#000;color:#fff;}
-.simple-view{display:none;}
-.simple-view.active{display:block;}
-.detail-view{display:none;}
-.detail-view.active{display:block;}
 .ampel-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #e0e0e0;}
-.ampel-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.ampel-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:4px;}
 .ampel-name{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;margin-bottom:3px;}
 .ampel-text{font-family:'Verdana',sans-serif;font-size:12px;color:#444;line-height:1.6;}
 .entscheid-box{margin-top:24px;border:2px solid #000;padding:16px;text-align:center;background:#fff;}
@@ -63,235 +109,196 @@ input[type=text],select{width:100%;padding:8px 10px;font-family:'Verdana',sans-s
 .audit-info-bar .info-label{font-weight:700;display:block;}
 .audit-info-bar .info-value{font-weight:400;display:block;margin-bottom:4px;}
 .error-box{margin-top:16px;padding:12px;background:#fde8e8;border-left:3px solid #c00;font-family:'Verdana',sans-serif;font-size:13px;color:#a00;}
-.progress-wrap{margin-top:20px;background:#F0F0F0;border-left:3px solid #77C5D8;padding:12px;display:none;}
-.progress-wrap.active{display:block;}
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
-.pulsing{animation:blink 1s step-start infinite;color:#7a5c00;font-weight:700;}
-.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
-.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
 .empty-state{font-family:'Verdana',sans-serif;font-size:13px;color:#555;}
-.slider-row{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #e0e0e0;}
-.slider-row:last-child{border-bottom:none;}
-.slider-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
-.slider-label{display:flex;align-items:center;gap:8px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;}
-.color-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
-.slider-val{font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;color:#000;min-width:40px;text-align:right;}
 .factor-badge{font-family:'Verdana',sans-serif;font-size:10px;padding:2px 7px;background:#F0F0F0;border:1px solid #e0e0e0;color:#000;display:inline-block;margin:2px;}
-.settings-info{font-family:'Verdana',sans-serif;font-size:12px;color:#444;margin-bottom:20px;padding:10px 12px;background:#F0F0F0;border-left:3px solid #77C5D8;line-height:1.7;}
-.status-bar{margin-top:16px;padding:8px 12px;background:#F0F0F0;border-left:3px solid #77C5D8;font-family:'Verdana',sans-serif;font-size:12px;color:#000;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
-@media print{.tabs,.footer-bar,.header-right,.check-list,.mode-grid,.checks-label,#panel0,#panel1,#panel3,.help-icon,.kachel-help,.toggle-wrap,.progress-wrap{display:none!important;}.header{background:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.panel{display:block!important;padding:16px!important;}.kachel-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.kachel-body{background:#F0F0F0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-@media(max-width:565px){
-  .mode-grid{grid-template-columns:1fr!important;}
-  .tabs{flex-direction:column;border-bottom:none;}
-  .tab{border-bottom:none;border-left:3px solid transparent;margin-bottom:0;}
-  .tab.active{border-left:3px solid #77C5D8;border-bottom:none;}
-  .tab:hover:not(.active){border-left:3px solid #000;}
-}
-@media(min-width:566px) and (max-width:960px){
-  .mode-grid{grid-template-columns:1fr 1fr;}
-  .tabs{flex-wrap:wrap;}
-  .tab{flex:1 1 auto;}
-}
+.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
+@media(max-width:560px){.mode-grid{grid-template-columns:1fr;}}
+@media print{.header,.nav-bar,.result-tabs,.toggle-wrap,.footer-bar{display:none!important;}.result-panel{display:block!important;}}
 </style>
 </head>
 <body>
-<div class="outer">
-  <div class="header">
-    <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="Hslu" style="height:32px;display:block;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
-    <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
-      <span style="font-family:'Verdana',sans-serif;font-size:26px;font-weight:700;color:#fff;">HSLU</span>
-      <span style="font-family:'Verdana',sans-serif;font-size:12px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
-    </div>
-    <div class="header-right" style="font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;">Seo Audit Tool</div>
+
+<!-- Header (fixiert) -->
+<div class="header">
+  <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="Hslu" style="height:32px;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
+  <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
+    <span style="font-family:'Verdana',sans-serif;font-size:24px;font-weight:700;color:#fff;">HSLU</span>
+    <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
   </div>
+  <div class="header-right">Seo Audit Tool</div>
 </div>
 
-<div class="tabs-outer">
-  <div class="tabs">
-    <button class="tab active" onclick="showTab(0)"><span class="tab-num">1</span>Audit starten</button>
-    <button class="tab" onclick="showTab(1)"><span class="tab-num">2</span>Analyse</button>
-    <button class="tab" onclick="showTab(2)"><span class="tab-num">3</span>Empfehlungen</button>
-    <button class="tab" onclick="showTab(3)"><span class="tab-num">4</span>Einstellungen</button>
-  </div>
-</div>
+<div class="main">
 
-<div class="wrap content-offset">
-  <div id="panel0" class="panel active">
-    <div class="section-title">Audit konfigurieren</div>
-    <div id="active-modes" style="margin-bottom:12px;min-height:20px;"></div>
-    <label>Url der zu prüfenden Seite *</label>
-    <input type="text" id="audit-url" placeholder="https://www.hslu.ch/beispielseite" onkeydown="if(event.key==='Enter')startAudit()">
-    <label style="margin-top:16px;">Seitentyp</label>
+  <!-- ── Schritt 1: URL + Seitentyp ── -->
+  <div id="step1" class="step active">
+    <div class="step-label">Schritt 1 von 2</div>
+    <div class="step-title">Welche Seite soll geprüft werden?</div>
+
+    <label>URL der zu prüfenden Seite *</label>
+    <input type="text" id="audit-url" placeholder="https://www.hslu.ch/beispielseite" onkeydown="if(event.key==='Enter')goStep2()">
+
+    <label style="margin-top:20px;">Seitentyp</label>
     <div class="mode-grid" id="mode-cards"></div>
-    <div style="margin-top:10px;font-family:'Verdana',sans-serif;font-size:11px;color:#555;">
-      Möchtest du die Gewichtung anpassen?
-      <a href="#" onclick="showTab(3);return false;" style="color:#77C5D8;font-weight:700;text-decoration:none;">→ Einstellungen öffnen</a>
+
+    <!-- Flyout Einstellungen -->
+    <div class="flyout-trigger" onclick="toggleFlyout()">
+      <span class="flyout-arrow" id="flyout-arrow">▼</span>
+      <span>Gewichtung anpassen</span>
     </div>
-    <label style="margin-top:16px;">Keywords (optional, kommagetrennt)</label>
-    <input type="text" id="audit-keywords" placeholder="z.B. soziale arbeit, weiterbildung, luzern" onkeydown="if(event.key==='Enter')startAudit()">
-    <label>Sprache</label>
+    <div class="flyout-body" id="flyout-body">
+      <div style="font-family:'Verdana',sans-serif;font-size:11px;color:#555;margin-bottom:14px;line-height:1.6;">Die Regler bestimmen wie stark jede Dimension in die Bewertung einfiesst. Die Summe bleibt immer 100%.</div>
+      <div id="sliders-wrap"></div>
+    </div>
+  </div>
+
+  <!-- ── Schritt 2: Keywords + Checks ── -->
+  <div id="step2" class="step">
+    <div class="step-label">Schritt 2 von 2</div>
+    <div class="step-title">Weitere Einstellungen</div>
+
+    <label>Keywords (optional, kommagetrennt)</label>
+    <input type="text" id="audit-keywords" placeholder="z.B. soziale arbeit, weiterbildung, luzern">
+
+    <label>Sprache <span id="lang-detected" style="font-weight:400;color:#777;font-size:11px;"></span></label>
     <select id="audit-lang"><option value="de-CH">de-CH</option><option value="en-US">en-US</option></select>
+
     <div class="checks-label">Checks auswählen</div>
     <div class="check-list" id="check-list">
       <div class="check-item selected" data-key="meta" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Meta-Texte</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Title-Tag (30–60 Zeichen), Meta-Description (70–160 Zeichen), Canonical-Tag, Robots-Direktiven und Open Graph.</div></div></div>
       <div class="check-item selected" data-key="headings" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Überschriften</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft ob genau eine H1 vorhanden ist, ob H2 und H3 korrekt verschachtelt sind und ob Duplikate vorkommen.</div></div></div>
-      <div class="check-item selected" data-key="broken_links" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Defekte Links</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung. Technische Weiterleitungen werden ignoriert.</div></div></div>
+      <div class="check-item selected" data-key="broken_links" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Defekte Links</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung.</div></div></div>
       <div class="check-item selected" data-key="alt_attributes" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Alt-Attribute</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft ob Bilder ein aussagekräftiges Alt-Attribut haben – wichtig für Barrierefreiheit und Suchmaschinen.</div></div></div>
       <div class="check-item selected" data-key="spelling" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Rechtschreibung</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).</div></div></div>
-      <div class="check-item selected" data-key="keywords" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Keywords &amp; Semantik</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung in Title, H1 und Meta-Description.</div></div></div>
-      <div class="check-item selected" data-key="url_slug" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Url / Slug</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Https, Url-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und Url-Tiefe (max. 5 Ebenen).</div></div></div>
-      <!-- SEA: per default DEAKTIVIERT -->
-      <div class="check-item" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb"><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Zeigt alle Kampagnen-Tags der Seite an. Prüft via Google Tag Manager Api ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für Hslu-Seiten verfügbar.</div></div></div>
+      <div class="check-item selected" data-key="keywords" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>Keywords &amp; Semantik</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung.</div></div></div>
+      <div class="check-item selected" data-key="url_slug" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb" checked><span>URL / Slug</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft Https, URL-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und URL-Tiefe (max. 5 Ebenen).</div></div></div>
+      <div class="check-item" data-key="sea" onclick="toggleCheck(this)"><input type="checkbox" class="check-cb"><span>Kampagnen-Check (SEA)</span><div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft ob aktive Kampagnen-Tags vorhanden sind (Google Ads, Meta Pixel, LinkedIn). Nur für HSLU-Seiten.</div></div></div>
     </div>
-    <div style="margin-top:20px;">
-      <button id="start-btn" onclick="startAudit()" style="width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;">Audit starten →</button>
-      <button id="reset-btn" onclick="confirmReset()" style="display:none;width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#fff;color:#000;border:2px solid #77C5D8;cursor:pointer;margin-top:0;">Zurücksetzen</button>
+    <div id="error-box" class="error-box" style="display:none;margin-top:16px;"></div>
+  </div>
+
+  <!-- ── Schritt 3: Audit läuft ── -->
+  <div id="step3" class="step">
+    <div class="audit-running">
+      <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
+      <div class="audit-running-title">Audit läuft...</div>
+      <div class="audit-running-sub">Bitte warten – die Seite wird gerade analysiert.<br>Dies kann bis zu 60 Sekunden dauern.</div>
     </div>
-    <div id="reset-modal" style="display:none;position:absolute;top:0;left:0;width:100%;min-height:400px;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-      <div style="background:#fff;padding:28px;max-width:380px;width:90%;margin:80px auto;font-family:'Verdana',sans-serif;">
-        <div style="font-size:14px;font-weight:700;color:#000;margin-bottom:10px;">Audit zurücksetzen?</div>
-        <div style="font-size:12px;color:#444;margin-bottom:20px;line-height:1.6;">Alle eingegebenen Daten und Resultate werden gelöscht. Dieser Schritt kann nicht rückgängig gemacht werden.</div>
-        <div style="display:flex;gap:10px;">
-          <button onclick="resetAudit()" style="flex:1;padding:10px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;">Ja, zurücksetzen</button>
-          <button onclick="document.getElementById('reset-modal').style.display='none'" style="flex:1;padding:10px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#fff;color:#000;border:2px solid #000;cursor:pointer;">Abbrechen</button>
-        </div>
-      </div>
-    </div>
-    <div id="progress-wrap" class="progress-wrap">
-      <div style="font-weight:700;margin-bottom:6px;font-family:'Verdana',sans-serif;font-size:12px;">Audit läuft...</div>
+    <div class="protocol-wrap">
+      <div style="font-weight:700;margin-bottom:6px;font-family:'Verdana',sans-serif;font-size:12px;">Protokoll</div>
       <div id="protocol-lines"></div>
     </div>
-    <div id="error-box" class="error-box" style="display:none;"></div>
   </div>
 
-  <!-- Tab 2 -->
-  <div id="panel1" class="panel">
-    <div class="section-title">Analyse — Ergebnisse</div>
-    <div id="analyse-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div>
-  </div>
-
-  <!-- Tab 3 -->
-  <div id="panel2" class="panel">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;">
-      <div class="section-title" style="margin:0;border:none;padding:0;">Empfehlungen</div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <div class="toggle-wrap">
-          <button class="toggle-btn active" id="btn-simple" onclick="toggleView('simple')">Einfach</button>
-          <button class="toggle-btn" id="btn-detail" onclick="toggleView('detail')">Detail</button>
+  <!-- ── Ergebnisse ── -->
+  <div id="step-results" class="step">
+    <div class="result-wrap" style="padding:0;">
+      <div class="result-tabs">
+        <button class="result-tab active" onclick="showResultTab(0)">Analyse</button>
+        <button class="result-tab" onclick="showResultTab(1)">Empfehlungen</button>
+      </div>
+      <div id="result-panel0" class="result-panel active">
+        <div id="analyse-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div>
+      </div>
+      <div id="result-panel1" class="result-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <div class="toggle-wrap">
+            <button class="toggle-btn active" id="btn-simple" onclick="toggleView('simple')">Einfach</button>
+            <button class="toggle-btn" id="btn-detail" onclick="toggleView('detail')">Detail</button>
+          </div>
+          <button onclick="exportPDF()" style="padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;">↓ Als PDF exportieren</button>
         </div>
-        <button onclick="exportPDF()" style="padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;">↓ Als Pdf exportieren</button>
-      </div>
-    </div>
-    <div id="simple-view" class="simple-view active"><div id="empfehlung-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
-    <div id="detail-view" class="detail-view"><div id="detail-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
-    <div id="entscheid-box" class="entscheid-box">
-      <div class="entscheid-label">Gesamtentscheid</div>
-      <div class="entscheid-value">🔴 Nicht möglich</div>
-      <div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>
-    </div>
-  </div>
-
-  <!-- Tab 4 -->
-  <div id="panel3" class="panel">
-    <div class="section-title">Einstellungen – Modus-Gewichtung</div>
-    <div class="settings-info">Definiere hier wie stark jede Dimension bei der Bewertung gewichtet werden soll. Die Schieberegler beeinflussen sich gegenseitig – die Summe bleibt immer bei 100%. Wählst du eine Kachel in Tab 1, werden die Regler automatisch auf die passenden Werte gesetzt.</div>
-    <div id="sliders-wrap"></div>
-    <div class="status-bar">
-      <span id="weights-status"></span>
-      <div style="display:flex;gap:8px;">
-        <button onclick="resetWeights()" style="padding:8px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#fff;color:#000;border:2px solid #77C5D8;cursor:pointer;">Zurücksetzen</button>
-        <button onclick="saveWeights()" style="padding:8px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;">Speichern</button>
+        <div id="simple-view" style="display:block;"><div id="empfehlung-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
+        <div id="detail-view" style="display:none;"><div id="detail-content"><div class="empty-state">Noch kein Audit durchgeführt.</div></div></div>
+        <div id="entscheid-box" class="entscheid-box">
+          <div class="entscheid-label">Gesamtentscheid</div>
+          <div class="entscheid-value">🔴 Nicht möglich</div>
+          <div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="footer-bar">
-    <span>hslu-seo-audit by DMS</span>
-    <span></span>
-    <span id="footer-info"></span>
-  </div>
+</div><!-- /main -->
+
+<!-- Nav-Bar (fixiert unten) -->
+<div class="nav-bar" id="nav-bar">
+  <button class="btn-secondary" id="btn-back" onclick="navBack()" style="display:none;">← Zurück</button>
+  <button class="btn-primary" id="btn-next" onclick="navNext()">Weiter →</button>
+</div>
+
+<div class="footer-bar">
+  <span>hslu-seo-audit by DMS</span>
+  <span id="footer-info"></span>
 </div>
 
 <script>
-const VERSION='260330-0740';
+const VERSION='260330-1049';
 const API_URL='http://localhost:8000';
 
+let currentStep=1; // 1, 2, 3, 'results'
+
 const MODES={
-  content:{
-    label:'Content & Autorität',
-    color:'#77C5D8',
-    badgeStyle:'background:#77C5D8;color:#fff;',
-    defaultW:60,
-    desc:'Diese Seite soll Wissen vermitteln und Vertrauen aufbauen. Sie richtet sich an Menschen die sich informieren wollen. Wichtig ist dass klar wird wer hinter dem Inhalt steckt, dass Quellen angegeben sind und dass das Thema vollständig behandelt wird. Typisch: Fachbeiträge, Studiengangsseiten, Wissensseiten.',
-    factors:['Autorenschaft sichtbar','Externe Quellenangaben','Interne Verlinkung','Semantische Breite','H2–H3 Struktur'],
-  },
-  conversion:{
-    label:'Conversion',
-    color:'#ADCA2A',
-    badgeStyle:'background:#ADCA2A;color:#fff;',
-    defaultW:40,
-    desc:'Diese Seite soll Besucher:innen zu einer konkreten Handlung bewegen – Anmeldung, Kauf oder Kontaktaufnahme. Es braucht einen klar sichtbaren Button, eine Ansprechperson und Vertrauenssignale wie Referenzen oder Bewertungen. Typisch: Angebotsseiten, Kontaktformulare, Anmeldeseiten.',
-    factors:['Call-to-Action klar sichtbar','Ansprechperson vorhanden','Kontaktmöglichkeit','Trust-Signale','Transaktionale Keywords'],
-  },
-  course:{
-    label:'Kurs / Produkt',
-    color:'#FCC300',
-    badgeStyle:'background:#FCC300;color:#fff;',
-    defaultW:0,
-    desc:'Diese Seite bewirbt einen Kurs oder ein Produkt. Interessierte brauchen alle Infos für eine Entscheidung auf einen Blick: Was kostet es? Wann findet es statt? Für wen ist es geeignet? Was bekomme ich am Ende? Typisch: Weiterbildungsangebote, Studiengänge, Zertifikatskurse.',
-    factors:['Preis / Kosten angegeben','Dauer und Umfang klar','Nächste Durchführung sichtbar','Zielgruppe definiert','Abschluss / Zertifikat erwähnt'],
-  },
-  event:{
-    label:'Event',
-    color:'#EE6A87',
-    badgeStyle:'background:#EE6A87;color:#fff;',
-    defaultW:0,
-    desc:'Diese Seite bewirbt eine Veranstaltung. Menschen entscheiden in Sekunden ob eine Veranstaltung für sie relevant ist – Datum, Ort und Zielgruppe müssen sofort erkennbar sein. Ein klarer Anmelde-Button ist Pflicht. Typisch: Konferenzen, Tagungen, Informationsabende, Webinare.',
-    factors:['Datum / Zeit prominent','Ort / Format (online, hybrid, vor Ort)','Anmelde-CTA vorhanden','Preis / Kosten','Referenten sichtbar','Programm / Agenda','Frist / Deadline','Event-Schema Markup'],
-  },
+  content:{label:'Content & Autorität',color:'#77C5D8',badgeStyle:'background:#77C5D8;color:#fff;',defaultW:60,desc:'Diese Seite soll Wissen vermitteln und Vertrauen aufbauen. Sie richtet sich an Menschen die sich informieren wollen. Wichtig ist dass klar wird wer hinter dem Inhalt steckt, dass Quellen angegeben sind und dass das Thema vollständig behandelt wird. Typisch: Fachbeiträge, Studiengangsseiten, Wissensseiten.',factors:['Autorenschaft sichtbar','Externe Quellenangaben','Interne Verlinkung','Semantische Breite','H2–H3 Struktur']},
+  conversion:{label:'Conversion',color:'#ADCA2A',badgeStyle:'background:#ADCA2A;color:#fff;',defaultW:40,desc:'Diese Seite soll Besucher:innen zu einer konkreten Handlung bewegen – Anmeldung, Kauf oder Kontaktaufnahme. Es braucht einen klar sichtbaren Button, eine Ansprechperson und Vertrauenssignale wie Referenzen oder Bewertungen. Typisch: Angebotsseiten, Kontaktformulare, Anmeldeseiten.',factors:['CTA klar sichtbar','Ansprechperson vorhanden','Kontaktmöglichkeit','Trust-Signale','Transaktionale Keywords']},
+  course:{label:'Kurs / Produkt',color:'#FCC300',badgeStyle:'background:#FCC300;color:#fff;',defaultW:0,desc:'Diese Seite bewirbt einen Kurs oder ein Produkt. Interessierte brauchen alle Infos für eine Entscheidung auf einen Blick: Was kostet es? Wann findet es statt? Für wen ist es geeignet? Typisch: Weiterbildungsangebote, Studiengänge, Zertifikatskurse.',factors:['Preis / Kosten angegeben','Dauer und Umfang klar','Nächste Durchführung sichtbar','Zielgruppe definiert','Abschluss / Zertifikat erwähnt']},
+  event:{label:'Event',color:'#EE6A87',badgeStyle:'background:#EE6A87;color:#fff;',defaultW:0,desc:'Diese Seite bewirbt eine Veranstaltung. Datum, Ort und Zielgruppe müssen sofort erkennbar sein. Ein klarer Anmelde-Button ist Pflicht. Typisch: Konferenzen, Tagungen, Informationsabende, Webinare.',factors:['Datum / Zeit prominent','Ort / Format (online, hybrid, vor Ort)','Anmelde-CTA vorhanden','Preis / Kosten','Referenten sichtbar','Programm / Agenda','Frist / Deadline','Event-Schema Markup']},
 };
-
-const MODE_PRESETS={
-  content:    {content:80,conversion:20,course:0,event:0},
-  conversion: {content:20,conversion:80,course:0,event:0},
-  course:     {content:30,conversion:40,course:30,event:0},
-  event:      {content:20,conversion:30,course:0,event:50},
-};
-
-const CHECK_HELP={
-  meta:'Prüft Title-Tag (30–60 Zeichen), Meta-Description (70–160 Zeichen), Canonical-Tag, Robots-Direktiven und Open Graph.',
-  headings:'Prüft ob genau eine H1 vorhanden ist, ob H2 und H3 korrekt verschachtelt sind und ob Duplikate vorkommen.',
-  broken_links:'Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung.',
-  alt_attributes:'Prüft ob Bilder ein aussagekräftiges Alt-Attribut haben – wichtig für Barrierefreiheit und Suchmaschinen.',
-  spelling:'Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).',
-  keywords:'Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung.',
-  url_slug:'Prüft Https, Url-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und Url-Tiefe (max. 5 Ebenen).',
-};
-
-const CHECKS_META={
-  meta:{label:'Meta-Texte',color:'#77C5D8'},
-  headings:{label:'Überschriften',color:'#ADCA2A'},
-  broken_links:{label:'Defekte Links',color:'#EE6A87'},
-  alt_attributes:{label:'Alt-Attribute',color:'#FCC300'},
-  spelling:{label:'Rechtschreibung',color:'#77C5D8'},
-  keywords:{label:'Keywords & Semantik',color:'#ADCA2A'},
-  url_slug:{label:'Url / Slug',color:'#EE6A87'},
-  sea:{label:'Kampagnen-Check',color:'#77C5D8'},
-};
+const MODE_PRESETS={content:{content:80,conversion:20,course:0,event:0},conversion:{content:20,conversion:80,course:0,event:0},course:{content:30,conversion:40,course:30,event:0},event:{content:20,conversion:30,course:0,event:50}};
+const CHECK_HELP={meta:'Prüft Title-Tag (30–60 Zeichen), Meta-Description (70–160 Zeichen), Canonical-Tag, Robots-Direktiven und Open Graph.',headings:'Prüft ob genau eine H1 vorhanden ist, ob H2 und H3 korrekt verschachtelt sind und ob Duplikate vorkommen.',broken_links:'Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung.',alt_attributes:'Prüft ob Bilder ein aussagekräftiges Alt-Attribut haben – wichtig für Barrierefreiheit und Suchmaschinen.',spelling:'Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).',keywords:'Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung.',url_slug:'Prüft Https, URL-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und URL-Tiefe (max. 5 Ebenen).'};
+const CHECKS_META={meta:{label:'Meta-Texte',color:'#77C5D8'},headings:{label:'Überschriften',color:'#ADCA2A'},broken_links:{label:'Defekte Links',color:'#EE6A87'},alt_attributes:{label:'Alt-Attribute',color:'#FCC300'},spelling:{label:'Rechtschreibung',color:'#77C5D8'},keywords:{label:'Keywords & Semantik',color:'#ADCA2A'},url_slug:{label:'URL / Slug',color:'#EE6A87'},sea:{label:'Kampagnen-Check',color:'#77C5D8'}};
 
 let currentWeights={};
+function initWeights(){Object.keys(MODES).forEach(k=>{currentWeights[k]=MODES[k].defaultW;});}
 
-function initWeights(){
-  Object.keys(MODES).forEach(k=>{currentWeights[k]=MODES[k].defaultW;});
+// ── Steps ─────────────────────────────────────────────────────────────────
+function showStep(s){
+  ['step1','step2','step3','step-results'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById(s==='results'?'step-results':'step'+s).classList.add('active');
+  window.scrollTo(0,0);
+  const back=document.getElementById('btn-back');
+  const next=document.getElementById('btn-next');
+  const nav=document.getElementById('nav-bar');
+  // Verschiebe nav-bar in den aktiven Step
+  const activeStep=document.getElementById(s==='results'?'step-results':'step'+s);
+  activeStep.appendChild(nav);
+  nav.style.display='flex';
+  if(s===1){back.style.display='none';next.style.display='block';next.textContent='Weiter →';next.className='btn-primary';}
+  else if(s===2){back.style.display='block';next.style.display='block';next.textContent='Audit starten →';next.className='btn-primary';}
+  else if(s===3){nav.style.display='none';}
+  else if(s==='results'){back.style.display='block';back.textContent='← Neuer Audit';next.style.display='none';}
+  currentStep=s;
 }
 
-// ── Tab-Navigation ────────────────────────────────────────────────────────
-function showTab(i){
-  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
-  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',i===j));
+function navNext(){
+  if(currentStep===1){
+    const url=document.getElementById('audit-url').value.trim();
+    if(!url){alert('Bitte eine URL eingeben.');return;}
+    // Sprache automatisch erkennen
+    const detected=detectLang(url);
+    const sel=document.getElementById('audit-lang');
+    sel.value=detected;
+    document.getElementById('lang-detected').textContent='(automatisch erkannt)';
+    showStep(2);
+  } else if(currentStep===2){
+    startAudit();
+  }
+}
+function navBack(){
+  if(currentStep===2) showStep(1);
+  else if(currentStep==='results') resetAll();
 }
 
-// ── Mode-Kacheln aufbauen ─────────────────────────────────────────────────
+// ── Flyout ────────────────────────────────────────────────────────────────
+function toggleFlyout(){
+  const body=document.getElementById('flyout-body');
+  const arrow=document.getElementById('flyout-arrow');
+  const open=body.classList.toggle('open');
+  arrow.classList.toggle('open',open);
+}
+
+// ── Mode-Kacheln ──────────────────────────────────────────────────────────
 function buildModeCards(){
   const c=document.getElementById('mode-cards');
   c.innerHTML='';
@@ -300,11 +307,11 @@ function buildModeCards(){
     div.className='mode-card'+(i===0?' selected':'');
     div.dataset.key=key;
     div.onclick=()=>selectModeCard(div,key);
-    div.innerHTML=`<span class="mode-badge" style="${mode.badgeStyle}">${mode.label}</span><div class="mode-desc">${mode.desc}</div>`;
+    const factors=mode.factors.map(f=>`<span class="factor-badge">${f}</span>`).join('');
+    div.innerHTML=`<span class="mode-badge" style="${mode.badgeStyle}">${mode.label}</span><div class="mode-desc">${mode.desc}</div><div style="margin-top:8px;">${factors}</div>`;
     c.appendChild(div);
   });
 }
-
 function selectModeCard(el,key){
   document.querySelectorAll('#mode-cards .mode-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
@@ -316,151 +323,63 @@ function selectModeCard(el,key){
     if(sl)sl.value=preset[k];
     if(vl)vl.textContent=preset[k]+'%';
   });
-  updateWeightsStatus();
-  updateModeSelector();
 }
 
-// ── Schieberegler aufbauen ────────────────────────────────────────────────
+// ── Slider ────────────────────────────────────────────────────────────────
 function buildSliders(){
   const c=document.getElementById('sliders-wrap');
   c.innerHTML='';
   Object.entries(MODES).forEach(([key,mode])=>{
     const row=document.createElement('div');
     row.className='slider-row';
-    row.innerHTML=`
-      <div class="slider-header">
-        <div class="slider-label"><div class="color-dot" style="background:${mode.color};"></div>${mode.label}</div>
-        <span class="slider-val" id="vl-${key}">${currentWeights[key]}%</span>
-      </div>
-      <input type="range" min="0" max="100" step="5" value="${currentWeights[key]}" id="sl-${key}"
-        style="width:100%;accent-color:${mode.color};" oninput="updateSlider('${key}',+this.value)">
-      <div style="font-family:'Verdana',sans-serif;font-size:11px;color:#444;margin-top:6px;line-height:1.5;">${mode.desc}</div>
-      <div style="margin-top:6px;">${mode.factors.map(f=>`<span class="factor-badge">${f}</span>`).join('')}</div>`;
+    row.innerHTML=`<div class="slider-header"><div class="slider-label"><div class="color-dot" style="background:${mode.color};"></div>${mode.label}</div><span class="slider-val" id="vl-${key}">${currentWeights[key]}%</span></div><input type="range" min="0" max="100" step="5" value="${currentWeights[key]}" id="sl-${key}" style="width:100%;accent-color:${mode.color};" oninput="updateSlider('${key}',+this.value)">`;
     c.appendChild(row);
   });
-  updateWeightsStatus();
 }
-
 function updateSlider(key,newVal){
-  const oldVal=currentWeights[key];
-  const diff=newVal-oldVal;
-  if(diff===0)return;
+  const oldVal=currentWeights[key];const diff=newVal-oldVal;if(diff===0)return;
   const others=Object.keys(MODES).filter(k=>k!==key);
   const otherTotal=others.reduce((s,k)=>s+currentWeights[k],0);
   if(diff>0&&otherTotal===0){document.getElementById('sl-'+key).value=oldVal;return;}
-  if(diff>0){
-    let rem=diff;
-    others.forEach((k,i)=>{
-      const share=i<others.length-1?Math.round((currentWeights[k]/otherTotal)*diff):rem;
-      const actual=Math.min(currentWeights[k],share);
-      currentWeights[k]=Math.max(0,currentWeights[k]-actual);
-      rem-=actual;
-    });
-  } else {
-    const inc=-diff;
-    const active=others.filter(k=>currentWeights[k]>0);
-    if(!active.length){currentWeights[others[0]]=Math.min(100,currentWeights[others[0]]+inc);}
-    else{let rem=inc;active.forEach((k,i)=>{const s=i<active.length-1?Math.round(inc/active.length):rem;currentWeights[k]+=s;rem-=s;});}
-  }
+  if(diff>0){let rem=diff;others.forEach((k,i)=>{const share=i<others.length-1?Math.round((currentWeights[k]/otherTotal)*diff):rem;const actual=Math.min(currentWeights[k],share);currentWeights[k]=Math.max(0,currentWeights[k]-actual);rem-=actual;});}
+  else{const inc=-diff;const active=others.filter(k=>currentWeights[k]>0);if(!active.length){currentWeights[others[0]]=Math.min(100,currentWeights[others[0]]+inc);}else{let rem=inc;active.forEach((k,i)=>{const s=i<active.length-1?Math.round(inc/active.length):rem;currentWeights[k]+=s;rem-=s;});}}
   currentWeights[key]=newVal;
   const tot=Object.values(currentWeights).reduce((a,b)=>a+b,0);
   if(tot!==100){const fix=others.find(k=>currentWeights[k]>0);if(fix)currentWeights[fix]+=100-tot;}
-  Object.keys(MODES).forEach(k=>{
-    const sl=document.getElementById('sl-'+k);
-    const vl=document.getElementById('vl-'+k);
-    if(sl)sl.value=currentWeights[k];
-    if(vl)vl.textContent=currentWeights[k]+'%';
-  });
-  syncCardToWeights();
-  updateWeightsStatus();
-  updateModeSelector();
-}
-
-function syncCardToWeights(){
-  const match=Object.entries(MODE_PRESETS).find(([,p])=>Object.keys(p).every(m=>p[m]===currentWeights[m]));
-  document.querySelectorAll('#mode-cards .mode-card').forEach(c=>c.classList.remove('selected'));
-  if(match){
-    const keys=Object.keys(MODES);
-    const idx=keys.indexOf(match[0]);
-    const cards=document.querySelectorAll('#mode-cards .mode-card');
-    if(cards[idx])cards[idx].classList.add('selected');
-  }
-}
-
-function updateWeightsStatus(){
-  const tot=Object.values(currentWeights).reduce((a,b)=>a+b,0);
-  const el=document.getElementById('weights-status');
-  if(el)el.innerHTML=tot===100
-    ?'<span style="color:#1b5e20;">✓ Verteilung: 100%</span>'
-    :'<span style="color:#a00;">Summe: '+tot+'% – bitte anpassen</span>';
-}
-
-function updateModeSelector(){
-  const el=document.getElementById('active-modes');
-  if(!el)return;
-  const active=Object.entries(currentWeights).filter(([,v])=>v>0)
-    .map(([k,v])=>`<span style="display:inline-block;padding:2px 8px;font-size:10px;font-weight:700;border-radius:2px;${MODES[k].badgeStyle}margin-right:4px;">${MODES[k].label} ${v}%</span>`).join('');
-  el.innerHTML=active;
-}
-
-function resetWeights(){initWeights();buildSliders();buildModeCards();updateModeSelector();}
-
-function saveWeights(){
-  const tot=Object.values(currentWeights).reduce((a,b)=>a+b,0);
-  if(tot!==100){alert('Bitte sicherstellen dass die Summe 100% ergibt.');return;}
-  syncCardToWeights();
-  showTab(0);
-  const btn=document.querySelector('#panel3 button:last-child');
-  const orig=btn.textContent;
-  btn.textContent='✓ Gespeichert';
-  btn.style.background='#ADCA2A';
-  setTimeout(()=>{btn.textContent=orig;btn.style.background='#77C5D8';},1500);
+  Object.keys(MODES).forEach(k=>{const sl=document.getElementById('sl-'+k);const vl=document.getElementById('vl-'+k);if(sl)sl.value=currentWeights[k];if(vl)vl.textContent=currentWeights[k]+'%';});
 }
 
 // ── Checks ────────────────────────────────────────────────────────────────
-function toggleCheck(el){
-  const cb=el.querySelector('.check-cb');
-  cb.checked=!cb.checked;
-  el.classList.toggle('selected',cb.checked);
-}
+function toggleCheck(el){const cb=el.querySelector('.check-cb');cb.checked=!cb.checked;el.classList.toggle('selected',cb.checked);}
+function getSelectedChecks(){return Array.from(document.querySelectorAll('#check-list .check-item.selected')).map(el=>el.dataset.key);}
 
-function getSelectedChecks(){
-  return Array.from(document.querySelectorAll('#check-list .check-item.selected')).map(el=>el.dataset.key);
+// ── Result Tabs ───────────────────────────────────────────────────────────
+function showResultTab(i){
+  document.querySelectorAll('.result-tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.result-panel').forEach((p,j)=>p.classList.toggle('active',i===j));
 }
-
-// ── View-Toggle ───────────────────────────────────────────────────────────
 function toggleView(view){
-  document.getElementById('simple-view').classList.toggle('active',view==='simple');
-  document.getElementById('detail-view').classList.toggle('active',view!=='simple');
+  document.getElementById('simple-view').style.display=view==='simple'?'block':'none';
+  document.getElementById('detail-view').style.display=view!=='simple'?'block':'none';
   document.getElementById('btn-simple').classList.toggle('active',view==='simple');
   document.getElementById('btn-detail').classList.toggle('active',view!=='simple');
 }
 
 // ── Reset ─────────────────────────────────────────────────────────────────
-function confirmReset(){
-  document.getElementById('reset-modal').style.display='flex';
-}
-function resetAudit(){
-  document.getElementById('reset-modal').style.display='none';
+function resetAll(){
   document.getElementById('audit-url').value='';
   document.getElementById('audit-keywords').value='';
   document.getElementById('audit-lang').selectedIndex=0;
-  // SEA bleibt nach Reset deaktiviert
-  document.querySelectorAll('#check-list .check-item').forEach(el=>{
-    const isSea=el.dataset.key==='sea';
-    el.classList.toggle('selected',!isSea);
-    el.querySelector('.check-cb').checked=!isSea;
-  });
-  document.getElementById('progress-wrap').classList.remove('active');
+  document.querySelectorAll('#check-list .check-item').forEach(el=>{const sea=el.dataset.key==='sea';el.classList.toggle('selected',!sea);el.querySelector('.check-cb').checked=!sea;});
   document.getElementById('protocol-lines').innerHTML='';
   document.getElementById('error-box').style.display='none';
   document.getElementById('analyse-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   document.getElementById('empfehlung-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   document.getElementById('detail-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   document.getElementById('entscheid-box').innerHTML='<div class="entscheid-label">Gesamtentscheid</div><div class="entscheid-value">🔴 Nicht möglich</div><div class="entscheid-hint">Hierfür bitte alle Tests durchführen.</div>';
-  document.getElementById('start-btn').style.display='block';
-  document.getElementById('reset-btn').style.display='none';
-  showTab(0);
+  document.getElementById('nav-bar').style.display='flex';
+  initWeights();buildSliders();buildModeCards();
+  showStep(1);
 }
 
 // ── Protokoll ─────────────────────────────────────────────────────────────
@@ -478,217 +397,129 @@ function addLog(text,type=''){
 // ── Audit ─────────────────────────────────────────────────────────────────
 async function startAudit(){
   const url=document.getElementById('audit-url').value.trim();
-  if(!url){alert('Bitte eine Url eingeben.');return;}
   const selected=getSelectedChecks();
   if(!selected.length){alert('Bitte mindestens einen Check auswählen.');return;}
   const keywords=document.getElementById('audit-keywords').value.split(',').map(k=>k.trim()).filter(k=>k);
   const language=document.getElementById('audit-lang').value;
 
-  document.getElementById('analyse-content').innerHTML='<div class="empty-state">Audit läuft...</div>';
-  document.getElementById('empfehlung-content').innerHTML='<div class="empty-state">Audit läuft...</div>';
-  document.getElementById('detail-content').innerHTML='<div class="empty-state">Audit läuft...</div>';
-  document.getElementById('entscheid-box').innerHTML='<div class="entscheid-label">Gesamtentscheid</div><div class="entscheid-value">⏳ Wird berechnet...</div>';
-  document.getElementById('protocol-lines').innerHTML='';
-  document.getElementById('progress-wrap').classList.add('active');
-  document.getElementById('error-box').style.display='none';
-  document.getElementById('start-btn').disabled=true;
-  document.getElementById('start-btn').textContent='Audit läuft...';
-
+  showStep(3);
   addLog('→ Audit gestartet für: <strong>'+url+'</strong>');
   addLog('→ Checks: '+selected.map(k=>CHECKS_META[k].label).join(', '));
   const waitLine=addLog('Checks laufen, bitte warten...','wait');
 
   try{
     const response=await fetch(API_URL+'/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,keywords,language,mode_weights:currentWeights,run_sea:selected.includes('sea')})});
-    if(!response.ok){const err=await response.json();throw new Error(err.detail||'Api-Fehler: '+response.status);}
+    if(!response.ok){const err=await response.json();throw new Error(err.detail||'API-Fehler: '+response.status);}
     const data=await response.json();
-    waitLine.classList.remove('pulsing');
-    waitLine.style.color='#1b5e20';
+    waitLine.classList.remove('pulsing');waitLine.style.color='#1b5e20';
     waitLine.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>✓ Antwort erhalten – '+selected.length+' Checks ausgewertet';
     const results={};
-    for(const key of selected){
-      if(data.checks[key]){results[key]=data.checks[key];addLog('✓ '+CHECKS_META[key].label+' (Score: '+data.checks[key].score+')','done');}
-    }
-    if(data.checks['mode_analysis']){
-      results['mode_analysis']=data.checks['mode_analysis'];
-      addLog('✓ Modus-Analyse (Score: '+data.checks['mode_analysis'].score+')','done');
-    }
+    for(const key of selected){if(data.checks[key]){results[key]=data.checks[key];addLog('✓ '+CHECKS_META[key].label+' (Score: '+data.checks[key].score+')','done');}}
+    if(data.checks['mode_analysis']){results['mode_analysis']=data.checks['mode_analysis'];addLog('✓ Modus-Analyse (Score: '+data.checks['mode_analysis'].score+')','done');}
+    addLog('✓ Audit abgeschlossen','done');
     renderAnalyse(results,selected,url);
     renderEmpfehlungen(results,selected,url);
-    addLog('✓ Audit abgeschlossen','done');
-    document.getElementById('start-btn').style.display='none';
-    document.getElementById('reset-btn').style.display='block';
-    showTab(1);
+    setTimeout(()=>showStep('results'),800);
   }catch(err){
-    waitLine.classList.remove('pulsing');
-    waitLine.style.color='#a00';
+    waitLine.classList.remove('pulsing');waitLine.style.color='#a00';
     waitLine.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>✗ Fehler beim Abrufen';
     addLog('✗ '+err.message,'error');
+    document.getElementById('nav-bar').style.display='flex';
     const eb=document.getElementById('error-box');
     eb.style.display='block';
-    eb.innerHTML='<strong>Fehler:</strong> '+err.message+'<br><small>Ist das Backend gestartet? <code>bash start.sh</code> im Terminal ausführen.</small>';
-  }finally{
-    document.getElementById('start-btn').disabled=false;
-    document.getElementById('start-btn').textContent='Audit starten →';
+    eb.innerHTML='<strong>Fehler:</strong> '+err.message+'<br><small>Ist das Backend gestartet?</small>';
+    showStep(2);
   }
 }
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────
-function msgText(m){return typeof m==='object'?m.message:m;}
+function detectLang(url){
+  if(/\/(de-ch|de_ch|\/de\/)/i.test(url)) return 'de-CH';
+  if(/\/(en-us|en_us|\/en\/)/i.test(url)) return 'en-US';
+  if(/\/de[-_]/i.test(url)) return 'de-CH';
+  if(/\/en[-_]/i.test(url)) return 'en-US';
+  return 'de-CH'; // Fallback
+}
+
+return typeof m==='object'?m.message:m;}
 function fixMsg(msg){return msg.replace(/Wird von Google abgeschnitten/gi,'Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten').replace(/\(dekorativ\?\)/gi,'');}
 function linkify(text){return text.replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>');}
 function scoreToColor(s){if(s>=80)return '#ADCA2A';if(s>=60)return '#77C5D8';if(s>=40)return '#FCC300';return '#EE6A87';}
+function getFilename(path){try{const c=path.split('?')[0].split('#')[0];const p=c.split('/');return p[p.length-1]||c;}catch(e){return path;}}
+function getMode(){const card=document.querySelector('#mode-cards .mode-card.selected');return card?card.querySelector('.mode-badge').textContent.trim():'';}
+function buildInfoBar(url,mode){return'<div class="audit-info-bar"><span class="info-label">Auditierte URL:</span><span class="info-value"><a href="'+url+'" target="_blank" style="color:#000;">'+url+'</a></span><span class="info-label">Seitentyp:</span><span class="info-value">'+mode+'</span></div>';}
+
 function renderModeAnalysisKachel(container,r,showSchema){
   if(!r)return;
   const color=scoreToColor(r.score);
-  const w=document.createElement('div');
-  w.className='kachel-wrap';
+  const w=document.createElement('div');w.className='kachel-wrap';
   const modes=(r.data&&r.data.active_modes||[]).map(m=>MODES[m]?MODES[m].label:m).join(', ');
-  let head='<div class="kachel-head" style="background:'+color+';">'+
-    '<div style="display:flex;align-items:center;gap:6px;">Modus-Analyse'+
-    '<div class="kachel-help" onclick="event.stopPropagation()">?<div class="tooltip">Prüft inhaltliche Soft-Faktoren basierend auf dem aktiven Seitentyp.</div></div></div></div>';
-  let body='<div class="kachel-body">'+
-    '<p style="font-size:15px;font-weight:700;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">Score: '+r.score+' / 100</p>'+
-    (modes?'<p style="color:#555;font-size:11px;">Aktive Modi: '+modes+'</p>':'');
+  let head='<div class="kachel-head" style="background:'+color+';">Modus-Analyse<div class="kachel-help" onclick="event.stopPropagation()">?<div class="tooltip">Prüft inhaltliche Soft-Faktoren basierend auf dem aktiven Seitentyp.</div></div></div>';
+  let body='<div class="kachel-body"><p style="font-size:15px;font-weight:700;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">Score: '+r.score+' / 100</p>'+(modes?'<p style="color:#555;font-size:11px;">Aktive Modi: '+modes+'</p>':'');
   (r.warnings||[]).forEach(w=>{body+='<p style="color:#7a5c00;">⚠ '+fixMsg(msgText(w))+'</p>';});
   (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">✓ '+fixMsg(msgText(p))+'</p>';});
-  if(showSchema&&r.data&&r.data.schema_results&&r.data.schema_results.length){
-    body+='<p style="font-weight:700;margin-top:8px;padding-top:6px;border-top:1px solid #e0e0e0;font-size:11px;">Schema.org</p>';
-    r.data.schema_results.forEach(s=>{
-      const col=s.ok?'#1b5e20':'#7a5c00';
-      body+='<p style="color:'+col+';">'+(s.ok?'✓':'⚠')+' '+s.label+': '+s.message+'</p>';
-    });
-  }
-  body+='</div>';
-  w.innerHTML=head+body;
-  container.appendChild(w);
+  if(showSchema&&r.data&&r.data.schema_results&&r.data.schema_results.length){body+='<p style="font-weight:700;margin-top:8px;font-size:11px;">Schema.org</p>';r.data.schema_results.forEach(s=>{body+='<p style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' '+s.label+': '+s.message+'</p>';});}
+  body+='</div>';w.innerHTML=head+body;container.appendChild(w);
 }
 
-function getFilename(path){try{const c=path.split('?')[0].split('#')[0];const p=c.split('/');return p[p.length-1]||c;}catch(e){return path;}}
-
-function buildInfoBar(url,mode){
-  return '<div class="audit-info-bar">'+
-    '<span class="info-label">Auditierte Url:</span>'+
-    '<span class="info-value"><a href="'+url+'" target="_blank" style="color:#000;">'+url+'</a></span>'+
-    '<span class="info-label">Mode:</span>'+
-    '<span class="info-value">'+mode+'</span>'+
-    '</div>';
-}
-
-function getMode(){
-  const card=document.querySelector('#mode-cards .mode-card.selected');
-  if(card)return card.querySelector('.mode-badge').textContent.trim();
-  return Object.entries(currentWeights).filter(([,v])=>v>0).map(([k,v])=>MODES[k].label+' '+v+'%').join(', ');
-}
-
-// ── Analyse rendern ───────────────────────────────────────────────────────
 function renderAnalyse(results,selected,url){
   const c=document.getElementById('analyse-content');
   c.innerHTML=buildInfoBar(url,getMode());
   for(const key of selected){
     const r=results[key];if(!r)continue;
     const color=scoreToColor(r.score);
-    const w=document.createElement('div');
-    w.className='kachel-wrap';
-    const tip=CHECK_HELP[key]||'';
-    let head='<div class="kachel-head" style="background:'+color+';">'+
-      '<div style="display:flex;align-items:center;gap:6px;">'+CHECKS_META[key].label+
-      '<div class="kachel-help" onclick="event.stopPropagation()">?<div class="tooltip">'+tip+'</div></div></div></div>';
+    const w=document.createElement('div');w.className='kachel-wrap';
+    let head='<div class="kachel-head" style="background:'+color+';">'+CHECKS_META[key].label+'<div class="kachel-help" onclick="event.stopPropagation()">?<div class="tooltip">'+(CHECK_HELP[key]||'')+'</div></div></div>';
     let body='<div class="kachel-body"><p style="font-size:15px;font-weight:700;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">Score: '+r.score+' / 100</p>';
     (r.issues||[]).forEach(i=>{body+='<p style="color:#a00;">✗ '+linkify(fixMsg(msgText(i)))+'</p>';});
     (r.warnings||[]).forEach(w=>{body+='<p style="color:#7a5c00;">⚠ '+linkify(fixMsg(msgText(w)))+'</p>';});
     (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">✓ '+linkify(fixMsg(msgText(p)))+'</p>';});
-    body+='</div>';
-    w.innerHTML=head+body;
-    c.appendChild(w);
+    body+='</div>';w.innerHTML=head+body;c.appendChild(w);
   }
-  const ma=results['mode_analysis'];
-  if(ma)renderModeAnalysisKachel(c,ma,false);
+  const ma=results['mode_analysis'];if(ma)renderModeAnalysisKachel(c,ma,false);
 }
 
-// ── Extra-Details ─────────────────────────────────────────────────────────
 function buildExtra(key,r,simple){
   let items=[];
   if(key==='broken_links'){const broken=(r.data&&r.data.links||[]).filter(l=>l.status_code>=400||l.status==='error');items=broken.map(l=>{const u=l.url||l;return'Defekter Link: <a href="'+u+'" target="_blank" style="color:#a00;"><strong>'+u+'</strong></a>'+(l.status_code?' ('+l.status_code+')':'');});}
-  if(key==='alt_attributes'){const missing=(r.data&&r.data.images_missing_alt)||[];items=missing.map(f=>{const raw=(f.src||f).replace(/\s*\(dekorativ\?\)/gi,'').trim();const display=simple?getFilename(raw):raw;return'Alt-Attribut fehlt: <strong>'+display+'</strong>';});}
+  if(key==='alt_attributes'){const missing=(r.data&&r.data.images_missing_alt)||[];items=missing.map(f=>{const raw=(f.src||f).replace(/\s*\(dekorativ\?\)/gi,'').trim();return'Alt-Attribut fehlt: <strong>'+(simple?getFilename(raw):raw)+'</strong>';});}
   if(key==='spelling'){const errors=(r.data&&r.data.errors)||[];items=errors.slice(0,10).map(e=>'«'+(e.word||e)+'»'+(e.context?' – '+e.context:''));}
   if(!items.length)return'';
   return'<ul style="margin:6px 0 0 16px;line-height:1.8;">'+items.map(i=>'<li>'+i+'</li>').join('')+'</ul>';
 }
 
-// ── Empfehlungen rendern ──────────────────────────────────────────────────
 function renderEmpfehlungen(results,selected,url){
   const allSelected=Object.keys(CHECKS_META).every(k=>selected.includes(k));
-  const mode=getMode();
-  const infoBar=buildInfoBar(url,mode);
+  const infoBar=buildInfoBar(url,getMode());
   let simpleHTML=infoBar,detailHTML=infoBar;
-
   for(const key of selected){
     const r=results[key];if(!r)continue;
     const issues=r.issues||[],warnings=r.warnings||[],passed=r.passed||[];
     const dotColor=issues.length?'#c00':warnings.length?'#f9a825':'#4caf50';
     const allMsg=[...issues.map(m=>({t:'issue',m:linkify(fixMsg(msgText(m)))})),...warnings.map(m=>({t:'warn',m:linkify(fixMsg(msgText(m)))}))];
     const tip=CHECK_HELP[key]||'';
-    const nameHTML='<span style="display:flex;align-items:center;gap:6px;">'+CHECKS_META[key].label+
-      '<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">'+tip+'</div></div></span>';
-    let statusHTML=allMsg.length
-      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li style="color:'+(m.t==='issue'?'#aa0000':'#7a5c00')+';">'+m.m+'</li>').join('')+'</ul>'
-      :'<div style="color:#1b5e20;margin-top:2px;">Keine Probleme gefunden</div>';
-    const extraS=buildExtra(key,r,true);
-    const extraD=buildExtra(key,r,false);
-    const rowBase=(extra)=>'<div class="ampel-row">'+
-      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
-      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
-      '<div class="ampel-text">'+statusHTML+'</div>'+
-      (extra?'<div style="font-size:12px;color:#a00;margin-top:4px;">'+extra+'</div>':'')+
-      '</div></div>';
-    simpleHTML+=rowBase(extraS);
+    const nameHTML='<span style="display:flex;align-items:center;gap:6px;">'+CHECKS_META[key].label+'<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">'+tip+'</div></div></span>';
+    let statusHTML=allMsg.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li style="color:'+(m.t==='issue'?'#aa0000':'#7a5c00')+';">'+m.m+'</li>').join('')+'</ul>':'<div style="color:#1b5e20;margin-top:2px;">Keine Probleme gefunden</div>';
+    const rowBase=(extra)=>'<div class="ampel-row"><div class="ampel-dot" style="background:'+dotColor+';"></div><div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div><div class="ampel-text">'+statusHTML+'</div>'+(extra?'<div style="font-size:12px;color:#a00;margin-top:4px;">'+extra+'</div>':'')+'</div></div>';
+    simpleHTML+=rowBase(buildExtra(key,r,true));
     const passedHTML=passed.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+passed.map(p=>'<li style="color:#1b5e20;">'+fixMsg(msgText(p))+'</li>').join('')+'</ul>':'';
-    detailHTML+='<div class="ampel-row">'+
-      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
-      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
-      '<div class="ampel-text">'+statusHTML+'</div>'+
-      (extraD?'<div style="font-size:12px;color:#a00;margin-top:4px;">'+extraD+'</div>':'')+
-      passedHTML+'</div></div>';
+    detailHTML+='<div class="ampel-row"><div class="ampel-dot" style="background:'+dotColor+';"></div><div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div><div class="ampel-text">'+statusHTML+'</div>'+buildExtra(key,r,false)+passedHTML+'</div></div>';
   }
-
   document.getElementById('empfehlung-content').innerHTML=simpleHTML;
   document.getElementById('detail-content').innerHTML=detailHTML;
-
   const ma=results['mode_analysis'];
   if(ma){
     const issues=ma.issues||[],warnings=ma.warnings||[],passed=ma.passed||[];
     const dotColor=issues.length?'#c00':warnings.length?'#f9a825':'#4caf50';
     const allMsg=[...issues,...warnings].map(m=>linkify(fixMsg(msgText(m))));
-    const nameHTML='<span style="display:flex;align-items:center;gap:6px;">Modus-Analyse'+
-      '<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft inhaltliche Soft-Faktoren basierend auf dem aktiven Seitentyp.</div></div></span>';
-    let statusHTML=allMsg.length
-      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li>'+m+'</li>').join('')+'</ul>'
-      :'<div style="color:#1b5e20;margin-top:2px;">Alle Soft-Faktoren erfüllt</div>';
-    const passedHTML=passed.length
-      ?'<ul style="margin:4px 0 0 16px;line-height:1.8;color:#1b5e20;">'+passed.map(p=>'<li>'+fixMsg(msgText(p))+'</li>').join('')+'</ul>'
-      :'';
-    const rowSimple='<div class="ampel-row">'+
-      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
-      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
-      '<div class="ampel-text">'+statusHTML+'</div>'+
-      '</div></div>';
-    const schemaHTML=ma.data&&ma.data.schema_results&&ma.data.schema_results.length
-      ?'<div style="font-size:11px;font-weight:700;margin-top:8px;color:#000;">Schema.org</div>'+
-        '<ul style="margin:4px 0 0 16px;line-height:1.8;">'+
-        ma.data.schema_results.map(s=>'<li style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' '+s.label+': '+s.message+'</li>').join('')+
-        '</ul>'
-      :'';
-    const rowDetail='<div class="ampel-row">'+
-      '<div class="ampel-dot" style="background:'+dotColor+';"></div>'+
-      '<div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div>'+
-      '<div class="ampel-text">'+statusHTML+'</div>'+
-      passedHTML+schemaHTML+
-      '</div></div>';
-    document.getElementById('empfehlung-content').innerHTML+=rowSimple;
-    document.getElementById('detail-content').innerHTML+=rowDetail;
+    const nameHTML='<span style="display:flex;align-items:center;gap:6px;">Modus-Analyse<div class="help-icon" onclick="event.stopPropagation()">?<div class="tooltip">Prüft inhaltliche Soft-Faktoren basierend auf dem aktiven Seitentyp.</div></div></span>';
+    const statusHTML=allMsg.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;">'+allMsg.map(m=>'<li>'+m+'</li>').join('')+'</ul>':'<div style="color:#1b5e20;margin-top:2px;">Alle Soft-Faktoren erfüllt</div>';
+    const passedHTML=passed.length?'<ul style="margin:4px 0 0 16px;line-height:1.8;color:#1b5e20;">'+passed.map(p=>'<li>'+fixMsg(msgText(p))+'</li>').join('')+'</ul>':'';
+    const schemaHTML=ma.data&&ma.data.schema_results&&ma.data.schema_results.length?'<div style="font-size:11px;font-weight:700;margin-top:8px;">Schema.org</div><ul style="margin:4px 0 0 16px;line-height:1.8;">'+ma.data.schema_results.map(s=>'<li style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' '+s.label+': '+s.message+'</li>').join('')+'</ul>':'';
+    const row='<div class="ampel-row"><div class="ampel-dot" style="background:'+dotColor+';"></div><div style="flex:1;"><div class="ampel-name">'+nameHTML+'</div><div class="ampel-text">'+statusHTML+'</div>'+passedHTML+schemaHTML+'</div></div>';
+    document.getElementById('empfehlung-content').innerHTML+=row;
+    document.getElementById('detail-content').innerHTML+=row;
   }
-
   if(allSelected){
     const avg=Math.round(selected.map(k=>(results[k]&&results[k].score)||0).reduce((a,b)=>a+b,0)/selected.length);
     let decision,emoji;
@@ -699,14 +530,14 @@ function renderEmpfehlungen(results,selected,url){
   }
 }
 
-function exportPDF(){showTab(2);setTimeout(()=>window.print(),200);}
+function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
 
 // ── Init ──────────────────────────────────────────────────────────────────
 initWeights();
 document.addEventListener('DOMContentLoaded',()=>{
   buildModeCards();
   buildSliders();
-  updateModeSelector();
+  showStep(1);
   document.getElementById('footer-info').textContent='Beta v'+VERSION;
 });
 </script>
