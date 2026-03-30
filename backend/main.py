@@ -3,6 +3,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
 from crawler import fetch_page
 from checks.meta_texts import check_meta
 from checks.headings import check_headings
