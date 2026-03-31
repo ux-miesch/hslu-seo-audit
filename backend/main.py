@@ -3,7 +3,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-import sys, os
+import sys, os, asyncio
 sys.path.insert(0, os.path.dirname(__file__))
 from crawler import fetch_page
 from checks.meta_texts import check_meta
@@ -59,22 +59,46 @@ async def run_audit(request: AuditRequest):
             detail=f"URL konnte nicht abgerufen werden: {request.url}"
         )
 
-    results = {}
+    soup = page["soup"]
 
-    results["meta"] = check_meta(page["soup"], request.url)
-    results["headings"] = check_headings(page["soup"])
-    results["broken_links"] = await check_broken_links(page["soup"], request.url)
-    results["alt_attributes"] = check_alt_attributes(page["soup"], request.url)
-    results["spelling"] = check_spelling(page["soup"], language=request.language)
-    results["keywords"] = check_keywords(page["soup"], keywords=request.keywords)
-    results["url_slug"] = check_url_slug(request.url)
-    results["mode_analysis"] = check_mode_analysis(
-        page["soup"],
-        request.url,
-        request.mode_weights or {},
-    )
+    # Alle Checks parallel ausführen
+    tasks = {
+        "meta":           asyncio.to_thread(check_meta, soup, request.url),
+        "headings":       asyncio.to_thread(check_headings, soup),
+        "broken_links":   check_broken_links(soup, request.url),
+        "alt_attributes": asyncio.to_thread(check_alt_attributes, soup, request.url),
+        "spelling":       asyncio.to_thread(check_spelling, soup, language=request.language),
+        "keywords":       asyncio.to_thread(check_keywords, soup, keywords=request.keywords),
+        "url_slug":       asyncio.to_thread(check_url_slug, request.url),
+        "mode_analysis":  asyncio.to_thread(check_mode_analysis, soup, request.url, request.mode_weights or {}),
+    }
+
+    keys = list(tasks.keys())
+    values = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    results = {}
+    for key, result in zip(keys, values):
+        if isinstance(result, Exception):
+            results[key] = {
+                "score": 0,
+                "issues": [{"message": f"Check fehlgeschlagen: {str(result)}"}],
+                "warnings": [],
+                "passed": [],
+            }
+        else:
+            results[key] = result
+
+    # SEA separat – nur wenn aktiviert
     if request.run_sea:
-        results["sea"] = check_sea(page["soup"], request.url)
+        try:
+            results["sea"] = await asyncio.to_thread(check_sea, soup, request.url)
+        except Exception as e:
+            results["sea"] = {
+                "score": 0,
+                "issues": [{"message": f"SEA-Check fehlgeschlagen: {str(e)}"}],
+                "warnings": [],
+                "passed": [],
+            }
 
     return AuditResponse(
         url=request.url,
