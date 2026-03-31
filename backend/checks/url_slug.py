@@ -1,36 +1,20 @@
 from urllib.parse import urlparse, unquote
 import re
 
-
-# Empfohlene URL-Länge
 URL_MAX_LENGTH = 75
 SLUG_MAX_LENGTH = 60
 SLUG_MAX_SEGMENTS = 5
 
-# Problematische Zeichen im Slug
 PROBLEMATIC_CHARS = re.compile(r'[^a-z0-9\-\/\.]')
 
-# Typische Parameter die auf dynamische/unoptimierte URLs hinweisen
 PROBLEMATIC_PARAMS = {
     "sessionid", "sid", "phpsessid", "jsessionid",
-    "utm_source", "utm_medium", "utm_campaign",  # Tracking-Parameter (OK in Ads, nicht in canonical)
+    "utm_source", "utm_medium", "utm_campaign",
     "ref", "source", "from",
 }
 
 
 def check_url_slug(url: str) -> dict:
-    """
-    Analysiert die URL/Slug einer Seite auf SEO-Kriterien:
-    - URL-Länge
-    - Sonderzeichen und Umlaute
-    - Tiefe der URL-Struktur
-    - Großbuchstaben
-    - Underscores statt Bindestriche
-    - Tracking-Parameter
-    - Dateiendungen (.php, .html etc.)
-    - Doppelte Slashes
-    - Sinnvolle Slug-Länge
-    """
     issues = []
     warnings = []
     passed = []
@@ -49,7 +33,6 @@ def check_url_slug(url: str) -> dict:
         "segments": [],
     }
 
-    # URL-Segmente analysieren
     segments = [s for s in path.split("/") if s]
     data["segments"] = segments
     slug = segments[-1] if segments else ""
@@ -68,7 +51,6 @@ def check_url_slug(url: str) -> dict:
     # ── URL-LÄNGE ─────────────────────────────────────────────────────────
     url_length = len(full_url)
     data["url_length"] = url_length
-
     if url_length > URL_MAX_LENGTH:
         warnings.append({
             "code": "URL_TOO_LONG",
@@ -90,19 +72,16 @@ def check_url_slug(url: str) -> dict:
 
     # ── UMLAUTE & SONDERZEICHEN ───────────────────────────────────────────
     decoded_path = unquote(path)
-    umlaut_pattern = re.compile(r'[äöüÄÖÜß]')
+    umlaut_pattern = re.compile(r'[äöüÄÖÜ]')
     has_umlauts = bool(umlaut_pattern.search(decoded_path))
-
     encoded_chars = re.compile(r'%[0-9A-Fa-f]{2}')
     has_encoded = bool(encoded_chars.search(path))
 
     if has_umlauts or has_encoded:
         warnings.append({
             "code": "URL_SPECIAL_CHARS",
-            "message": (
-                f"URL enthält Umlaute oder Sonderzeichen: {decoded_path}. "
-                "Empfehlung: Umlaute ersetzen (ä→ae, ö→oe, ü→ue)."
-            ),
+            "message": f"URL enthält Umlaute oder Sonderzeichen: {decoded_path}. "
+                "Empfehlung: Umlaute ersetzen (ä→ae, ö→oe, ü→ue).",
             "severity": "warning",
         })
     else:
@@ -112,7 +91,7 @@ def check_url_slug(url: str) -> dict:
     if "_" in path:
         warnings.append({
             "code": "URL_UNDERSCORES",
-            "message": f"URL verwendet Underscores statt Bindestriche: {path}. Google bevorzugt Bindestriche.",
+            "message": f"URL verwendet Underscores statt Bindestriche: {path}. Bindestriche sind empfohlen.",
             "severity": "warning",
         })
     else:
@@ -121,7 +100,6 @@ def check_url_slug(url: str) -> dict:
     # ── URL-TIEFE ─────────────────────────────────────────────────────────
     depth = len(segments)
     data["depth"] = depth
-
     if depth > SLUG_MAX_SEGMENTS:
         warnings.append({
             "code": "URL_TOO_DEEP",
@@ -176,7 +154,6 @@ def check_url_slug(url: str) -> dict:
     if slug:
         slug_length = len(slug)
         data["slug_length"] = slug_length
-
         if slug_length > SLUG_MAX_LENGTH:
             warnings.append({
                 "code": "SLUG_TOO_LONG",
@@ -192,11 +169,10 @@ def check_url_slug(url: str) -> dict:
         else:
             passed.append({"code": "SLUG_LENGTH_OK", "message": f"Slug-Länge optimal ({slug_length} Zeichen): \"{slug}\" ✓"})
 
-        # Zahlen-only Slug
         if re.match(r'^\d+$', slug):
             warnings.append({
                 "code": "SLUG_NUMBERS_ONLY",
-                "message": f"Slug besteht nur aus Zahlen: \"{slug}\". Sprechende Slugs sind SEO-freundlicher.",
+                "message": f"Slug besteht nur aus Zahlen: \"{slug}\". Sprechende Slugs sind empfohlen.",
                 "severity": "warning",
             })
 
@@ -206,10 +182,4 @@ def check_url_slug(url: str) -> dict:
 def _build_result(issues, warnings, passed, data) -> dict:
     total = len(issues) + len(warnings) + len(passed)
     score = round((len(passed) / total) * 100) if total > 0 else 0
-    return {
-        "score": score,
-        "issues": issues,
-        "warnings": warnings,
-        "passed": passed,
-        "data": data,
-    }
+    return {"score": score, "issues": issues, "warnings": warnings, "passed": passed, "data": data}

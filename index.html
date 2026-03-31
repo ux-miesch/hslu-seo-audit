@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Seo Audit Tool – Hslu</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -139,7 +139,11 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
     <div class="step-title">Weitere Einstellungen</div>
     <label>Keywords (optional, kommagetrennt)</label>
     <input type="text" id="audit-keywords" placeholder="z.B. soziale arbeit, weiterbildung, luzern">
-    <label>Sprache <span id="lang-detected" style="font-weight:400;color:#777;font-size:11px;"></span></label>
+    <div style="font-family:'Verdana',sans-serif;font-size:11px;color:#555;line-height:1.7;margin-top:6px;">
+      Keywords sind Begriffe, die Nutzer:innen bei der Suche verwenden und nach welchen die Seite strategisch ausgerichtet ist. (Werden sie gezielt im Text, in der Überschrift und in der Meta-Description verwendet, hilft das der Seite bei der richtigen Zielgruppe zu erscheinen.) Keywords sind optional – wenn bei der Analyse gezielt nach ihnen gesucht werden kann, verbessert dies die Genauigkeit des Rapports.
+      <br><a href="https://hsluzern.sharepoint.com/" target="_blank" style="color:#000;font-weight:700;text-decoration:none;">Weitere Informationen →</a>
+    </div>
+    <label>Seitensprache <span id="lang-detected" style="font-weight:400;color:#777;font-size:11px;"></span></label>
     <select id="audit-lang"><option value="de-CH">de-CH</option><option value="en-US">en-US</option></select>
     <div class="checks-label">Checks auswählen</div>
     <div class="check-list" id="check-list">
@@ -212,8 +216,8 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260330-1853';
-const API_URL='https://hslu-seo-audit.onrender.com';
+const VERSION='260330-1049';
+const API_URL='http://localhost:8000';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/';
 
 const MODES={
@@ -223,24 +227,24 @@ const MODES={
   event:{label:'Event',color:'#EE6A87',badgeStyle:'background:#EE6A87;color:#fff;',defaultW:0,desc:'Diese Seite bewirbt eine Veranstaltung. Datum, Ort und Zielgruppe müssen sofort erkennbar sein. Ein klarer Anmelde-Button ist Pflicht. Typisch: Konferenzen, Tagungen, Informationsabende, Webinare.',factors:['Datum / Zeit prominent','Ort / Format (online, hybrid, vor Ort)','Anmelde-CTA vorhanden','Preis / Kosten','Referenten sichtbar','Programm / Agenda','Frist / Deadline','Event-Schema Markup']},
 };
 const MODE_PRESETS={content:{content:80,conversion:20,course:0,event:0},conversion:{content:20,conversion:80,course:0,event:0},course:{content:30,conversion:40,course:30,event:0},event:{content:20,conversion:30,course:0,event:50}};
-const CHECK_HELP={meta:'Prüft Title-Tag (30–60 Zeichen), Meta-Description (70–160 Zeichen), Canonical-Tag, Robots-Direktiven und Open Graph.',headings:'Prüft ob genau eine H1 vorhanden ist, ob H2 und H3 korrekt verschachtelt sind und ob Duplikate vorkommen.',broken_links:'Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung.',alt_attributes:'Prüft ob Bilder ein aussagekräftiges Alt-Attribut haben – wichtig für Barrierefreiheit und Suchmaschinen.',spelling:'Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).',keywords:'Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung.',url_slug:'Prüft Https, URL-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und URL-Tiefe (max. 5 Ebenen).'};
+const CHECK_HELP={meta:'Prüft Title-Tag (30–60 Zeichen), Meta-Description (70–160 Zeichen), Canonical-Tag, Robots-Direktiven und Open Graph.',headings:'Prüft ob genau eine H1 vorhanden ist, ob H2 und H3 korrekt verschachtelt sind und ob Duplikate vorkommen.',broken_links:'Prüft alle Links auf Erreichbarkeit. Interne 404-Fehler sind kritisch, externe eine Warnung.',alt_attributes:'Prüft ob Bilder ein aussagekräftiges Alt-Attribut haben – wichtig für Barrierefreiheit und Suchresultaten.',spelling:'Prüft den Seiteninhalt auf Rechtschreib- und Grammatikfehler via LanguageTool (de-CH / en-US).',keywords:'Analysiert Keyword-Dichte (Optimum: 0.5–3%), semantische Vielfalt und Keyword-Platzierung.',url_slug:'Prüft Https, URL-Länge (max. 75 Zeichen), Sonderzeichen, Umlaute und URL-Tiefe (max. 5 Ebenen).'};
 const CHECKS_META={meta:{label:'Meta-Texte'},headings:{label:'Überschriften'},broken_links:{label:'Defekte Links'},alt_attributes:{label:'Alt-Attribute'},spelling:{label:'Rechtschreibung'},keywords:{label:'Keywords & Semantik'},url_slug:{label:'URL / Slug'},sea:{label:'Kampagnen-Check'},mode_analysis:{label:'Seitentyp-Analyse'}};
 
 const AUFGABE_TEXTE={
   meta:{
-    issue:{why:'Title und Meta-Description sind die ersten Texte die Nutzer:innen in Google sehen. Fehlen sie oder sind sie zu kurz, verlierst du Klicks.',action:'Ergänze einen aussagekräftigen Title (30–60 Zeichen) und eine Meta-Description (70–160 Zeichen) direkt im CMS.'},
-    warning:{why:'Zu lange Texte werden von Google abgeschnitten. Das wirkt unvollständig und senkt die Klickrate.',action:'Kürze Title oder Description auf die empfohlene Zeichenzahl.'},
+    issue:{why:'Title und Meta-Description sind die ersten Texte die Nutzer:innen bei Suchresultaten sehen. Fehlen sie oder sind sie zu kurz, verlierst du Klicks.',action:'Ergänze einen aussagekräftigen Title (30–60 Zeichen) und eine Meta-Description (70–160 Zeichen) direkt im CMS.'},
+    warning:{why:'Zu lange Texte können bei Suchresultaten abgeschnitten werden. Das wirkt unvollständig und senkt die Klickrate.',action:'Kürze Title oder Description auf die empfohlene Zeichenzahl.'},
   },
   headings:{
-    issue:{why:'Die H1 ist das wichtigste Inhaltssignal für Google – sie muss genau einmal vorkommen.',action:'Stelle sicher, dass die Seite genau eine H1 hat. Weitere Abschnitte mit H2 und H3 strukturieren.'},
-    warning:{why:'Lücken in der Überschriftenstruktur erschweren Google das Verständnis des Inhalts.',action:'Prüfe die Reihenfolge der Überschriften und fülle fehlende Ebenen auf.'},
+    issue:{why:'Die H1 ist das wichtigste Inhaltssignal für Suchresultaten – sie muss genau einmal vorkommen.',action:'Stelle sicher, dass die Seite genau eine H1 hat. Weitere Abschnitte mit H2 und H3 strukturieren.'},
+    warning:{why:'Lücken in der Überschriftenstruktur erschweren die korrekte Darstellung in Suchresultaten.',action:'Prüfe die Reihenfolge der Überschriften und fülle fehlende Ebenen auf.'},
   },
   broken_links:{
     issue:{why:'Defekte Links frustrieren Nutzer:innen und werden von Google negativ bewertet.',action:'Ersetze oder entferne alle defekten Links. Interne 404-Fehler haben höchste Priorität.'},
     warning:{why:'Weiterleitungen sollten direkt auf die Ziel-URL zeigen.',action:'Aktualisiere interne Weiterleitungen direkt auf die Ziel-URL.'},
   },
   alt_attributes:{
-    issue:{why:'Fehlende Alt-Texte sind ein Barrierefreiheitsproblem und verschlechtern die Auffindbarkeit in der Bildsuche.',action:'Ergänze für jedes Bild einen kurzen, beschreibenden Alt-Text im CMS.'},
+    issue:{why:'Fehlende Alt-Texte sind ein Barrierefreiheitsproblem und verschlechtern die Auffindbarkeit in Suchresultaten.',action:'Ergänze für jedes Bild einen kurzen, beschreibenden Alt-Text im CMS.'},
     warning:{why:'Einzelne fehlende Alt-Texte zählen negativ – besonders bei wichtigen Inhaltsbildern.',action:'Prüfe die aufgelisteten Bilder und ergänze die fehlenden Texte.'},
   },
   spelling:{
@@ -248,8 +252,8 @@ const AUFGABE_TEXTE={
     warning:{why:'Einzelne Treffer können auch Eigennamen oder Fachbegriffe sein – bitte manuell prüfen.',action:'Schau die Liste durch und korrigiere echte Fehler im CMS.'},
   },
   keywords:{
-    issue:{why:'Ohne relevante Begriffe kann Google die Seite keinem Suchbegriff zuordnen – sie wird kaum gefunden.',action:'Verwende die wichtigsten Keywords natürlich im Text, in der H1 und in der Meta-Description.'},
-    warning:{why:'Eine Keyword-Dichte ausserhalb von 0.5–3% verschlechtert das Ranking.',action:'Überarbeite den Text so, dass Keywords natürlich und in angemessener Häufigkeit vorkommen.'},
+    issue:{why:'Ohne relevante Begriffe kann die Seite in Suchresultaten keinem Suchbegriff zugeordnet werden – sie wird kaum gefunden.',action:'Verwende die wichtigsten Keywords natürlich im Text, in der H1 und in der Meta-Description.'},
+    warning:{why:'Eine Keyword-Dichte ausserhalb von 0.5–3% verschlechtert die Platzierung in Suchresultaten.',action:'Überarbeite den Text so, dass Keywords natürlich und in angemessener Häufigkeit vorkommen.'},
   },
   url_slug:{
     issue:{why:'Lange, unleserliche oder fehlerhafte URLs sind schlecht für Google und für Nutzer:innen.',action:'Kürze die URL, entferne Sonderzeichen und Umlaute und halte die Tiefe unter 5 Ebenen.'},
@@ -265,7 +269,17 @@ const AUFGABE_TEXTE={
   },
 };
 
-let currentWeights={};
+const CHECK_QUICKTIP={
+  meta:'Title und Meta-Description bestimmen wie die Seite in Suchresultaten erscheint.',
+  headings:'Eine klare Überschriftenstruktur hilft Suchmaschinen den Inhalt zu verstehen.',
+  broken_links:'Defekte Links schaden der Nutzererfahrung und der Bewertung in Suchresultaten.',
+  alt_attributes:'Alt-Texte machen Bilder für Suchmaschinen und Menschen mit Sehbehinderung lesbar.',
+  spelling:'Rechtschreibfehler wirken unprofessionell und können das Vertrauen der Besucher:innen senken.',
+  keywords:'Keywords helfen Suchmaschinen die Seite dem richtigen Suchbegriff zuzuordnen.',
+  url_slug:'Eine saubere URL ist leicht lesbar und verbessert die Auffindbarkeit in Suchresultaten.',
+  sea:'Prüft ob aktive Kampagnen-Tags auf der Seite vorhanden sind.',
+  mode_analysis:'Je nach Fokus der Seite sind andere Elemente Pflicht. Sind diese nicht vorhanden, werden sie hier aufgeführt.',
+};
 function initWeights(){Object.keys(MODES).forEach(k=>{currentWeights[k]=MODES[k].defaultW;});}
 
 function scoreToColor(s){
@@ -356,7 +370,7 @@ function addLog(text,type=''){
   const colors={done:'#1b5e20',error:'#a00',wait:'#7a5c00'};
   const el=document.createElement('div');
   el.style.cssText='color:'+(colors[type]||'#000')+';padding:1px 0;font-family:Verdana,sans-serif;font-size:12px;';
-  if(type==='wait')el.classList.add('pulsing');
+  if(type==='wait')el.style.color='#7a5c00';
   el.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>'+text;
   document.getElementById('protocol-lines').appendChild(el);
   return el;
@@ -401,7 +415,7 @@ async function startAudit(){
   }
 }
 function msgText(m){return typeof m==='object'?m.message:m;}
-function fixMsg(msg){return msg.replace(/Wird von Google abgeschnitten/gi,'Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten').replace(/\(dekorativ\?\)/gi,'');}
+function fixMsg(msg){return msg.replace(/ß/g,'ss').replace(/\(dekorativ\?\)/gi,'');}
 function linkify(text){return text.replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;word-break:break-all;">$1</a>');}
 function getMode(){const card=document.querySelector('#mode-cards .mode-card.selected');return card?card.querySelector('.mode-badge').textContent.trim():'';}
 function buildInfoBar(url,mode){return'<div class="audit-info-bar"><span class="info-label">Auditierte URL:</span><span class="info-value"><a href="'+url+'" target="_blank" style="color:#000;">'+url+'</a></span><span class="info-label">Seitentyp:</span><span class="info-value">'+mode+'</span></div>';}
@@ -434,9 +448,9 @@ function renderAnalyse(results,selected,url){
     if(isModeAnalysis){
       body+='<p style="color:#555;font-style:italic;border-bottom:1px solid #e0e0e0;padding-bottom:6px;">Je nach Fokus der Seite sind andere Elemente Pflicht. Sind diese nicht vorhanden, werden sie hier aufgeführt.</p>';
     }
-    (r.issues||[]).forEach(i=>{body+='<p style="color:#a00;">✗ '+linkify(fixMsg(msgText(i)))+'</p>';});
-    (r.warnings||[]).forEach(wn=>{body+='<p style="color:#7a5c00;">⚠ '+linkify(fixMsg(msgText(wn)))+'</p>';});
-    (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">✓ '+fixMsg(msgText(p))+'</p>';});
+    (r.issues||[]).forEach(i=>{body+='<p style="color:#a00;">🔴 '+linkify(fixMsg(msgText(i)))+'</p>';});
+    (r.warnings||[]).forEach(wn=>{body+='<p style="color:#7a5c00;">🟡 '+linkify(fixMsg(msgText(wn)))+'</p>';});
+    (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">🟢 '+fixMsg(msgText(p))+'</p>';});
     if(isModeAnalysis&&r.data&&r.data.schema_results&&r.data.schema_results.length){
       r.data.schema_results.forEach(s=>{body+='<p style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' Schema.org – '+s.label+': '+s.message+'</p>';});
     }
@@ -480,12 +494,21 @@ function renderAufgaben(results,selected,url){
     const body=document.createElement('div');
     body.className='kachel-body';body.style.padding='0';
 
+    // Quick-Tipp für alle Checks
+    const qt=CHECK_QUICKTIP[key]||'';
+    if(qt){
+      const tip=document.createElement('div');
+      tip.style.cssText='padding:10px 14px;color:#555;font-style:italic;border-bottom:1px solid #e0e0e0;font-size:12px;';
+      tip.textContent=qt;
+      body.appendChild(tip);
+    }
+
     if(!hasIssue&&!hasWarning){
       const sec=document.createElement('div');sec.className='aufgabe-section';
-      sec.innerHTML='<span style="color:#1b5e20;font-weight:700;">✓ Keine Probleme gefunden</span>';
+      sec.innerHTML='<span style="color:#1b5e20;font-weight:700;">🟢 Keine Probleme gefunden</span>';
       body.appendChild(sec);
     } else {
-      [[issues,'issue','#a00','✗'],[warnings,'warning','#7a5c00','⚠']].forEach(([msgs,type,col,icon])=>{
+      [[issues,'issue','#a00','🔴'],[warnings,'warning','#7a5c00','🟡']].forEach(([msgs,type,col,icon])=>{
         if(!msgs.length)return;
         const txEntry=txKey?txKey[type]:null;
         const sec=document.createElement('div');sec.className='aufgabe-section';

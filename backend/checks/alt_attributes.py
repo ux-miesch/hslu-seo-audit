@@ -4,38 +4,19 @@ from whitelist import ALT_ATTRIBUTE_FILENAME_WHITELIST, ALT_ATTRIBUTE_EXTENSION_
 
 
 def _is_whitelisted(src: str) -> bool:
-    """Prüft ob Dateiname oder Dateierweiterung in der Whitelist steht."""
     clean = src.split("?")[0].split("#")[0]
     filename = clean.split("/")[-1].lower()
-    # Erweiterung prüfen
     for ext in ALT_ATTRIBUTE_EXTENSION_WHITELIST:
         if filename.endswith(ext.lower()):
             return True
-    # Einzelne Dateinamen prüfen
     return filename in [f.lower() for f in ALT_ATTRIBUTE_FILENAME_WHITELIST]
 
 
 def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
-    """
-    Prüft Alt-Attribute und Zugänglichkeit von Medien:
-    - <img> ohne alt-Attribut
-    - <img> mit leerem alt (dekorativ – OK, aber prüfen)
-    - <img> mit zu kurzem oder nichtssagendem alt
-    - <video> ohne aria-label oder title
-    - <iframe> (YouTube etc.) ohne title
-    - PDF-Links ohne beschreibenden Ankertext
-
-    Whitelisted Dateinamen (siehe whitelist.py) werden komplett ignoriert.
-    """
     issues = []
     warnings = []
     passed = []
-    data = {
-        "images": [],
-        "videos": [],
-        "iframes": [],
-        "pdfs": [],
-    }
+    data = {"images": [], "videos": [], "iframes": [], "pdfs": []}
 
     # ── BILDER ────────────────────────────────────────────────────────────
     images = soup.find_all("img")
@@ -43,14 +24,10 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
         src = img.get("src", "")
         alt = img.get("alt")
         absolute_src = urljoin(base_url, src) if src else ""
-
-        # Whitelisted Dateien komplett überspringen
         if _is_whitelisted(absolute_src or src):
             continue
-
         img_data = {"src": absolute_src, "alt": alt}
         data["images"].append(img_data)
-
         if alt is None:
             issues.append({
                 "code": "IMG_MISSING_ALT",
@@ -59,8 +36,6 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": absolute_src,
             })
         elif alt.strip() == "":
-            # Leeres alt = dekoratives Bild – wenn whitelisted, komplett ignorieren
-            # (Whitelist greift auch hier, nicht nur bei alt=None)
             pass
         elif len(alt.strip()) < 5:
             warnings.append({
@@ -79,10 +54,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "alt": alt,
             })
         else:
-            passed.append({
-                "code": "IMG_ALT_OK",
-                "message": f"Alt-Text vorhanden: \"{alt[:60]}\"",
-            })
+            passed.append({"code": "IMG_ALT_OK", "message": f"Alt-Text vorhanden: \"{alt[:60]}\""})
 
     if not images:
         passed.append({"code": "NO_IMAGES", "message": "Keine Bilder auf der Seite gefunden."})
@@ -94,10 +66,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
         aria_label = video.get("aria-label", "")
         title = video.get("title", "")
         absolute_src = urljoin(base_url, src) if src else ""
-
-        video_data = {"src": absolute_src, "aria_label": aria_label, "title": title}
-        data["videos"].append(video_data)
-
+        data["videos"].append({"src": absolute_src, "aria_label": aria_label, "title": title})
         if not aria_label and not title:
             issues.append({
                 "code": "VIDEO_MISSING_LABEL",
@@ -106,27 +75,18 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": absolute_src,
             })
         else:
-            label = aria_label or title
-            passed.append({
-                "code": "VIDEO_LABEL_OK",
-                "message": f"Video mit Label: \"{label[:60]}\"",
-            })
+            passed.append({"code": "VIDEO_LABEL_OK", "message": f"Video mit Label: \"{(aria_label or title)[:60]}\""})
 
     # ── IFRAMES ───────────────────────────────────────────────────────────
     IGNORE_IFRAME_DOMAINS = {"googletagmanager.com", "google.com/recaptcha", "doubleclick.net"}
-
     iframes = soup.find_all("iframe")
     for iframe in iframes:
         src = iframe.get("src", "")
         title = iframe.get("title", "")
         aria_label = iframe.get("aria-label", "")
-
         if any(domain in src for domain in IGNORE_IFRAME_DOMAINS):
             continue
-
-        iframe_data = {"src": src, "title": title}
-        data["iframes"].append(iframe_data)
-
+        data["iframes"].append({"src": src, "title": title})
         if not title and not aria_label:
             issues.append({
                 "code": "IFRAME_MISSING_TITLE",
@@ -135,28 +95,19 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": src,
             })
         else:
-            label = title or aria_label
-            passed.append({
-                "code": "IFRAME_TITLE_OK",
-                "message": f"iframe mit title: \"{label[:60]}\"",
-            })
+            passed.append({"code": "IFRAME_TITLE_OK", "message": f"iframe mit title: \"{(title or aria_label)[:60]}\""})
 
     # ── PDF-LINKS ─────────────────────────────────────────────────────────
     pdf_links = [
         a for a in soup.find_all("a", href=True)
-        if a["href"].lower().endswith(".pdf")
-        or "pdf" in a["href"].lower()
+        if a["href"].lower().endswith(".pdf") or "pdf" in a["href"].lower()
     ]
-
     for a in pdf_links:
         href = a["href"]
         anchor_text = a.get_text(strip=True)
         absolute_href = urljoin(base_url, href)
         aria_label = a.get("aria-label", "")
-
-        pdf_data = {"href": absolute_href, "anchor_text": anchor_text, "aria_label": aria_label}
-        data["pdfs"].append(pdf_data)
-
+        data["pdfs"].append({"href": absolute_href, "anchor_text": anchor_text, "aria_label": aria_label})
         if not anchor_text and not aria_label:
             issues.append({
                 "code": "PDF_MISSING_TEXT",
@@ -172,29 +123,18 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "href": absolute_href,
             })
         else:
-            passed.append({
-                "code": "PDF_TEXT_OK",
-                "message": f"PDF-Link mit beschreibendem Text: \"{anchor_text[:60]}\"",
-            })
+            passed.append({"code": "PDF_TEXT_OK", "message": f"PDF-Link mit beschreibendem Text: \"{anchor_text[:60]}\""})
 
-    # ── ZUSAMMENFASSUNG ────────────────────────────────────────────────────
     data["summary"] = {
         "total_images": len(images),
         "total_videos": len(videos),
         "total_iframes": len(iframes),
         "total_pdfs": len(pdf_links),
     }
-
     return _build_result(issues, warnings, passed, data)
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
     total = len(issues) + len(warnings) + len(passed)
     score = round((len(passed) / total) * 100) if total > 0 else 0
-    return {
-        "score": score,
-        "issues": issues,
-        "warnings": warnings,
-        "passed": passed,
-        "data": data,
-    }
+    return {"score": score, "issues": issues, "warnings": warnings, "passed": passed, "data": data}

@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
 
-# Empfohlene Zeichenlängen (Google-Richtlinien)
+# Empfohlene Zeichenlängen (Richtlinien für Suchausgaben)
 TITLE_MIN = 30
 TITLE_MAX = 60
 DESCRIPTION_MIN = 70
@@ -48,7 +48,7 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
         elif title_len > TITLE_MAX:
             warnings.append({
                 "code": "TITLE_TOO_LONG",
-                "message": f"Title zu lang ({title_len} Zeichen, Maximum: {TITLE_MAX}). Wird in Google abgeschnitten.",
+                "message": f"Title zu lang ({title_len} Zeichen, Maximum: {TITLE_MAX}). Kann bei Suchresultaten abgeschnitten werden.",
                 "severity": "warning",
                 "value": title_text,
             })
@@ -79,7 +79,7 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
         elif desc_len > DESCRIPTION_MAX:
             warnings.append({
                 "code": "DESCRIPTION_TOO_LONG",
-                "message": f"Meta-Description zu lang ({desc_len} Zeichen, Maximum: {DESCRIPTION_MAX}).",
+                "message": f"Meta-Description zu lang ({desc_len} Zeichen, Maximum: {DESCRIPTION_MAX}). Kann bei Suchresultaten abgeschnitten werden.",
                 "severity": "warning",
                 "value": desc_text,
             })
@@ -94,7 +94,7 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
         if "noindex" in robots_content:
             issues.append({
                 "code": "ROBOTS_NOINDEX",
-                "message": f"Seite ist auf noindex gesetzt: '{robots_content}'. Google indexiert diese Seite nicht.",
+                "message": f"Seite ist auf noindex gesetzt: '{robots_content}'. Die Seite wird in den Suchresultaten nicht angezeigt.",
                 "severity": "critical",
             })
         elif "nofollow" in robots_content:
@@ -107,7 +107,6 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
             passed.append({"code": "ROBOTS_OK", "message": f"Robots-Direktive: {robots_content}"})
     else:
         data["robots"] = None
-        # kein robots-tag = Standard (index, follow) – OK
         passed.append({"code": "ROBOTS_DEFAULT", "message": "Kein robots-Tag → Standard (index, follow)."})
 
     # ── CANONICAL ──────────────────────────────────────────────────────────
@@ -122,7 +121,6 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
     else:
         canonical_href = canonical_tag.get("href", "")
         data["canonical"] = canonical_href
-        # Prüfen ob canonical auf sich selbst zeigt
         parsed_url = urlparse(url)
         parsed_canonical = urlparse(canonical_href)
         if parsed_url.netloc and parsed_canonical.netloc and parsed_url.netloc != parsed_canonical.netloc:
