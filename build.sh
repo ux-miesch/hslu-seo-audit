@@ -8,9 +8,9 @@ echo "→ Build-Version: $VERSION"
 # Version in index.html ersetzen
 sed -i '' "s/const VERSION='[^']*'/const VERSION='$VERSION'/" index.html
 
-# Git push
-git add index.html
+# Git push – lokaler Stand hat immer Vorrang
+git add -A
 git commit -m "build: $VERSION"
-git push
+git push --force-with-lease
 
 echo "✓ Fertig – Version $VERSION deployed."
