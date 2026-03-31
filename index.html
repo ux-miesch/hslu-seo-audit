@@ -219,7 +219,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260331-0947';
+const VERSION='260330-1049';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/';
 
@@ -568,8 +568,19 @@ function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
   P.prototype.draw=function(){ctx.save();ctx.globalAlpha=Math.max(0,this.alpha);ctx.fillStyle=this.color;ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();ctx.restore();};
   function animate(){running=true;ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.alpha>0);particles.forEach(p=>{p.update();p.draw();});if(particles.length>0){requestAnimationFrame(animate);}else{running=false;}}
   window.launchKonfetti=function(){
-    const cx=window.innerWidth/2,cy=window.innerHeight/2;
-    for(let i=0;i<150;i++){const c=COLORS[Math.floor(Math.random()*COLORS.length)];particles.push(new P(cx+(Math.random()-0.5)*40,cy,c));}
+    const loader=document.querySelector('.hslu-loader');
+    const rect=loader?loader.getBoundingClientRect():{top:200,left:window.innerWidth/2,width:0};
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height/2;
+    for(let i=0;i<150;i++){
+      const c=COLORS[Math.floor(Math.random()*COLORS.length)];
+      const p=new P(cx+(Math.random()-0.5)*60,cy,c);
+      p.vx=(Math.random()-0.5)*16;
+      p.vy=Math.random()*-4+2;
+      p.gravity=0.25;
+      p.alpha=1;
+      particles.push(p);
+    }
     if(!running)animate();
   };
 })();
