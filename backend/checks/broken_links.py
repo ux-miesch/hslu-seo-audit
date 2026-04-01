@@ -32,7 +32,7 @@ OK_CODES = set(range(200, 400))
 BOT_BLOCKED_CODES = {403, 999, 429}
 
 BOT_BLOCKED_DOMAINS = set(LINK_DOMAIN_WHITELIST) | {
-    "twitter.com", "x.com", "academia.edu"
+    "twitter.com", "x.com", "academia.edu", "youtube.com", "youtu.be"
 }
 
 CONSENT_INDICATORS = [
