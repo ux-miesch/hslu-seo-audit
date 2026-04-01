@@ -12,6 +12,15 @@ IGNORE_TAGS = {
 MIN_TEXT_LENGTH = 50
 MAX_ERRORS = 50
 
+# Wörter die nicht als Fehler gewertet werden sollen
+SPELLING_WHITELIST = {
+    # HSLU-spezifische Abkürzungen und Begriffe
+    "ekkj", "mas", "cas", "das", "ba", "ifz", "study", "ikm", "ibr",
+    "sa", "pibs", "dba", "sas", "mba", "sebwk",
+    # Englische Begriffe die auf deutschsprachigen Seiten vorkommen
+    "the", "it", "hours", "and", "lowers", "detection",
+}
+
 
 def extract_main_text(soup: BeautifulSoup) -> list[dict]:
     blocks = []
@@ -82,7 +91,7 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
     all_errors = []
     error_count = 0
 
-    with httpx.Client(timeout=15) as client:
+    with httpx.Client(timeout=30) as client:
         for block in blocks:
             if error_count >= MAX_ERRORS:
                 break
@@ -115,6 +124,11 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
                 offset = match["offset"]
                 length = match["length"]
                 error_text = block["text"][offset:offset + length]
+
+                # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
+                if error_text.lower() in SPELLING_WHITELIST:
+                    continue
+
                 suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
                 severity = "critical" if category == "TYPOS" else "warning"
 
