@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import httpx
+import unicodedata
 from typing import Optional
 
 LANGUAGETOOL_API = "https://api.languagetool.org/v2/check"
@@ -36,7 +37,7 @@ def extract_main_text(soup: BeautifulSoup) -> list[dict]:
     for tag in search_area.find_all(["p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "td", "th", "blockquote"]):
         if any(parent.name in IGNORE_TAGS for parent in tag.parents):
             continue
-        text = tag.get_text(separator=" ", strip=True)
+        text = unicodedata.normalize("NFC", tag.get_text(separator=" ", strip=True))
         if len(text) < MIN_TEXT_LENGTH:
             continue
         if tag.get("aria-hidden") == "true":

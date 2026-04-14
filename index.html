@@ -227,7 +227,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260414-1746';
+const VERSION='260414-1813';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -304,6 +304,8 @@ const CHECK_QUICKTIP={
 };
 
 let currentWeights={};
+let currentStep=1;
+let auditController=null;
 function initWeights(){const keys=Object.keys(MODES);keys.forEach((k,i)=>{currentWeights[k]=i===0?100:0;});}
 
 function scoreToColor(s){
@@ -316,6 +318,7 @@ function scoreToColor(s){
 function showStep(s){
   document.querySelectorAll('.step').forEach(el=>el.classList.remove('active'));
   document.getElementById(s==='results'?'step-results':'step'+s).classList.add('active');
+  currentStep=s;
   window.scrollTo(0,0);
 }
 function navToStep2(){
@@ -412,12 +415,13 @@ async function startAudit(){
   if(!selected.length){alert('Bitte mindestens einen Check auswählen.');return;}
   const keywords=document.getElementById('audit-keywords').value.split(',').map(k=>k.trim()).filter(k=>k);
   const language=document.getElementById('audit-lang').value;
+  auditController=new AbortController();
   showStep(3);
   addLog('→ Audit gestartet für: <strong>'+url+'</strong>');
   addLog('→ Checks: '+selected.map(k=>CHECKS_META[k]?CHECKS_META[k].label:k).join(', '));
   const waitLine=addLog('Checks laufen, bitte warten...','wait');
   try{
-    const response=await fetch(API_URL+'/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,keywords,language,mode_weights:currentWeights,run_sea:selected.includes('sea')})});
+    const response=await fetch(API_URL+'/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,keywords,language,mode_weights:currentWeights,run_sea:selected.includes('sea')}),signal:auditController.signal});
     if(!response.ok){const err=await response.json();throw new Error(err.detail||'API-Fehler: '+response.status);}
     const data=await response.json();
     waitLine.classList.remove('pulsing');waitLine.style.color='#1b5e20';
@@ -430,14 +434,32 @@ async function startAudit(){
     renderAufgaben(results,selected,url);
     setTimeout(()=>{showStep('results');launchKonfetti();},800);
   }catch(err){
+    if(err.name==='AbortError'){
+      waitLine.classList.remove('pulsing');waitLine.style.color='#7a5c00';
+      waitLine.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>✗ Audit abgebrochen';
+      addLog('Audit wurde abgebrochen.','error');
+      showStep(2);return;
+    }
     waitLine.classList.remove('pulsing');waitLine.style.color='#a00';
     waitLine.innerHTML='<span style="color:#aaa;margin-right:8px;">'+ts()+'</span>✗ Fehler beim Abrufen';
     addLog('✗ '+err.message,'error');
     document.getElementById('error-box').style.display='block';
     document.getElementById('error-box').innerHTML='<strong>Fehler:</strong> '+err.message+'<br><small>Ist das Backend gestartet?</small>';
     showStep(2);
-  }
+  }finally{auditController=null;}
 }
+document.addEventListener('keydown',function(e){
+  const tag=document.activeElement?document.activeElement.tagName:'';
+  const isTextarea=tag==='TEXTAREA';
+  if(e.key==='Enter'&&!isTextarea){
+    if(currentStep===1){e.preventDefault();navToStep2();}
+    else if(currentStep===2){e.preventDefault();startAudit();}
+  }
+  if(e.key==='Escape'){
+    if(currentStep===3&&auditController){auditController.abort();}
+    else if(document.getElementById('reset-modal').classList.contains('active')){closeResetModal();}
+  }
+});
 function msgText(m){return typeof m==='object'?m.message:m;}
 function fixMsg(msg){return msg.replace(/ß/g,'ss').replace(/\(dekorativ\?\)/gi,'');}
 function linkify(text){return text.replace(/(https?:\/\/[^\s<"]+)/g,'<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;word-break:break-all;">$1</a>');}
@@ -522,8 +544,8 @@ function renderAufgaben(results,selected,url){
     const qt=CHECK_QUICKTIP[key]||'';
     if(qt){
       const tip=document.createElement('div');
-      tip.style.cssText='padding:10px 14px;color:#555;font-style:italic;border-bottom:1px solid #e0e0e0;font-size:12px;';
-      tip.textContent=qt;
+      tip.style.cssText='padding:10px 14px;background:#fff;border-bottom:1px solid #e0e0e0;font-size:12px;color:#000;line-height:1.6;';
+      tip.innerHTML='<span style="font-weight:700;margin-right:4px;">Warum wichtig:</span>'+qt;
       body.appendChild(tip);
     }
 
