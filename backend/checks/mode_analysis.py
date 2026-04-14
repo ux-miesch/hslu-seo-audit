@@ -306,6 +306,79 @@ def check_deadline(soup, base_url, text):
     return False, "Kein Anmeldeschluss gefunden"
 
 
+def check_trust_signals(soup, base_url, text):
+    keywords = [
+        "akkreditiert", "akkreditierung", "zertifiziert", "ausgezeichnet",
+        "referenz", "referenzen", "bewertung", "erfahrungsbericht",
+        "testimonial", "empfehlung", "partner", "mitglied",
+        "accredited", "certified", "award", "review", "testimonial",
+    ]
+    found = [kw for kw in keywords if kw in text]
+    if found:
+        return True, f"Trust-Signale erkannt: {', '.join(found[:3])}"
+    has_ratings = bool(soup.find(class_=re.compile(r"rating|review|testimonial|trust|award", re.I)))
+    if has_ratings:
+        return True, "Trust-Signale erkannt (Klassen-Pattern)"
+    return False, "Keine Trust-Signale gefunden"
+
+
+def check_fact_list(soup, base_url, text):
+    if soup.find("table"):
+        return True, "Fact-Liste als Tabelle vorhanden"
+    if soup.find("dl"):
+        return True, "Fact-Liste als Definition-Liste vorhanden"
+    info_box = soup.find(class_=re.compile(r"fact|info.?box|keydata|kennzahl|overview|steckbrief", re.I))
+    if info_box:
+        return True, "Fact-/Info-Box erkannt"
+    return False, "Keine Fact-Liste oder strukturierte Übersicht gefunden"
+
+
+def check_site_navigation(soup, base_url, text):
+    if soup.find("nav"):
+        return True, "Site-Navigation vorhanden (<nav>)"
+    breadcrumb = soup.find(class_=re.compile(r"breadcrumb|breadcrumbs|bread-crumb", re.I))
+    if breadcrumb:
+        return True, "Breadcrumb-Navigation erkannt"
+    side_nav = soup.find(class_=re.compile(r"sidebar|side-nav|sidenav|sub-nav|subnav|local-nav", re.I))
+    if side_nav:
+        return True, "Seitennavigation erkannt"
+    return False, "Keine Site-Navigation erkennbar"
+
+
+def check_person_with_contact(soup, base_url, text):
+    person_ok, _ = check_person(soup, base_url, text)
+    contact_ok, _ = check_contact(soup, base_url, text)
+    if person_ok and contact_ok:
+        return True, "Kontaktperson mit Kontaktdaten vorhanden"
+    if person_ok:
+        return False, "Ansprechperson erkannt, aber keine Kontaktdaten gefunden"
+    if contact_ok:
+        return False, "Kontaktdaten vorhanden, aber keine Ansprechperson erkennbar"
+    return False, "Keine Kontaktperson und keine Kontaktdaten gefunden"
+
+
+def check_infoveranstaltung(soup, base_url, text):
+    keywords = [
+        "infoveranstaltung", "infoabend", "informationsabend", "infoanlass",
+        "tag der offenen tür", "open house", "open day",
+        "schnuppertag", "orientierungsabend", "beratungsgespräch",
+    ]
+    found = [kw for kw in keywords if kw in text]
+    if found:
+        return True, f"Infoveranstaltung erkannt: {', '.join(found[:2])}"
+    return False, "Keine Infoveranstaltung oder Infoabend erwähnt"
+
+
+def check_cas_mas_sas(soup, base_url, text):
+    patterns = [r"\bcas\b", r"\bmas\b", r"\bsas\b", r"\bdas\b"]
+    raw = soup.get_text(" ", strip=True)
+    for pat in patterns:
+        if re.search(pat, raw, re.IGNORECASE):
+            m = re.search(pat, raw, re.IGNORECASE)
+            return True, f"Programmzuordnung erkannt: {m.group().upper()}"
+    return False, "Keine Zuordnung zu CAS / MAS / SAS erkennbar"
+
+
 def check_schema_article(soup, base_url, text):
     types = [s.get("@type", "") for s in get_schema(soup)]
     found = any(t in ["Article", "BlogPosting", "NewsArticle"] for t in types)
@@ -352,6 +425,12 @@ FN_MAP = {
     "check_schema_org": check_schema_org,
     "check_schema_course": check_schema_course,
     "check_schema_event": check_schema_event,
+    "check_trust_signals": check_trust_signals,
+    "check_fact_list": check_fact_list,
+    "check_site_navigation": check_site_navigation,
+    "check_person_with_contact": check_person_with_contact,
+    "check_infoveranstaltung": check_infoveranstaltung,
+    "check_cas_mas_sas": check_cas_mas_sas,
 }
 
 
