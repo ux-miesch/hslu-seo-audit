@@ -18,6 +18,9 @@ SPELLING_WHITELIST = {
     # HSLU-spezifische Abkürzungen und Begriffe
     "ekkj", "mas", "cas", "das", "ba", "ifz", "study", "ikm", "ibr",
     "sa", "pibs", "dba", "sas", "mba", "sebwk",
+    "hslu", "sdg", "isa", "isa-modul", "isa-modulen",
+    "bachelor-studiengang", "bachelor-studiengängen",
+    "master-studiengang", "master-studiengängen",
     # Englische Begriffe die auf deutschsprachigen Seiten vorkommen
     "the", "it", "hours", "and", "lowers", "detection",
 }
