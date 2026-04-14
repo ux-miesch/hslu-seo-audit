@@ -13,7 +13,7 @@ HEADING_DUPLICATES_WHITELIST = [
 # ── URL-Pfad Whitelist ────────────────────────────────────────────────────
 # URLs die einen dieser Pfad-Bestandteile enthalten werden beim Link-Check ignoriert.
 URL_PATH_WHITELIST = [
-    "/personensuche/person-detail-site/",
+    "/personensuche/person-detail-site",
     "/info-veranstaltungen/",
 ]
 

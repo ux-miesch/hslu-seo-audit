@@ -21,7 +21,12 @@ SPELLING_WHITELIST = {
     "hslu", "sdg", "isa", "isa-modul", "isa-modulen",
     "bachelor-studiengang", "bachelor-studiengängen",
     "master-studiengang", "master-studiengängen",
-    # Englische Begriffe die auf deutschsprachigen Seiten vorkommen
+    "hslu-studierende", "minor", "major", "gastdozierende",
+    "bsc", "msc", "zum",
+    # Englische und gemischte Begriffe
+    "know-how", "nonprofit management", "public", "tourism",
+    "content management",
+    # Allgemeine Begriffe
     "the", "it", "hours", "and", "lowers", "detection",
 }
 

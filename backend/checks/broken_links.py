@@ -122,7 +122,7 @@ async def check_single_url(
                 "error": None,
             }
         except httpx.TimeoutException:
-            return {"url": url, "status_code": None, "ok": False, "bot_blocked": False, "consent_blocked": False, "error": "timeout"}
+            return {"url": url, "status_code": None, "ok": True, "bot_blocked": True, "consent_blocked": False, "final_url": url, "redirected": False, "error": "timeout"}
         except httpx.ConnectError:
             return {"url": url, "status_code": None, "ok": False, "bot_blocked": False, "consent_blocked": False, "error": "nicht erreichbar"}
         except Exception as e:
