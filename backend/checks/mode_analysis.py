@@ -401,10 +401,10 @@ def check_schema_event(soup, base_url, text):
 
 
 MODE_LABELS = {
-    "content":    "Content & Autorität",
+    "content":    "Content-Seite",
     "conversion": "Ausbildungs-Seite",
     "course":     "Weiterbildungs-Seite",
-    "event":      "Event",
+    "event":      "Event-Seite",
 }
 
 # ── Dispatcher ────────────────────────────────────────────────────────────
