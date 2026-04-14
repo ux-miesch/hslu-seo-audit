@@ -219,7 +219,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260414-1319';
+const VERSION='260414-1424';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -522,6 +522,18 @@ function renderAufgaben(results,selected,url){
     if(!hasIssue&&!hasWarning){
       const sec=document.createElement('div');sec.className='aufgabe-section';
       sec.innerHTML='<span style="color:#1b5e20;font-weight:700;">🟢 Keine Probleme gefunden</span>';
+      body.appendChild(sec);
+    } else if(key==='spelling'){
+      // Spelling: issues und warnings als eine gemeinsame Liste
+      const allMsgs=[...issues,...warnings];
+      const sec=document.createElement('div');sec.className='aufgabe-section';
+      const ul=document.createElement('ul');ul.className='issue-list';
+      allMsgs.map(m=>fixMsg(msgText(m))).forEach(m=>{const li=document.createElement('li');li.style.color='#7a5c00';li.innerHTML='🟡 '+m;ul.appendChild(li);});
+      sec.appendChild(ul);
+      const txEntry=txKey?txKey['warning']:null;
+      if(txEntry){const action=document.createElement('div');action.className='aufgabe-action';action.innerHTML='<strong>Was tun:</strong> '+txEntry.action;sec.appendChild(action);}
+      const cta=document.createElement('a');cta.className='aufgabe-cta';cta.href=ANLEITUNG_URLS[key]||ANLEITUNG_URL;cta.target='_blank';cta.textContent='→ Zur Anleitung';
+      sec.appendChild(cta);
       body.appendChild(sec);
     } else {
       [[issues,'issue','#a00','🔴'],[warnings,'warning','#7a5c00','🟡']].forEach(([msgs,type,col,icon])=>{

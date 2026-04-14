@@ -10,6 +10,13 @@ HEADING_DUPLICATES_WHITELIST = [
     "team", "partner", "weiteres", "informationen", "hinweise",
 ]
 
+# ── URL-Pfad Whitelist ────────────────────────────────────────────────────
+# URLs die einen dieser Pfad-Bestandteile enthalten werden beim Link-Check ignoriert.
+URL_PATH_WHITELIST = [
+    "/personensuche/person-detail-site/",
+    "/info-veranstaltungen/",
+]
+
 # ── URL-Parameter Whitelist ────────────────────────────────────────────────
 # URLs die einen dieser Parameter enthalten werden beim Link-Check ignoriert.
 URL_PARAM_WHITELIST = [

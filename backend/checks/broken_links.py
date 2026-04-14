@@ -2,7 +2,7 @@ import asyncio
 import httpx
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from whitelist import LINK_DOMAIN_WHITELIST, URL_PARAM_WHITELIST
+from whitelist import LINK_DOMAIN_WHITELIST, URL_PARAM_WHITELIST, URL_PATH_WHITELIST
 
 HEADERS = {
     "User-Agent": (
@@ -62,6 +62,11 @@ def has_url_param_whitelisted(url: str) -> bool:
     return any(p.lower() in url_lower for p in URL_PARAM_WHITELIST)
 
 
+def has_url_path_whitelisted(url: str) -> bool:
+    """Prüft ob die URL einen whitegelisteten Pfad enthält."""
+    return any(p in url for p in URL_PATH_WHITELIST)
+
+
 def is_consent_blocked(url: str, response: httpx.Response) -> bool:
     final_url = str(response.url).lower()
     if any(indicator in final_url for indicator in CONSENT_INDICATORS):
@@ -93,6 +98,12 @@ async def check_single_url(
                 "url": url, "status_code": None, "ok": True,
                 "bot_blocked": False, "consent_blocked": False,
                 "final_url": url, "redirected": False, "error": "param_whitelisted",
+            }
+        if has_url_path_whitelisted(url):
+            return {
+                "url": url, "status_code": None, "ok": True,
+                "bot_blocked": False, "consent_blocked": False,
+                "final_url": url, "redirected": False, "error": "path_whitelisted",
             }
         try:
             response = await client.get(url, timeout=TIMEOUT)

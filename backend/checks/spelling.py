@@ -130,7 +130,11 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
                     continue
 
                 suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
-                severity = "critical" if category == "TYPOS" else "warning"
+                message_lower = match.get("message", "").lower()
+                if "möglich" in message_lower or "möglicher" in message_lower:
+                    severity = "warning"
+                else:
+                    severity = "critical" if category == "TYPOS" else "warning"
 
                 all_errors.append({
                     "text": error_text,
