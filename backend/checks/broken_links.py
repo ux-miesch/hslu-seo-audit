@@ -249,8 +249,15 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    score = 100
+    for entry in issues:
+        if entry.get("code") == "BROKEN_LINK":
+            # internal links (severity=critical) → -20, external → -10
+            score -= 20 if entry.get("severity") == "critical" else 10
+    for entry in warnings:
+        if entry.get("code") == "REDIRECT":
+            score -= 5
+    score = max(0, score)
     return {
         "score": score,
         "issues": issues,

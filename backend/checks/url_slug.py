@@ -180,6 +180,15 @@ def check_url_slug(url: str) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    _DEDUCTIONS = {
+        "URL_NOT_HTTPS": 20,
+        "URL_TOO_LONG": 10, "URL_SPECIAL_CHARS": 10, "URL_UPPERCASE": 10,
+        "URL_UNDERSCORES": 5, "URL_TOO_DEEP": 5, "SLUG_TOO_LONG": 5,
+        "URL_DOUBLE_SLASH": 5, "URL_FILE_EXTENSION": 5,
+        "URL_TRACKING_PARAMS": 5, "URL_HAS_PARAMS": 5,
+    }
+    score = 100
+    for entry in issues + warnings:
+        score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
+    score = max(0, score)
     return {"score": score, "issues": issues, "warnings": warnings, "passed": passed, "data": data}

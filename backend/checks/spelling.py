@@ -181,8 +181,11 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    score = 100
+    for entry in issues + warnings:
+        if entry.get("code") == "SPELLING_ERROR":
+            score -= 10 if entry.get("severity") == "critical" else 5
+    score = max(0, score)
     return {
         "score": score,
         "issues": issues,

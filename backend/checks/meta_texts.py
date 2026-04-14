@@ -162,8 +162,16 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
     ]
 
     # ── SCORE ──────────────────────────────────────────────────────────────
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    _DEDUCTIONS = {
+        "TITLE_MISSING": 20, "DESCRIPTION_MISSING": 20,
+        "TITLE_TOO_SHORT": 10, "TITLE_TOO_LONG": 10,
+        "DESCRIPTION_TOO_SHORT": 10, "DESCRIPTION_TOO_LONG": 10,
+        "CANONICAL_MISSING": 5, "OG_INCOMPLETE": 5,
+    }
+    score = 100
+    for entry in issues + warnings:
+        score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
+    score = max(0, score)
 
     return {
         "score": score,

@@ -314,8 +314,19 @@ def check_keywords(soup: BeautifulSoup, keywords: list[str] = None) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    _DEDUCTIONS = {
+        "KEYWORD_NOT_FOUND": 20,
+        "KEYWORD_DENSITY_LOW": 10,
+        "LOW_VOCABULARY_RICHNESS": 10,
+        "KEYWORD_NOT_IN_TITLE": 5,
+        "KEYWORD_NOT_IN_H1": 5,
+        "KEYWORD_NOT_IN_META": 5,
+        "HEADINGS_LOW_VARIETY": 5,
+    }
+    score = 100
+    for entry in issues + warnings:
+        score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
+    score = max(0, score)
     return {
         "score": score,
         "issues": issues,

@@ -146,8 +146,15 @@ def check_headings(soup: BeautifulSoup) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    _DEDUCTIONS = {
+        "NO_HEADINGS": 20, "H1_MISSING": 20, "H2_MISSING": 20,
+        "H1_MULTIPLE": 10, "H3_WITHOUT_H2": 10, "HEADING_EMPTY": 10, "H1_EMPTY": 10,
+        "HEADING_DUPLICATE": 5, "HEADING_TOO_LONG": 5,
+    }
+    score = 100
+    for entry in issues + warnings:
+        score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
+    score = max(0, score)
     return {
         "score": score,
         "issues": issues,

@@ -135,6 +135,14 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
 
 
 def _build_result(issues, warnings, passed, data) -> dict:
-    total = len(issues) + len(warnings) + len(passed)
-    score = round((len(passed) / total) * 100) if total > 0 else 0
+    _DEDUCTIONS = {
+        "IMG_MISSING_ALT": 20,
+        "IMG_ALT_TOO_SHORT": 10, "IMG_ALT_GENERIC": 10,
+        "VIDEO_MISSING_LABEL": 10,
+        "IFRAME_MISSING_TITLE": 5, "PDF_MISSING_TEXT": 5, "PDF_GENERIC_TEXT": 5,
+    }
+    score = 100
+    for entry in issues + warnings:
+        score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
+    score = max(0, score)
     return {"score": score, "issues": issues, "warnings": warnings, "passed": passed, "data": data}
