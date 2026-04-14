@@ -35,7 +35,6 @@ STOPWORDS = STOPWORDS_DE | STOPWORDS_EN
 
 # Schwellenwerte
 KEYWORD_DENSITY_MIN = 0.5   # % – Keyword zu selten
-KEYWORD_DENSITY_MAX = 3.0   # % – Keyword zu häufig (Keyword-Stuffing)
 MIN_WORD_LENGTH = 3
 MIN_VOCABULARY_RICHNESS = 0.3  # Type-Token-Ratio
 
@@ -63,16 +62,16 @@ def extract_text_content(soup: BeautifulSoup) -> dict:
         if text:
             headings_text.append({"level": tag.name, "text": text})
 
-    # Body-Text (Hauptinhalt)
+    # Body-Text (Hauptinhalt) – auf Kopie arbeiten damit das originale Soup nicht verändert wird
     body_text = ""
+    soup_copy = BeautifulSoup(str(soup), "html.parser")
     main_area = (
-        soup.find("main")
-        or soup.find("article")
-        or soup.select_one("[role='main']")
-        or soup.find("body")
+        soup_copy.find("main")
+        or soup_copy.find("article")
+        or soup_copy.select_one("[role='main']")
+        or soup_copy.find("body")
     )
     if main_area:
-        # Scripts/Styles entfernen
         for tag in main_area.find_all(["script", "style", "nav", "footer"]):
             tag.decompose()
         body_text = main_area.get_text(separator=" ", strip=True)
@@ -215,20 +214,6 @@ def check_keywords(soup: BeautifulSoup, keywords: list[str] = None) -> dict:
             "message": f"Gute semantische Vielfalt (TTR: {vocab['ttr']}, {vocab['unique']} einzigartige Wörter).",
         })
 
-    # ── KEYWORD-DICHTE DER TOP-KEYWORDS ───────────────────────────────────
-    for kw_data in top_keywords[:5]:  # Top 5 analysieren
-        density = kw_data["density"]
-        word = kw_data["word"]
-
-        if density > KEYWORD_DENSITY_MAX:
-            warnings.append({
-                "code": "KEYWORD_STUFFING",
-                "message": f"Mögliches Keyword-Stuffing: \"{word}\" ({density}% Dichte, Max: {KEYWORD_DENSITY_MAX}%)",
-                "severity": "warning",
-                "word": word,
-                "density": density,
-            })
-
     # ── BENUTZERDEFINIERTE KEYWORDS PRÜFEN ────────────────────────────────
     if keywords:
         kw_analyses = []
@@ -264,18 +249,10 @@ def check_keywords(soup: BeautifulSoup, keywords: list[str] = None) -> dict:
                     "keyword": keyword,
                     "density": density,
                 })
-            elif density > KEYWORD_DENSITY_MAX:
-                warnings.append({
-                    "code": "KEYWORD_DENSITY_HIGH",
-                    "message": f"Keyword \"{keyword}\" zu häufig ({density}% Dichte, Max: {KEYWORD_DENSITY_MAX}%). Risiko: Keyword-Stuffing.",
-                    "severity": "warning",
-                    "keyword": keyword,
-                    "density": density,
-                })
             else:
                 passed.append({
                     "code": "KEYWORD_DENSITY_OK",
-                    "message": f"Keyword \"{keyword}\" mit optimaler Dichte ({density}%).",
+                    "message": f"Keyword \"{keyword}\" mit guter Dichte ({density}%).",
                     "keyword": keyword,
                 })
 

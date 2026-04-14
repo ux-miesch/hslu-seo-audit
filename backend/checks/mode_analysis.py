@@ -400,6 +400,13 @@ def check_schema_event(soup, base_url, text):
     return found, "Event-Schema Markup vorhanden" if found else "Kein Event-Schema Markup gefunden"
 
 
+MODE_LABELS = {
+    "content":    "Content & Autorität",
+    "conversion": "Ausbildungs-Seite",
+    "course":     "Weiterbildungs-Seite",
+    "event":      "Event",
+}
+
 # ── Dispatcher ────────────────────────────────────────────────────────────
 
 FN_MAP = {
@@ -476,12 +483,12 @@ def check_mode_analysis(soup: BeautifulSoup, base_url: str, mode_weights: dict) 
             elif ok:
                 passed.append({
                     "code": check["code"],
-                    "message": f"[{mode_key.title()}] {msg}",
+                    "message": msg,
                 })
             else:
                 warnings.append({
                     "code": check["code"],
-                    "message": f"[{mode_key.title()}] {check['label']}: {msg}",
+                    "message": msg,
                     "severity": "warning",
                 })
 
