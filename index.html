@@ -121,7 +121,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
     <div class="step-title">Welche Seite soll geprüft werden?</div>
     <label>URL der zu prüfenden Seite</label>
     <input type="text" id="audit-url" placeholder="https://www.hslu.ch/beispielseite">
-    <label style="margin-top:20px;">Was ist der Fokus der Seite?</label>
+    <label style="margin-top:20px;">Was ist der Fokus der Seite, triff eine Auswahl.</label>
     <div class="mode-grid" id="mode-cards"></div>
     <div class="flyout-trigger" onclick="toggleFlyout()">
       <span class="flyout-arrow" id="flyout-arrow">▼</span>
@@ -219,7 +219,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260414-1205';
+const VERSION='260414-1213';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -296,7 +296,7 @@ const CHECK_QUICKTIP={
 };
 
 let currentWeights={};
-function initWeights(){Object.keys(MODES).forEach(k=>{currentWeights[k]=MODES[k].defaultW;});}
+function initWeights(){const keys=Object.keys(MODES);keys.forEach((k,i)=>{currentWeights[k]=i===0?100:0;});}
 
 function scoreToColor(s){
   if(s>=99)return '#ADCA2A';
@@ -336,10 +336,10 @@ function buildModeCards(){
 function selectModeCard(el,key){
   document.querySelectorAll('#mode-cards .mode-card').forEach(c=>c.classList.remove('selected'));
   el.classList.add('selected');
-  Object.keys(MODE_PRESETS[key]).forEach(k=>{
-    currentWeights[k]=MODE_PRESETS[key][k];
+  Object.keys(MODES).forEach(k=>{
+    currentWeights[k]=k===key?100:0;
     const sl=document.getElementById('sl-'+k);const vl=document.getElementById('vl-'+k);
-    if(sl)sl.value=MODE_PRESETS[key][k];if(vl)vl.textContent=MODE_PRESETS[key][k]+'%';
+    if(sl)sl.value=currentWeights[k];if(vl)vl.textContent=currentWeights[k]+'%';
   });
 }
 function buildSliders(){
