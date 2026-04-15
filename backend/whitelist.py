@@ -63,5 +63,5 @@ SPELLING_WHITELIST = {
     "bsc", "msc", "zum",
     "know-how", "nonprofit management", "public", "tourism",
     "content management",
-    "the", "it", "hours", "and", "lowers", "detection", "SAQ", "Weiterbildungs-ABC", "Studies", "Sur",
+    "the", "it", "hours", "and", "lowers", "detection", "saq", "weiterbildungs-abc", "studies", "sur",
 }

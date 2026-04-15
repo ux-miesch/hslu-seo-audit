@@ -57,20 +57,21 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 .btn-primary:hover{background:#55a8bc;}
 .btn-outline{flex:1;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#fff;color:#000;border:2px solid #000;cursor:pointer;}
 .btn-outline:hover{background:#f0f0f0;}
-.audit-running{text-align:center;padding-top:48px;}
+#step3.active{display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;align-items:center;justify-content:center;padding:24px;}
+.audit-content-box{background:#fff;padding:32px 24px;max-width:540px;width:100%;}
+.audit-running{text-align:center;margin-bottom:16px;}
 .audit-running-title{font-family:'Verdana',sans-serif;font-size:18px;font-weight:700;color:#000;margin-bottom:8px;}
-.audit-running-sub{font-family:'Verdana',sans-serif;font-size:13px;color:#555;margin-bottom:32px;}
-.protocol-wrap{text-align:left;background:#F0F0F0;border-left:3px solid #77C5D8;padding:12px;margin-top:8px;}
+.audit-running-sub{font-family:'Verdana',sans-serif;font-size:13px;color:#555;margin-bottom:24px;}
+.protocol-wrap{text-align:left;background:#F0F0F0;border-left:3px solid #77C5D8;padding:12px;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 .pulsing{animation:blink 1s step-start infinite;color:#7a5c00;font-weight:700;}
-@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-12px);}}
-.hslu-loader{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 24px;}
-.hslu-loader span{display:inline-block;width:14px;height:14px;border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+@keyframes orbit{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.hslu-loader{position:relative;width:80px;height:80px;margin:0 auto 28px;}
+.hslu-loader span{position:absolute;width:12px;height:12px;border-radius:50%;top:6px;left:34px;transform-origin:6px 34px;animation:orbit 2s linear infinite;}
 .hslu-loader span:nth-child(1){background:#77C5D8;animation-delay:0s;}
-.hslu-loader span:nth-child(2){background:#ADCA2A;animation-delay:0.15s;}
-.hslu-loader span:nth-child(3){background:#FCC300;animation-delay:0.3s;}
-.hslu-loader span:nth-child(4){background:#EE6A87;animation-delay:0.45s;}
-#konfetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;}
+.hslu-loader span:nth-child(2){background:#ADCA2A;animation-delay:-0.5s;}
+.hslu-loader span:nth-child(3){background:#FCC300;animation-delay:-1s;}
+.hslu-loader span:nth-child(4){background:#EE6A87;animation-delay:-1.5s;}
 .result-tabs{display:flex;margin-bottom:0;}
 .result-tab{padding:10px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;background:#fff;color:#000;border-bottom:3px solid transparent;margin-bottom:0;}
 .result-tab.active{border-bottom:3px solid #77C5D8;}
@@ -109,8 +110,6 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </style>
 </head>
 <body>
-
-<canvas id="konfetti-canvas"></canvas>
 
 <div class="header">
   <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="Hslu" style="height:32px;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
@@ -176,14 +175,16 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 
   <!-- Schritt 3 -->
   <div id="step3" class="step">
-    <div class="audit-running">
-      <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
-      <div class="audit-running-title">Audit läuft...</div>
-      <div class="audit-running-sub">Bitte warten – die Seite wird gerade analysiert.<br>Dies kann bis zu 60 Sekunden dauern.</div>
-    </div>
-    <div class="protocol-wrap">
-      <div style="font-weight:700;margin-bottom:6px;font-family:'Verdana',sans-serif;font-size:12px;">Protokoll</div>
-      <div id="protocol-lines"></div>
+    <div class="audit-content-box">
+      <div class="audit-running">
+        <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
+        <div class="audit-running-title">Audit läuft...</div>
+        <div class="audit-running-sub">Bitte warten – die Seite wird gerade analysiert.<br>Dies kann bis zu 60 Sekunden dauern.</div>
+      </div>
+      <div class="protocol-wrap">
+        <div style="font-weight:700;margin-bottom:6px;font-family:'Verdana',sans-serif;font-size:12px;">Protokoll</div>
+        <div id="protocol-lines"></div>
+      </div>
     </div>
   </div>
 
@@ -227,7 +228,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260415-0810';
+const VERSION='260415-0836';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -432,7 +433,7 @@ async function startAudit(){
     addLog('✓ Audit abgeschlossen','done');
     renderAnalyse(results,selected,url);
     renderAufgaben(results,selected,url);
-    setTimeout(()=>{showStep('results');launchKonfetti();},800);
+    setTimeout(()=>{showStep('results');},800);
   }catch(err){
     if(err.name==='AbortError'){
       waitLine.classList.remove('pulsing');waitLine.style.color='#7a5c00';
@@ -600,50 +601,32 @@ function renderAufgaben(results,selected,url){
 
 function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
 
-// ── Konfetti ──────────────────────────────────────────────────────────────
-(function(){
-  const COLORS=['#77C5D8','#ADCA2A','#FCC300','#EE6A87'];
-  const canvas=document.getElementById('konfetti-canvas');
-  const ctx=canvas.getContext('2d');
-  let particles=[],running=false;
-  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
-  window.addEventListener('resize',resize);resize();
-  function P(x,y,c){
-    this.x=x;this.y=y;this.color=c;
-    this.r=Math.random()*6+4;
-    this.vx=(Math.random()-0.5)*10;
-    this.vy=Math.random()*-14-6;
-    this.gravity=0.4;this.alpha=1;
-  }
-  P.prototype.update=function(){this.vy+=this.gravity;this.x+=this.vx;this.y+=this.vy;this.alpha-=0.012;};
-  P.prototype.draw=function(){ctx.save();ctx.globalAlpha=Math.max(0,this.alpha);ctx.fillStyle=this.color;ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fill();ctx.restore();};
-  function animate(){running=true;ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>p.alpha>0);particles.forEach(p=>{p.update();p.draw();});if(particles.length>0){requestAnimationFrame(animate);}else{running=false;}}
-  window.launchKonfetti=function(){
-    const cx=window.innerWidth/2;
-    const cy=80;
-    for(let i=0;i<150;i++){
-      const c=COLORS[Math.floor(Math.random()*COLORS.length)];
-      const p=new P(cx+(Math.random()-0.5)*60,cy,c);
-      p.vx=(Math.random()-0.5)*12;
-      p.vy=Math.random()*-3+1.5;
-      p.gravity=0.19;
-      p.alpha=1;
-      particles.push(p);
-    }
-    if(!running)animate();
-  };
-})();
-
 initWeights();
 document.addEventListener('DOMContentLoaded',()=>{
   buildModeCards();buildSliders();showStep(1);
   document.getElementById('footer-info').textContent='Beta v'+VERSION;
+  if(!localStorage.getItem('hslu_seo_welcome_accepted')){
+    document.getElementById('welcome-modal').classList.add('active');
+  }
 });
+function closeWelcomeModal(){
+  localStorage.setItem('hslu_seo_welcome_accepted','1');
+  document.getElementById('welcome-modal').classList.remove('active');
+}
 
 function confirmReset(){document.getElementById('reset-modal').classList.add('active');}
 function closeResetModal(){document.getElementById('reset-modal').classList.remove('active');}
 function confirmResetAndExecute(){closeResetModal();resetAll();}
 </script>
+
+<div class="modal-overlay" id="welcome-modal" style="z-index:9999;">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-title" style="font-size:17px;margin-bottom:14px;">🔍 SEO Audit Tool – HSLU</div>
+    <div class="modal-text" style="margin-bottom:14px;">Willkommen beim internen SEO Audit Tool der HSLU.<br><br>Dieses Tool analysiert HSLU-Webseiten auf technische und inhaltliche SEO-Qualität. Gib eine URL ein, wähle den Seitentyp und starte den Audit.</div>
+    <div class="modal-text" style="font-style:italic;color:#999;font-size:11px;margin-bottom:22px;"><strong style="font-style:normal;color:#555;">Rechtlicher Hinweis (den niemand liest):</strong><br>Durch die Nutzung dieses Tools erklärst du dich damit einverstanden, dass wir deine Daten für folgende Zwecke verwenden: gar keine. Wir speichern nichts, verkaufen nichts und interessieren uns ehrlich gesagt herzlich wenig dafür, welche URLs du prüfst. Die eingegebene URL wird lediglich an unser Backend und die LanguageTool API zur Rechtschreibprüfung gesendet – und danach vergessen.</div>
+    <button style="width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;" onclick="closeWelcomeModal()">Alles klar, ich hab's nicht gelesen – weiter →</button>
+  </div>
+</div>
 
 <div class="modal-overlay" id="reset-modal" onclick="if(event.target===this)closeResetModal()">
   <div class="modal-box">
