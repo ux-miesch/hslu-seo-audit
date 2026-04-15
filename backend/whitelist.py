@@ -8,6 +8,10 @@ HEADING_DUPLICATES_WHITELIST = [
     "news", "aktuelles", "home", "startseite", "impressum",
     "datenschutz", "links", "downloads", "publikationen",
     "team", "partner", "weiteres", "informationen", "hinweise",
+    # Sitecore Accessibility-Labels (strukturelle Navigation, keine Inhaltsfehler)
+    "unternavigation", "hauptnavigation", "meta-navigation",
+    "breadcrumbs-navigation", "sprachwahl und wichtige links",
+    "departementsnavigation", "footer", "direkteinstieg", "quicklink",
 ]
 
 # ── URL-Pfad Whitelist ────────────────────────────────────────────────────

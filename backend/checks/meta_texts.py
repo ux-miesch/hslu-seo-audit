@@ -112,12 +112,19 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
     # ── CANONICAL ──────────────────────────────────────────────────────────
     canonical_tag = soup.find("link", attrs={"rel": "canonical"})
     if not canonical_tag:
-        warnings.append({
-            "code": "CANONICAL_MISSING",
-            "message": "Kein canonical-Tag gefunden. Empfohlen zur Vermeidung von Duplicate Content.",
-            "severity": "warning",
-        })
         data["canonical"] = None
+        if "hslu.ch" in url:
+            warnings.append({
+                "code": "CANONICAL_MISSING",
+                "message": "Kein canonical-Tag im HTML gefunden. HSLU-Seiten setzen diesen Tag dynamisch per JavaScript – mit diesem Tool nicht prüfbar.",
+                "severity": "info",
+            })
+        else:
+            warnings.append({
+                "code": "CANONICAL_MISSING",
+                "message": "Kein canonical-Tag gefunden. Empfohlen zur Vermeidung von Duplicate Content.",
+                "severity": "warning",
+            })
     else:
         canonical_href = canonical_tag.get("href", "")
         data["canonical"] = canonical_href
@@ -170,6 +177,8 @@ def check_meta(soup: BeautifulSoup, url: str) -> dict:
     }
     score = 100
     for entry in issues + warnings:
+        if entry.get("code") == "CANONICAL_MISSING" and entry.get("severity") == "info":
+            continue
         score -= _DEDUCTIONS.get(entry.get("code", ""), 0)
     score = max(0, score)
 
