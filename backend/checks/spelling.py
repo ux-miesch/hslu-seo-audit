@@ -22,6 +22,13 @@ DEDUPE_BY_RULE_ONLY = {
     "WHITESPACE_BEFORE_CLOSING_BRACKET",
 }
 
+DEDUPE_BY_MESSAGE_PREFIX = [
+    "Vor Satzzeichen",
+    "Nur hinter einem Komma",
+    "Vor dem Punkt",
+    "Vor einer schliessenden",
+]
+
 
 def extract_main_text(soup: BeautifulSoup) -> list[dict]:
     blocks = []
@@ -132,12 +139,15 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
     unique_matches = []
     for match in result.get("matches", []):
         rid = match.get("rule", {}).get("id", "")
+        msg = match.get("message", "")
         o = match.get("offset", 0)
         l = match.get("length", 0)
         if rid in DEDUPE_BY_RULE_ONLY:
-            key = rid  # einmal pro Regeltyp reicht
+            key = rid
+        elif any(msg.startswith(prefix) for prefix in DEDUPE_BY_MESSAGE_PREFIX):
+            key = msg
         else:
-            key = (full_text[o:o + l].lower(), match.get("message", ""))
+            key = (full_text[o:o + l].lower(), msg)
         if key not in seen:
             seen.add(key)
             unique_matches.append(match)
@@ -155,7 +165,9 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
         offset = match["offset"]
         length = match["length"]
-        error_text = "Leerzeichen vor Satzzeichen" if rule_id in DEDUPE_BY_RULE_ONLY else full_text[offset:offset + length]
+        msg = match.get("message", "")
+        is_whitespace_err = rule_id in DEDUPE_BY_RULE_ONLY or any(msg.startswith(p) for p in DEDUPE_BY_MESSAGE_PREFIX)
+        error_text = "Leerzeichen vor Satzzeichen" if is_whitespace_err else full_text[offset:offset + length]
 
         # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
         if error_text.lower() in SPELLING_WHITELIST:
