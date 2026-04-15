@@ -1,112 +1,90 @@
-# SEO Audit Tool
+# SEO Audit Tool – HSLU
 
-Lokales SEO-Audit-Tool mit Python/FastAPI Backend und statischem Frontend.
+Internes SEO-Audit-Tool der HSLU. Analysiert Webseiten auf technische und inhaltliche SEO-Qualität. Das Frontend läuft auf GitHub Pages, das Backend auf Render.com.
+
+---
 
 ## Projektstruktur
 
 ```
-seo-audit/
-├── backend/
-│   ├── main.py              # FastAPI App & Endpunkte
-│   ├── crawler.py           # HTTP-Abruf & HTML-Parsing
-│   ├── checks/
-│   │   ├── meta_texts.py    # Title, Description, Canonical, OG
-│   │   └── headings.py      # H1–H6 Struktur & Hierarchie
-│   └── requirements.txt
+hslu-seo-audit/
+├── index.html                  ← Frontend (GitHub Pages)
+├── build.sh                    ← Version setzen + git push
+├── deploy.sh                   ← Vollständiger Deploy-Prozess
+├── start.sh                    ← Backend lokal starten
+├── render.yaml                 ← Render-Konfiguration
+├── .python-version             ← Python 3.11.9
 ├── frontend/
-│   └── index.html           # Minimale Testoberfläche
-├── render.yaml              # Render Deployment Config
-└── README.md
+│   └── assets/
+│       └── HSLU_Logo_DE_Weiss_rgb.svg
+└── backend/
+    ├── main.py                 ← FastAPI, parallele Checks
+    ├── crawler.py              ← Seiten-Crawler
+    ├── whitelist.py            ← Zentrale Ausnahmelisten
+    ├── mode_checks.py          ← Seitentyp-Definitionen
+    ├── requirements.txt
+    ├── gtm_credentials.json    ← GTM API (git-ignored)
+    └── checks/
+        ├── meta_texts.py
+        ├── headings.py
+        ├── broken_links.py
+        ├── alt_attributes.py
+        ├── spelling.py
+        ├── keywords.py
+        ├── url_slug.py
+        ├── mode_analysis.py
+        └── sea.py
 ```
 
-## Lokale Installation
+---
 
-### 1. Repository klonen
+## Checks
+
+Alle 8 Checks sind implementiert und aktiv:
+
+| Check | Beschreibung |
+|---|---|
+| **Meta-Texte** | Title, Meta-Description, Canonical, Robots, Open Graph |
+| **Überschriften** | H1–H6 Struktur, Hierarchie, Duplikate, Länge |
+| **Defekte Links** | Erreichbarkeit aller Links, Weiterleitungen, Bot-Blocking |
+| **Alt-Attribute** | Bilder, iFrames, PDFs, Videos |
+| **Rechtschreibung** | Fehler via LanguageTool Public API (de-CH / en-US) |
+| **Keywords & Semantik** | Keyword-Dichte, Platzierung, Wortschatz-Vielfalt |
+| **URL / Slug** | HTTPS, Länge, Sonderzeichen, Tiefe, Parameter |
+| **Seitentyp-Analyse** | Soft-Faktoren je nach Seitentyp (Conversion, Content, etc.) |
+| **Kampagnen-Check (SEA)** | Google Tag Manager API – optional |
+
+---
+
+## Deployment
+
+- **Frontend:** GitHub Pages → https://ux-miesch.github.io/hslu-seo-audit
+- **Backend:** Render.com → https://hslu-seo-audit.onrender.com
+
 ```bash
-git clone https://github.com/DEIN-USERNAME/seo-audit.git
-cd seo-audit
+bash deploy.sh
 ```
 
-### 2. Python-Umgebung einrichten
-```bash
-python -m venv venv
+Setzt die Build-Version, pusht auf GitHub. Render.com deployed das Backend automatisch.
 
-# macOS/Linux:
+---
+
+## Lokale Entwicklung
+
+```bash
+cd ~/Desktop/hslu-seo-audit
 source venv/bin/activate
-
-# Windows:
-venv\Scripts\activate
+bash start.sh
 ```
 
-### 3. Abhängigkeiten installieren
-```bash
-pip install -r backend/requirements.txt
-```
-
-### 4. Backend starten
-```bash
-uvicorn backend.main:app --reload
-```
-
-API läuft auf: http://localhost:8000  
-Automatische Docs: http://localhost:8000/docs
-
-### 5. Frontend öffnen
-Einfach `frontend/index.html` im Browser öffnen – kein Server nötig.
-
----
-
-## API-Endpunkte
-
-### `POST /audit`
-Startet ein SEO-Audit für eine URL.
-
-**Request:**
-```json
-{
-  "url": "https://example.com",
-  "keywords": ["seo", "audit"]
-}
-```
-
-**Response:**
-```json
-{
-  "url": "https://example.com",
-  "status": "success",
-  "checks": {
-    "meta": { "score": 80, "issues": [], "warnings": [], "passed": [], "data": {} },
-    "headings": { "score": 100, "issues": [], "warnings": [], "passed": [], "data": {} }
-  }
-}
-```
-
----
-
-## Geplante Checks
-
-- [x] Meta-Texte (Title, Description, Canonical, Open Graph)
-- [x] Überschriftenstruktur (H1–H6)
-- [ ] Defekte Links
-- [ ] Alt-Attribute (Bilder, PDFs, Videos)
-- [ ] Rechtschreibung
-- [ ] Keyword-Optimierung & semantische Vielfalt
-- [ ] URL/Slug-Analyse
-
----
-
-## Deployment auf Render
-
-1. Repository auf GitHub pushen
-2. Auf [render.com](https://render.com) anmelden
-3. "New Web Service" → GitHub Repo verknüpfen
-4. Render erkennt `render.yaml` automatisch
-5. Deploy → URL notieren und in `frontend/index.html` eintragen (`const API = "..."`)
+Backend läuft auf: http://localhost:8000  
+API-Dokumentation: http://localhost:8000/docs
 
 ---
 
 ## Technologie
 
-- **Backend:** Python, FastAPI, httpx, BeautifulSoup4
-- **Frontend:** Vanilla HTML/CSS/JS (kein Framework nötig)
-- **Hosting:** Render (Backend) + GitHub Pages (Frontend)
+- **Backend:** Python 3.11, FastAPI, httpx, BeautifulSoup4, asyncio (parallele Ausführung)
+- **Frontend:** Vanilla HTML/CSS/JS
+- **Rechtschreibung:** LanguageTool Public API
+- **Hosting:** Render.com (Backend, Free Tier) + GitHub Pages (Frontend)
