@@ -159,6 +159,7 @@ def extract_links(soup: BeautifulSoup, base_url: str) -> list:
 async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
     issues = []
     warnings = []
+    infos = []
     passed = []
 
     links = extract_links(soup, base_url)
@@ -166,7 +167,7 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
 
     if total_links == 0:
         warnings.append({"code": "NO_LINKS", "message": "Keine Links auf der Seite gefunden.", "severity": "info"})
-        return _build_result(issues, warnings, passed, {"total": 0, "broken": [], "redirected": [], "ok_count": 0})
+        return _build_result(issues, warnings, passed, {"total": 0, "broken": [], "redirected": [], "ok_count": 0}, infos)
 
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
     async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=TIMEOUT) as client:
@@ -174,12 +175,14 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
         results = await asyncio.gather(*tasks)
 
     link_map = {link["url"]: link for link in links}
-    broken, bot_blocked, consent_blocked, redirected, ok_links = [], [], [], [], []
+    broken, timeouts, bot_blocked, consent_blocked, redirected, ok_links = [], [], [], [], [], []
 
     for result in results:
         meta = link_map.get(result["url"], {})
         enriched = {**result, **meta}
-        if result.get("bot_blocked"):
+        if result.get("error") == "timeout":
+            timeouts.append(enriched)
+        elif result.get("bot_blocked"):
             bot_blocked.append(enriched)
         elif result.get("consent_blocked"):
             consent_blocked.append(enriched)
@@ -191,36 +194,77 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
             ok_links.append(enriched)
 
     for link in broken:
-        status_info = f"Status {link['status_code']}" if link["status_code"] else f"Fehler: {link.get('error', 'unbekannt')}"
-        link_type = "intern" if link.get("is_internal") else "extern"
-        issues.append({
+        status = link.get("status_code")
+        is_internal = link.get("is_internal", False)
+        url = link["url"]
+
+        if status == 404:
+            if is_internal:
+                severity = "critical"
+                message = f"Interne Seite nicht gefunden (404): {url}"
+            else:
+                severity = "warning"
+                message = f"Externe Seite nicht mehr erreichbar (404): {url}"
+        elif status == 403:
+            severity = "info"
+            message = f"Zugriff verweigert – manuell im Browser prüfen (403): {url}"
+        elif status == 500:
+            severity = "warning"
+            message = f"Server-Fehler auf Zielseite – später nochmals prüfen (500): {url}"
+        else:
+            link_type = "intern" if is_internal else "extern"
+            status_info = f"Status {status}" if status else f"Fehler: {link.get('error', 'unbekannt')}"
+            severity = "critical" if is_internal else "warning"
+            message = f"Defekter {link_type} Link ({status_info}): {url}"
+
+        entry = {
             "code": "BROKEN_LINK",
-            "message": f"Defekter {link_type} Link ({status_info}): {link['url']}",
-            "severity": "critical" if link.get("is_internal") else "warning",
+            "message": message,
+            "severity": severity,
             "anchor_text": link.get("anchor_text"),
-            "url": link["url"],
-            "status_code": link.get("status_code"),
+            "url": url,
+            "status_code": status,
             "error": link.get("error"),
-        })
+        }
+        if severity == "critical":
+            issues.append(entry)
+        elif severity == "info":
+            infos.append(entry)
+        else:
+            warnings.append(entry)
 
     for link in redirected:
-        warnings.append({
+        is_internal = link.get("is_internal", False)
+        url = link["url"]
+        if is_internal:
+            message = f"Interne Weiterleitung – Link direkt auf Ziel-URL aktualisieren: {url}"
+        else:
+            message = f"Externe Weiterleitung – kein dringender Handlungsbedarf: {url}"
+        infos.append({
             "code": "REDIRECT",
-            "message": f"Weiterleitung: {link['url']} → {link.get('final_url')}",
+            "message": message,
             "severity": "info",
             "anchor_text": link.get("anchor_text"),
         })
 
-    if bot_blocked:
-        warnings.append({
-            "code": "BOT_BLOCKED",
-            "message": f"{len(bot_blocked)} Link(s) nicht prüfbar (Plattform blockiert Bots): "
-                       + ", ".join(l["url"] for l in bot_blocked[:5]),
+    for link in timeouts:
+        infos.append({
+            "code": "TIMEOUT",
+            "message": f"Seite antwortet zu langsam – manuell im Browser prüfen: {link['url']}",
             "severity": "info",
+            "anchor_text": link.get("anchor_text"),
+        })
+
+    for link in bot_blocked:
+        infos.append({
+            "code": "BOT_BLOCKED",
+            "message": f"Plattform blockiert automatische Prüfung – kein Handlungsbedarf: {link['url']}",
+            "severity": "info",
+            "anchor_text": link.get("anchor_text"),
         })
 
     if consent_blocked:
-        warnings.append({
+        infos.append({
             "code": "CONSENT_BLOCKED",
             "message": f"{len(consent_blocked)} Link(s) hinter einer Consent-Wall – Inhalt nicht prüfbar: "
                        + ", ".join(l["url"] for l in consent_blocked[:5]),
@@ -238,6 +282,7 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
         "broken_count": len(broken),
         "redirected_count": len(redirected),
         "bot_blocked_count": len(bot_blocked),
+        "timeout_count": len(timeouts),
         "consent_blocked_count": len(consent_blocked),
         "ok_count": len(ok_links),
         "broken": broken,
@@ -245,23 +290,23 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
         "links": results,
     }
 
-    return _build_result(issues, warnings, passed, data)
+    return _build_result(issues, warnings, passed, data, infos)
 
 
-def _build_result(issues, warnings, passed, data) -> dict:
+def _build_result(issues, warnings, passed, data, infos=None) -> dict:
     score = 100
     for entry in issues:
         if entry.get("code") == "BROKEN_LINK":
-            # internal links (severity=critical) → -20, external → -10
             score -= 20 if entry.get("severity") == "critical" else 10
     for entry in warnings:
-        if entry.get("code") == "REDIRECT":
-            score -= 5
+        if entry.get("code") == "BROKEN_LINK":
+            score -= 10
     score = max(0, score)
     return {
         "score": score,
         "issues": issues,
         "warnings": warnings,
+        "infos": infos or [],
         "passed": passed,
         "data": data,
     }

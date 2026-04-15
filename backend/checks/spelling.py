@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import httpx
 import unicodedata
 from typing import Optional
+from whitelist import SPELLING_WHITELIST
 
 LANGUAGETOOL_API = "https://api.languagetool.org/v2/check"
 
@@ -12,23 +13,6 @@ IGNORE_TAGS = {
 
 MIN_TEXT_LENGTH = 50
 MAX_ERRORS = 50
-
-# Wörter die nicht als Fehler gewertet werden sollen
-SPELLING_WHITELIST = {
-    # HSLU-spezifische Abkürzungen und Begriffe
-    "ekkj", "mas", "cas", "das", "ba", "ifz", "study", "ikm", "ibr",
-    "sa", "pibs", "dba", "sas", "mba", "sebwk",
-    "hslu", "sdg", "isa", "isa-modul", "isa-modulen",
-    "bachelor-studiengang", "bachelor-studiengängen",
-    "master-studiengang", "master-studiengängen",
-    "hslu-studierende", "minor", "major", "gastdozierende",
-    "bsc", "msc", "zum",
-    # Englische und gemischte Begriffe
-    "know-how", "nonprofit management", "public", "tourism",
-    "content management",
-    # Allgemeine Begriffe
-    "the", "it", "hours", "and", "lowers", "detection",
-}
 
 
 def extract_main_text(soup: BeautifulSoup) -> list[dict]:
@@ -75,6 +59,7 @@ def detect_language(soup: BeautifulSoup) -> str:
 def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
     issues = []
     warnings = []
+    infos = []
     passed = []
     data = {
         "language_detected": None,
@@ -140,14 +125,18 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
                 suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
                 message_lower = match.get("message", "").lower()
-                if "möglich" in message_lower or "möglicher" in message_lower:
+                if category == "COMPOUNDING":
+                    severity = "info"
+                elif "möglich" in message_lower:
                     severity = "warning"
                 else:
                     severity = "critical" if category == "TYPOS" else "warning"
 
+                display_message = "Schreibweise prüfen: Bindestrich oder Zusammenschreibung." if category == "COMPOUNDING" else match.get("message", "")
+
                 all_errors.append({
                     "text": error_text,
-                    "message": match.get("message", ""),
+                    "message": display_message,
                     "suggestions": suggestions,
                     "rule_id": rule.get("id", ""),
                     "category": category,
@@ -171,6 +160,8 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
         }
         if error["severity"] == "critical":
             issues.append(entry)
+        elif error["severity"] == "info":
+            infos.append(entry)
         else:
             warnings.append(entry)
 
@@ -186,10 +177,10 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
             "severity": "info",
         })
 
-    return _build_result(issues, warnings, passed, data)
+    return _build_result(issues, warnings, passed, data, infos)
 
 
-def _build_result(issues, warnings, passed, data) -> dict:
+def _build_result(issues, warnings, passed, data, infos=None) -> dict:
     score = 100
     for entry in issues + warnings:
         if entry.get("code") == "SPELLING_ERROR":
@@ -199,6 +190,7 @@ def _build_result(issues, warnings, passed, data) -> dict:
         "score": score,
         "issues": issues,
         "warnings": warnings,
+        "infos": infos or [],
         "passed": passed,
         "data": data,
     }

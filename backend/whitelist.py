@@ -50,3 +50,18 @@ ALT_ATTRIBUTE_FILENAME_WHITELIST = [
 ALT_ATTRIBUTE_EXTENSION_WHITELIST = [
     ".svg",   # SVGs sind meist dekorativ (Icons, Logos, Pfeile)
 ]
+
+# ── Rechtschreibung: Whitelist ─────────────────────────────────────────────
+# Wörter die beim Rechtschreibcheck ignoriert werden (Gross-/Kleinschreibung egal).
+SPELLING_WHITELIST = {
+    "ekkj", "mas", "cas", "das", "ba", "ifz", "study", "ikm", "ibr",
+    "sa", "pibs", "dba", "sas", "mba", "sebwk",
+    "hslu", "sdg", "isa", "isa-modul", "isa-modulen",
+    "bachelor-studiengang", "bachelor-studiengängen",
+    "master-studiengang", "master-studiengängen",
+    "hslu-studierende", "minor", "major", "gastdozierende",
+    "bsc", "msc", "zum",
+    "know-how", "nonprofit management", "public", "tourism",
+    "content management",
+    "the", "it", "hours", "and", "lowers", "detection", "SAQ", "Weiterbildungs-ABC", "Studies", "Sur",
+}

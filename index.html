@@ -227,7 +227,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 </div>
 
 <script>
-const VERSION='260414-1842';
+const VERSION='260415-0810';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -498,6 +498,7 @@ function renderAnalyse(results,selected,url){
     }
     (r.issues||[]).forEach(i=>{body+='<p style="color:#a00;">🔴 '+linkify(fixMsg(msgText(i)))+'</p>';});
     (r.warnings||[]).forEach(wn=>{body+='<p style="color:#7a5c00;">🟡 '+linkify(fixMsg(msgText(wn)))+'</p>';});
+    (r.infos||[]).forEach(inf=>{body+='<p style="color:#0e7a8a;"><span style="color:#77C5D8;">●</span> '+linkify(fixMsg(msgText(inf)))+'</p>';});
     (r.passed||[]).forEach(p=>{body+='<p style="color:#1b5e20;">🟢 '+fixMsg(msgText(p))+'</p>';});
     if(isModeAnalysis&&r.data&&r.data.schema_results&&r.data.schema_results.length){
       r.data.schema_results.forEach(s=>{body+='<p style="color:'+(s.ok?'#1b5e20':'#7a5c00')+';">'+(s.ok?'✓':'⚠')+' Schema.org – '+s.label+': '+s.message+'</p>';});
@@ -525,6 +526,7 @@ function renderAufgaben(results,selected,url){
     // Filter nicht-prüfbare Einträge
     const issues=(r.issues||[]).filter(m=>!isNichtPruefbar(msgText(m)));
     const warnings=(r.warnings||[]).filter(m=>!isNichtPruefbar(msgText(m)));
+    const infos=(r.infos||[]).filter(m=>!isNichtPruefbar(msgText(m)));
 
     // Wenn nach dem Filter keine Einträge mehr übrig: gesamte Kategorie ausblenden
     const origIssues=(r.issues||[]).length;
@@ -532,7 +534,8 @@ function renderAufgaben(results,selected,url){
     const hadProblems=origIssues>0||origWarnings>0;
     const hasIssue=issues.length>0;
     const hasWarning=warnings.length>0;
-    if(hadProblems&&!hasIssue&&!hasWarning)return; // komplett ausblenden
+    const hasInfo=infos.length>0;
+    if(hadProblems&&!hasIssue&&!hasWarning&&!hasInfo)return; // komplett ausblenden
 
     const qt=CHECK_QUICKTIP[key]||'';
     const w=document.createElement('div');w.className='kachel-wrap';
@@ -543,16 +546,17 @@ function renderAufgaben(results,selected,url){
     const body=document.createElement('div');
     body.className='kachel-body';body.style.padding='0';
 
-    if(!hasIssue&&!hasWarning){
+    if(!hasIssue&&!hasWarning&&!hasInfo){
       const sec=document.createElement('div');sec.className='aufgabe-section';
       sec.innerHTML='<span style="color:#1b5e20;font-weight:700;">🟢 Keine Probleme gefunden</span>';
       body.appendChild(sec);
     } else if(key==='spelling'){
-      // Spelling: issues und warnings als eine gemeinsame Liste
-      const allMsgs=[...issues,...warnings];
+      // Spelling: issues, warnings und infos nach Schwere sortiert
       const sec=document.createElement('div');sec.className='aufgabe-section';
       const ul=document.createElement('ul');ul.className='issue-list';
-      allMsgs.map(m=>fixMsg(msgText(m))).forEach(m=>{const li=document.createElement('li');li.style.color='#7a5c00';li.innerHTML='🟡 '+m;ul.appendChild(li);});
+      issues.map(m=>fixMsg(msgText(m))).forEach(m=>{const li=document.createElement('li');li.style.color='#a00';li.innerHTML='🔴 '+m;ul.appendChild(li);});
+      warnings.map(m=>fixMsg(msgText(m))).forEach(m=>{const li=document.createElement('li');li.style.color='#7a5c00';li.innerHTML='🟡 '+m;ul.appendChild(li);});
+      infos.map(m=>fixMsg(msgText(m))).forEach(m=>{const li=document.createElement('li');li.style.color='#0e7a8a';li.innerHTML='<span style="color:#77C5D8;">●</span> '+m;ul.appendChild(li);});
       sec.appendChild(ul);
       const txEntry=txKey?txKey['warning']:null;
       if(txEntry){const action=document.createElement('div');action.className='aufgabe-action';action.innerHTML='<strong>Was tun:</strong> '+txEntry.action;sec.appendChild(action);}
@@ -560,7 +564,7 @@ function renderAufgaben(results,selected,url){
       sec.appendChild(cta);
       body.appendChild(sec);
     } else {
-      [[issues,'issue','#a00','🔴'],[warnings,'warning','#7a5c00','🟡']].forEach(([msgs,type,col,icon])=>{
+      [[issues,'issue','#a00','🔴'],[warnings,'warning','#7a5c00','🟡'],[infos,'info','#0e7a8a','<span style="color:#77C5D8;">●</span>']].forEach(([msgs,type,col,icon])=>{
         if(!msgs.length)return;
         const txEntry=txKey?txKey[type]:null;
         const sec=document.createElement('div');sec.className='aufgabe-section';
