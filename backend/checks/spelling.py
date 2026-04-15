@@ -119,12 +119,24 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
             })
             return _build_result(issues, warnings, passed, data)
 
+    # Duplikate entfernen (gleicher Fehlertext + gleiche Meldung)
+    seen = set()
+    unique_matches = []
     for match in result.get("matches", []):
+        o = match.get("offset", 0)
+        l = match.get("length", 0)
+        key = (full_text[o:o + l].lower(), match.get("message", ""))
+        if key not in seen:
+            seen.add(key)
+            unique_matches.append(match)
+
+    for match in unique_matches:
         if error_count >= MAX_ERRORS:
             break
 
         rule = match.get("rule", {})
         category = rule.get("category", {}).get("id", "")
+        rule_id = rule.get("id", "")
 
         if category in ("STYLE", "REDUNDANCY"):
             continue
@@ -143,7 +155,7 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
         suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
         message_lower = match.get("message", "").lower()
-        if category == "COMPOUNDING":
+        if category == "COMPOUNDING" or rule_id == "WHITESPACE_BEFORE_PUNCTUATION":
             severity = "info"
         elif "möglich" in message_lower:
             severity = "warning"
@@ -156,7 +168,7 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
             "text": error_text,
             "message": display_message,
             "suggestions": suggestions,
-            "rule_id": rule.get("id", ""),
+            "rule_id": rule_id,
             "category": category,
             "context": context,
             "severity": severity,
