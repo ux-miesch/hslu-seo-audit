@@ -14,6 +14,14 @@ IGNORE_TAGS = {
 MIN_TEXT_LENGTH = 50
 MAX_ERRORS = 50
 
+DEDUPE_BY_RULE_ONLY = {
+    "WHITESPACE_BEFORE_PUNCTUATION",
+    "COMMA_PARENTHESIS_WHITESPACE",
+    "PUNCTUATION_PARAGRAPH_END",
+    "DE_SENTENCE_WHITESPACE",
+    "WHITESPACE_BEFORE_CLOSING_BRACKET",
+}
+
 
 def extract_main_text(soup: BeautifulSoup) -> list[dict]:
     blocks = []
@@ -119,13 +127,17 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
             })
             return _build_result(issues, warnings, passed, data)
 
-    # Duplikate entfernen (gleicher Fehlertext + gleiche Meldung)
+    # Duplikate entfernen
     seen = set()
     unique_matches = []
     for match in result.get("matches", []):
+        rid = match.get("rule", {}).get("id", "")
         o = match.get("offset", 0)
         l = match.get("length", 0)
-        key = (full_text[o:o + l].lower(), match.get("message", ""))
+        if rid in DEDUPE_BY_RULE_ONLY:
+            key = rid  # einmal pro Regeltyp reicht
+        else:
+            key = (full_text[o:o + l].lower(), match.get("message", ""))
         if key not in seen:
             seen.add(key)
             unique_matches.append(match)
@@ -143,7 +155,7 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
         offset = match["offset"]
         length = match["length"]
-        error_text = full_text[offset:offset + length]
+        error_text = "Leerzeichen vor Satzzeichen" if rule_id in DEDUPE_BY_RULE_ONLY else full_text[offset:offset + length]
 
         # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
         if error_text.lower() in SPELLING_WHITELIST:
