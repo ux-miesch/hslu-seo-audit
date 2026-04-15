@@ -85,66 +85,83 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
     all_errors = []
     error_count = 0
 
-    with httpx.Client(timeout=30) as client:
-        for block in blocks:
-            if error_count >= MAX_ERRORS:
-                break
+    # Alle Blöcke zu einem Text zusammenfassen
+    full_text = "\n\n".join(block["text"] for block in blocks)
 
-            try:
-                response = client.post(LANGUAGETOOL_API, data={
-                    "text": block["text"],
-                    "language": detected_lang,
-                })
-                response.raise_for_status()
-                result = response.json()
-            except Exception as e:
+    # Einen einzigen API-Call
+    with httpx.Client(timeout=30) as client:
+        try:
+            response = client.post(LANGUAGETOOL_API, data={
+                "text": full_text,
+                "language": detected_lang,
+            })
+            if response.status_code >= 500:
                 warnings.append({
                     "code": "SPELLING_API_ERROR",
-                    "message": f"LanguageTool API nicht erreichbar: {str(e)}",
+                    "message": "Rechtschreibprüfung temporär nicht verfügbar.",
                     "severity": "warning",
                 })
                 return _build_result(issues, warnings, passed, data)
+            response.raise_for_status()
+            result = response.json()
+        except httpx.TimeoutException:
+            warnings.append({
+                "code": "SPELLING_API_ERROR",
+                "message": "Rechtschreibprüfung nicht erreichbar (Timeout).",
+                "severity": "warning",
+            })
+            return _build_result(issues, warnings, passed, data)
+        except Exception as e:
+            warnings.append({
+                "code": "SPELLING_API_ERROR",
+                "message": f"Rechtschreibprüfung nicht erreichbar: {str(e)}",
+                "severity": "warning",
+            })
+            return _build_result(issues, warnings, passed, data)
 
-            for match in result.get("matches", []):
-                if error_count >= MAX_ERRORS:
-                    break
+    for match in result.get("matches", []):
+        if error_count >= MAX_ERRORS:
+            break
 
-                rule = match.get("rule", {})
-                category = rule.get("category", {}).get("id", "")
+        rule = match.get("rule", {})
+        category = rule.get("category", {}).get("id", "")
 
-                if category in ("STYLE", "REDUNDANCY"):
-                    continue
+        if category in ("STYLE", "REDUNDANCY"):
+            continue
 
-                offset = match["offset"]
-                length = match["length"]
-                error_text = block["text"][offset:offset + length]
+        offset = match["offset"]
+        length = match["length"]
+        error_text = full_text[offset:offset + length]
 
-                # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
-                if error_text.lower() in SPELLING_WHITELIST:
-                    continue
+        # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
+        if error_text.lower() in SPELLING_WHITELIST:
+            continue
 
-                suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
-                message_lower = match.get("message", "").lower()
-                if category == "COMPOUNDING":
-                    severity = "info"
-                elif "möglich" in message_lower:
-                    severity = "warning"
-                else:
-                    severity = "critical" if category == "TYPOS" else "warning"
+        context_start = max(0, offset - 40)
+        context_end = min(len(full_text), offset + length + 40)
+        context = full_text[context_start:context_end]
 
-                display_message = "Schreibweise prüfen: Bindestrich oder Zusammenschreibung." if category == "COMPOUNDING" else match.get("message", "")
+        suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
+        message_lower = match.get("message", "").lower()
+        if category == "COMPOUNDING":
+            severity = "info"
+        elif "möglich" in message_lower:
+            severity = "warning"
+        else:
+            severity = "critical" if category == "TYPOS" else "warning"
 
-                all_errors.append({
-                    "text": error_text,
-                    "message": display_message,
-                    "suggestions": suggestions,
-                    "rule_id": rule.get("id", ""),
-                    "category": category,
-                    "context": block["preview"],
-                    "tag": block["tag"],
-                    "severity": severity,
-                })
-                error_count += 1
+        display_message = "Schreibweise prüfen: Bindestrich oder Zusammenschreibung." if category == "COMPOUNDING" else match.get("message", "")
+
+        all_errors.append({
+            "text": error_text,
+            "message": display_message,
+            "suggestions": suggestions,
+            "rule_id": rule.get("id", ""),
+            "category": category,
+            "context": context,
+            "severity": severity,
+        })
+        error_count += 1
 
     data["errors"] = all_errors
     data["error_count"] = len(all_errors)

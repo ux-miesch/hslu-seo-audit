@@ -64,4 +64,6 @@ SPELLING_WHITELIST = {
     "know-how", "nonprofit management", "public", "tourism",
     "content management",
     "the", "it", "hours", "and", "lowers", "detection", "saq", "weiterbildungs-abc", "studies", "sur",
+    "rics", "partnerhochschulen", "mscre", "careers", "msc-programm", "ielts",
+    "staatsangehörige", "smart-up", "msc-studiengang", "isa-module",
 }
