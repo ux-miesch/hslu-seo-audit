@@ -185,8 +185,9 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-(function(){if(localStorage.getItem('seo_auth')!=='hslu2026'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
+(function(){if(localStorage.getItem('seo_auth')!=='SEO@hslu.ch'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
 function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
+const VERSION='260417-1909';
 const API = "https://hslu-seo-audit.onrender.com";
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
 let _all = [];
@@ -460,7 +461,7 @@ function esc(s) {
 }
 function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
 
-document.getElementById("footer-ts").textContent = new Date().toLocaleDateString("de-CH");
+document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
 load();
 </script>
 </body>

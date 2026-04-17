@@ -217,8 +217,9 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-(function(){if(localStorage.getItem('seo_auth')!=='hslu2026'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
+(function(){if(localStorage.getItem('seo_auth')!=='SEO@hslu.ch'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
 function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
+const VERSION='260417-1909';
 const API = "https://hslu-seo-audit.onrender.com";
 
 /* ── Score helpers ── */
@@ -579,7 +580,7 @@ window.addEventListener("beforeunload", function(e) {
   }
 });
 
-document.getElementById("footer-ts").textContent = new Date().toLocaleDateString("de-CH");
+document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
 loadProjects();
 </script>
 </body>
