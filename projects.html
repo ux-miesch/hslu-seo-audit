@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projekte – SEO Audit HSLU</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;padding-bottom:48px;}
+
+.header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
+.header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;}
+
+.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;position:fixed;bottom:0;left:0;right:0;z-index:100;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
+
+main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
+
+/* ── Section titles ── */
+.section-title{font-family:'Verdana',sans-serif;font-size:16px;font-weight:700;color:#000;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a;}
+
+/* ── New project form ── */
+.form-card{background:#f4f4f4;border-left:5px solid #77C5D8;padding:20px 24px;margin-bottom:40px;}
+.form-card label{font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;display:block;margin-bottom:4px;margin-top:14px;}
+.form-card label:first-of-type{margin-top:0;}
+.form-card input[type=text],.form-card input[type=email],.form-card input[type=number]{width:100%;max-width:480px;padding:9px 12px;font-family:'Verdana',sans-serif;font-size:13px;border:1px solid #bbb;background:#fff;color:#000;}
+.form-card input[type=text]:focus,.form-card input[type=email]:focus,.form-card input[type=number]:focus{outline:none;border-color:#77C5D8;}
+.form-card input[type=number]{max-width:120px;}
+.btn-primary{display:inline-block;padding:10px 22px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
+.btn-primary:hover{background:#55a8bc;}
+.btn-primary:disabled{background:#bbb;cursor:not-allowed;}
+
+/* ── Projekttyp Toggle ── */
+.type-toggle{display:flex;gap:0;margin-top:4px;}
+.type-btn{padding:9px 20px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#e8e8e8;color:#555;border:2px solid transparent;cursor:pointer;transition:none;}
+.type-btn+.type-btn{border-left:none;}
+.type-btn:hover{background:#d4d4d4;color:#000;}
+.type-btn.selected{background:#77C5D8;color:#000;border-color:#55a8bc;}
+
+/* ── Loader ── */
+@keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-10px);}}
+.hslu-loader{display:flex;align-items:center;gap:10px;margin-top:16px;}
+.hslu-loader span{display:inline-block;width:12px;height:12px;border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+.hslu-loader span:nth-child(1){background:#77C5D8;animation-delay:0s;}
+.hslu-loader span:nth-child(2){background:#ADCA2A;animation-delay:0.15s;}
+.hslu-loader span:nth-child(3){background:#FCC300;animation-delay:0.3s;}
+.hslu-loader span:nth-child(4){background:#EE6A87;animation-delay:0.45s;}
+.progress-msg{font-family:'Verdana',sans-serif;font-size:12px;color:#555;margin-top:10px;}
+
+/* ── Dot-grid pattern (summary bg) ── */
+.dot-bg{
+  background-color:#f4f4f4;
+  background-image:radial-gradient(circle,#bbb 1px,transparent 1px);
+  background-size:8px 8px;
+}
+
+/* ── Projects table ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:#1a1a1a;color:#fff;text-align:left;padding:10px 14px;font-size:12px;font-weight:normal;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #e0e0e0;cursor:pointer;transition:background .1s;}
+tbody tr:hover{background:#f0fafd;}
+td{padding:10px 14px;vertical-align:middle;font-size:13px;}
+td.url-cell{color:#1a1a1a;font-size:12px;}
+td.ts{font-size:11px;color:#777;white-space:nowrap;}
+
+/* ── Score badge ── */
+.score-badge{display:inline-block;padding:2px 9px;font-weight:700;font-size:12px;color:#fff;}
+.score-green  {background:#ADCA2A;color:#1a1a1a;}
+.score-cyan   {background:#77C5D8;color:#1a1a1a;}
+.score-yellow {background:#FCC300;color:#1a1a1a;}
+.score-magenta{background:#EE6A87;}
+
+/* ── Action buttons ── */
+.btn-options,.btn-plan{padding:5px 12px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;background:#444;color:#fff;border:none;cursor:pointer;white-space:nowrap;}
+.btn-options:hover,.btn-plan:hover{background:#666;}
+.btn-plan.active{background:#77C5D8;color:#000;}
+.btn-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+
+/* ── Flyout menu ── */
+.flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
+.flyout.open{display:block;}
+.flyout-item{display:block;width:100%;padding:9px 14px;font-family:'Verdana',sans-serif;font-size:12px;text-align:left;background:none;border:none;cursor:pointer;color:#1a1a1a;text-decoration:none;white-space:nowrap;}
+.flyout-item:hover{background:#f0fafd;}
+.flyout-item.active{font-weight:700;color:#1a1a1a;}
+.flyout-item.active::before{content:"✓ ";color:#77C5D8;}
+.flyout-sep{height:1px;background:#e0e0e0;margin:4px 0;}
+.flyout-item-delete{color:#c00!important;}
+.flyout-item-delete:hover{background:#fde8e8!important;}
+.flyout-status{font-size:11px;color:#555;padding:4px 14px;min-height:18px;}
+
+/* ── Delete Modal ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#fff;padding:28px 32px;max-width:420px;width:90%;font-family:'Verdana',sans-serif;}
+.modal-box h2{font-size:15px;margin-bottom:14px;color:#c00;}
+.modal-box p{font-size:13px;line-height:1.6;margin-bottom:20px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+.btn-cancel{padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#eee;color:#333;border:none;cursor:pointer;}
+.btn-cancel:hover{background:#ddd;}
+.btn-confirm-delete{padding:9px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#c00;color:#fff;border:none;cursor:pointer;}
+.btn-confirm-delete:hover{background:#e00;}
+
+/* ── Empty / error state ── */
+.state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#777;padding:28px 0;}
+.error-box{background:#fde8e8;border-left:3px solid #c00;padding:10px 14px;font-family:'Verdana',sans-serif;font-size:12px;color:#a00;margin-top:12px;}
+
+/* ── Mobile Cards ── */
+@media(max-width:767px){
+  .form-card input[type=text],.form-card input[type=email],.form-card input[type=number]{max-width:100%;}
+  .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
+  .table-wrap thead{display:none;}
+  .table-wrap tbody tr{
+    border:1px solid #ddd;
+    border-left:4px solid #77C5D8;
+    margin-bottom:12px;
+    padding:14px 16px;
+    background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    cursor:pointer;
+  }
+  .table-wrap td{padding:4px 0;border:none;font-size:13px;}
+  .table-wrap td[data-label]::before{content:attr(data-label)": ";font-size:11px;color:#777;display:block;margin-bottom:2px;}
+  .table-wrap td.ts{font-size:11px;}
+  .table-wrap td:last-child{padding-top:10px;}
+}
+@media print{.header,.footer-bar{display:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
+  <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
+    <span style="font-family:'Verdana',sans-serif;font-size:24px;font-weight:700;color:#fff;">HSLU</span>
+    <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
+  </div>
+  <div class="header-right">SEO Audit Projekte</div>
+</div>
+
+<!-- ── Flyout: Optionen ── -->
+<div class="flyout" id="flyout-options">
+  <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung</a>
+  <div class="flyout-sep"></div>
+  <button class="flyout-item flyout-item-delete" onclick="openDeleteModal(_activeSlug)">Projekt löschen</button>
+</div>
+
+<!-- ── Flyout: Planen ── -->
+<div class="flyout" id="flyout-plan">
+  <button class="flyout-item" data-val="weekly"  onclick="pickSchedule('weekly')">Wöchentlich (jeden Montag)</button>
+  <button class="flyout-item" data-val="monthly" onclick="pickSchedule('monthly')">Monatlich (1. des Monats)</button>
+  <button class="flyout-item" data-val=""        onclick="pickSchedule('')">Deaktiviert</button>
+  <div class="flyout-status" id="flyout-status"></div>
+</div>
+
+<!-- ── Delete Modal (shared) ── -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-box">
+    <h2>Projekt löschen</h2>
+    <p>Möchtest du dieses Projekt wirklich löschen? Alle Daten werden unwiderruflich entfernt.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Abbrechen</button>
+      <button class="btn-confirm-delete" onclick="confirmDelete()">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── Neues Projekt ── -->
+  <div class="section-title">Neues Projekt erstellen</div>
+  <div class="form-card">
+    <label>Projekttyp <span style="color:#c00;font-weight:400;">*</span></label>
+    <div class="type-toggle">
+      <button type="button" class="type-btn selected" id="type-website" onclick="selectType('website')">HSLU-Website</button>
+      <button type="button" class="type-btn" id="type-blog" onclick="selectType('blog')">HSLU-Content-Blog</button>
+    </div>
+    <input type="hidden" id="proj-type" value="website">
+    <label for="proj-name">Projektname</label>
+    <input type="text" id="proj-name" placeholder="z.B. HSLU Wirtschaft">
+    <label for="proj-url">Webseiten-Adresse</label>
+    <input type="text" id="proj-url" placeholder="https://www.hslu.ch/de-ch/wirtschaft">
+    <label for="proj-max-pages">Anzahl der Seiten, welche untersucht werden</label>
+    <input type="number" id="proj-max-pages" value="20" min="1" max="500">
+    <label for="proj-email">E-Mail für Benachrichtigung <span style="font-weight:400;color:#777;">(optional)</span></label>
+    <input type="email" id="proj-email" placeholder="name@beispiel.ch">
+    <div style="margin-top:18px;">
+      <button class="btn-primary" id="btn-create" onclick="createProject()">Projekt erstellen →</button>
+    </div>
+    <div id="loader-wrap" style="display:none;">
+      <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
+      <div class="progress-msg" id="progress-msg">Projekt wird erstellt…</div>
+    </div>
+    <div id="form-error" class="error-box" style="display:none;"></div>
+  </div>
+
+  <!-- ── Projektliste ── -->
+  <div class="section-title">Bestehende Projekte</div>
+  <div id="projects-wrap">
+    <div class="state-msg">Lade Projekte…</div>
+  </div>
+
+</main>
+
+<div class="footer-bar">
+  <span>hslu-seo-audit by DMS</span>
+  <span id="footer-ts"></span>
+</div>
+
+<script>
+const API = "http://localhost:8000";
+
+/* ── Score helpers ── */
+function scoreClass(s) {
+  if (s === null || s === undefined) return null;
+  if (s >= 99) return "green";
+  if (s >= 66) return "cyan";
+  if (s >= 33) return "yellow";
+  return "magenta";
+}
+
+function scoreBadge(s) {
+  if (s === null || s === undefined) return '<span style="color:#aaa;font-size:12px;">—</span>';
+  const cls = scoreClass(s);
+  return `<span class="score-badge score-${cls}">${s.toFixed(1)}</span>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return "—";
+  return iso.replace("T", " ").slice(0, 16);
+}
+
+/* ── Load & render project list ── */
+async function loadProjects() {
+  const wrap = document.getElementById("projects-wrap");
+  try {
+    const res = await fetch(`${API}/projects/`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const projects = await res.json();
+
+    if (!projects.length) {
+      wrap.innerHTML = '<div class="state-msg">Noch keine Projekte vorhanden. Erstelle dein erstes Projekt oben.</div>';
+      return;
+    }
+
+    // For each project fetch report data to get page count + avg score
+    const enriched = await Promise.all(projects.map(async p => {
+      try {
+        const r = await fetch(`${API}/projects/${p.slug}/report`);
+        if (!r.ok) return { ...p, page_count: 0, avg_score: null };
+        const data = await r.json();
+        const pages = data.pages || [];
+        const scores = pages.map(pg => pg.score).filter(s => typeof s === "number");
+        const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+        return { ...p, page_count: pages.length, avg_score: avg !== null ? Math.round(avg * 10) / 10 : null };
+      } catch {
+        return { ...p, page_count: 0, avg_score: null };
+      }
+    }));
+
+    const rows = enriched.map(p => `
+      <tr data-slug="${p.slug}" onclick="window.location.href='report.html?project=${p.slug}'">
+        <td data-label="Projektname"><strong>${p.name}</strong></td>
+        <td class="url-cell" data-label="Root-URL">${p.root_url}</td>
+        <td style="text-align:center;" data-label="Seiten">${p.page_count || "—"}</td>
+        <td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>
+        <td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>
+        <td onclick="event.stopPropagation()">
+          <div class="btn-actions">
+            <button class="btn-options" id="opt-btn-${p.slug}" onclick="openOptionsFlyout('${p.slug}',this)">Optionen ▾</button>
+            <button class="btn-plan${p.schedule ? ' active' : ''}" id="plan-btn-${p.slug}" onclick="openPlanFlyout('${p.slug}','${p.schedule||''}',this)">Planen ▾</button>
+          </div>
+        </td>
+      </tr>`).join("");
+
+    wrap.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Projektname</th>
+              <th>Root-URL</th>
+              <th style="text-align:center;">Seiten</th>
+              <th>Ø Score</th>
+              <th>Letzter Audit</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  } catch (err) {
+    wrap.innerHTML = `<div class="error-box">Fehler beim Laden der Projekte: ${err.message}</div>`;
+  }
+}
+
+/* ── Create project → crawl → audit → redirect ── */
+async function createProject() {
+  const projectType = document.getElementById("proj-type").value;
+  const name        = document.getElementById("proj-name").value.trim();
+  const url         = document.getElementById("proj-url").value.trim();
+  const maxPages    = parseInt(document.getElementById("proj-max-pages").value) || 20;
+  const email       = document.getElementById("proj-email").value.trim();
+  const errBox      = document.getElementById("form-error");
+  errBox.style.display = "none";
+
+  if (!projectType) {
+    errBox.textContent = "Bitte einen Projekttyp auswählen.";
+    errBox.style.display = "block";
+    return;
+  }
+  if (!name || !url) {
+    errBox.textContent = "Bitte Projektname und Root-URL angeben.";
+    errBox.style.display = "block";
+    return;
+  }
+  if (!/^https?:\/\/.+/.test(url)) {
+    errBox.textContent = "Root-URL muss mit http:// oder https:// beginnen.";
+    errBox.style.display = "block";
+    return;
+  }
+
+  const btn = document.getElementById("btn-create");
+  const loaderWrap = document.getElementById("loader-wrap");
+  const progressMsg = document.getElementById("progress-msg");
+
+  btn.disabled = true;
+  loaderWrap.style.display = "block";
+  setProgress("Projekt wird erstellt…");
+
+  try {
+    // 1. Create project
+    const body = { name, root_url: url, max_pages: maxPages, project_type: projectType };
+    if (email) body.notification_email = email;
+    const createRes = await fetch(`${API}/projects/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!createRes.ok) {
+      const err = await createRes.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${createRes.status}`);
+    }
+    const project = await createRes.json();
+    const slug = project.slug;
+
+    // 2. Trigger crawl
+    setProgress("Crawl läuft – Seiten werden gesammelt…");
+    await fetch(`${API}/projects/${slug}/crawl`, { method: "POST" });
+
+    // 3. Poll until crawl is done (last_crawled_at is set and > project created_at)
+    await pollCrawl(slug);
+
+    // 4. Start audit
+    setProgress("Audit läuft – Seiten werden analysiert…");
+    await fetch(`${API}/projects/${slug}/audit`, { method: "POST" });
+
+    // 5. Poll until audit has results
+    await pollAudit(slug);
+
+    // 6. Redirect to report
+    setProgress("Fertig – Weiterleitung zum Rapport…");
+    window.location.href = `report.html?project=${slug}`;
+
+  } catch (err) {
+    btn.disabled = false;
+    loaderWrap.style.display = "none";
+    errBox.textContent = "Fehler: " + err.message;
+    errBox.style.display = "block";
+  }
+}
+
+function setProgress(msg) {
+  document.getElementById("progress-msg").textContent = msg;
+}
+
+async function pollCrawl(slug) {
+  // Poll until last_crawled_at is set (max 10 min)
+  const deadline = Date.now() + 10 * 60 * 1000;
+  let dots = 0;
+  while (Date.now() < deadline) {
+    await sleep(5000);
+    dots = (dots + 1) % 4;
+    const indicator = ".".repeat(dots + 1);
+    try {
+      const r = await fetch(`${API}/projects/${slug}`);
+      if (r.ok) {
+        const p = await r.json();
+        const pageRes = await fetch(`${API}/projects/${slug}/pages`);
+        const pages = pageRes.ok ? await pageRes.json() : [];
+        setProgress(`Crawl läuft – ${pages.length} Seiten gefunden${indicator}`);
+        if (p.last_crawled_at) return; // crawl done
+      }
+    } catch { /* ignore */ }
+  }
+  throw new Error("Crawl-Timeout – bitte manuell prüfen.");
+}
+
+async function pollAudit(slug) {
+  // Poll until at least 10 audit results exist (max 60 min)
+  const deadline = Date.now() + 60 * 60 * 1000;
+  let dots = 0;
+  while (Date.now() < deadline) {
+    await sleep(10000);
+    dots = (dots + 1) % 4;
+    const indicator = ".".repeat(dots + 1);
+    try {
+      const r = await fetch(`${API}/projects/${slug}/report`);
+      if (r.ok) {
+        const data = await r.json();
+        const count = (data.pages || []).length;
+        setProgress(`Audit läuft – ${count} Seiten ausgewertet${indicator}`);
+        if (count >= 10) return;
+      }
+    } catch { /* ignore */ }
+  }
+  throw new Error("Audit-Timeout – bitte manuell prüfen.");
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ── Projekttyp Toggle ── */
+function selectType(val) {
+  document.getElementById("proj-type").value = val;
+  document.getElementById("type-website").classList.toggle("selected", val === "website");
+  document.getElementById("type-blog").classList.toggle("selected", val === "blog");
+}
+
+/* ── Flyouts ── */
+let _activeSlug = null;
+let _activePlanCurrent = null;
+
+function _positionFlyout(flyout, btn) {
+  const rect = btn.getBoundingClientRect();
+  const h = flyout.offsetHeight || 130;
+  const left = Math.min(rect.left, window.innerWidth - 230);
+  flyout.style.left = left + "px";
+  if (window.innerHeight - rect.bottom < h && rect.top > h) {
+    flyout.style.top = (rect.top - h) + "px";
+  } else {
+    flyout.style.top = (rect.bottom + 4) + "px";
+  }
+}
+
+function closeAllFlyouts() {
+  document.getElementById("flyout-options").classList.remove("open");
+  document.getElementById("flyout-plan").classList.remove("open");
+}
+
+function openOptionsFlyout(slug, btn) {
+  const flyout = document.getElementById("flyout-options");
+  const isOpen = flyout.classList.contains("open") && _activeSlug === slug;
+  closeAllFlyouts();
+  if (isOpen) return;
+  _activeSlug = slug;
+  _positionFlyout(flyout, btn);
+  flyout.classList.add("open");
+}
+
+function openPlanFlyout(slug, current, btn) {
+  const flyout = document.getElementById("flyout-plan");
+  const isOpen = flyout.classList.contains("open") && _activeSlug === slug;
+  closeAllFlyouts();
+  if (isOpen) return;
+  _activeSlug = slug;
+  _activePlanCurrent = current;
+  document.getElementById("flyout-status").textContent = "";
+  flyout.querySelectorAll(".flyout-item[data-val]").forEach(el => {
+    el.classList.toggle("active", el.dataset.val === (current || ""));
+  });
+  _positionFlyout(flyout, btn);
+  flyout.classList.add("open");
+}
+
+async function pickSchedule(val) {
+  if (!_activeSlug) return;
+  const slug = _activeSlug;
+  const statusEl = document.getElementById("flyout-status");
+  statusEl.textContent = "Wird gespeichert…";
+  try {
+    const res = await fetch(`${API}/projects/${slug}/schedule`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ schedule: val || null }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    _activePlanCurrent = val;
+    document.getElementById("flyout-plan").querySelectorAll(".flyout-item[data-val]").forEach(el => {
+      el.classList.toggle("active", el.dataset.val === val);
+    });
+    const planBtn = document.getElementById(`plan-btn-${slug}`);
+    if (planBtn) {
+      planBtn.classList.toggle("active", !!val);
+      planBtn.onclick = () => openPlanFlyout(slug, val, planBtn);
+    }
+    statusEl.textContent = val
+      ? `Gespeichert: ${val === "weekly" ? "Wöchentlich" : "Monatlich"}`
+      : "Zeitplan deaktiviert.";
+    setTimeout(closeAllFlyouts, 1200);
+  } catch (err) {
+    statusEl.textContent = "Fehler: " + err.message;
+  }
+}
+
+// Klick ausserhalb schliesst beide Flyouts
+document.addEventListener("click", e => {
+  const fo = document.getElementById("flyout-options");
+  const fp = document.getElementById("flyout-plan");
+  if (!fo.classList.contains("open") && !fp.classList.contains("open")) return;
+  const inside = fo.contains(e.target) || fp.contains(e.target)
+    || (e.target.classList.contains("btn-options"))
+    || (e.target.classList.contains("btn-plan"));
+  if (!inside) closeAllFlyouts();
+});
+
+/* ── Delete ── */
+let _deleteSlug = null;
+
+function openDeleteModal(slug) {
+  closeAllFlyouts();
+  _deleteSlug = slug;
+  document.getElementById("delete-modal").classList.add("open");
+}
+
+function closeDeleteModal() {
+  document.getElementById("delete-modal").classList.remove("open");
+  _deleteSlug = null;
+}
+
+async function confirmDelete() {
+  if (!_deleteSlug) return;
+  const slug = _deleteSlug;
+  closeDeleteModal();
+  try {
+    const res = await fetch(`${API}/projects/${slug}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
+    // Zeile aus Tabelle entfernen
+    const row = document.querySelector(`tr[data-slug="${slug}"]`);
+    if (row) row.remove();
+    // Falls keine Zeilen mehr übrig → Leertext zeigen
+    const tbody = document.querySelector("#projects-wrap tbody");
+    if (tbody && !tbody.querySelector("tr")) {
+      document.getElementById("projects-wrap").innerHTML =
+        '<div class="state-msg">Noch keine Projekte vorhanden. Erstelle dein erstes Projekt oben.</div>';
+    }
+  } catch (err) {
+    alert("Fehler beim Löschen: " + err.message);
+  }
+}
+
+/* ── Init ── */
+document.getElementById("footer-ts").textContent = new Date().toLocaleDateString("de-CH");
+loadProjects();
+</script>
+</body>
+</html>

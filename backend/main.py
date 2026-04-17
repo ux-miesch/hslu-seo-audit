@@ -1,4 +1,5 @@
 from __future__ import annotations
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,13 +8,22 @@ import sys, os, asyncio
 sys.path.insert(0, os.path.dirname(__file__))
 from crawler import fetch_page
 from backend.routers import projects
-from backend.database import init_db
 from backend.audit_runner import run_checks
 from checks.sea import check_sea
 
-app = FastAPI(title="SEO Audit API", version="0.2.0")
 
-init_db()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from backend.database import migrate_all
+    from backend.scheduler import init_scheduler, shutdown_scheduler
+    migrate_all()
+    init_scheduler()
+    yield
+    shutdown_scheduler()
+
+
+app = FastAPI(title="SEO Audit API", version="0.2.0", lifespan=lifespan)
+
 app.include_router(projects.router)
 
 app.add_middleware(
