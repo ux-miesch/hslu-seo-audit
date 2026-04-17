@@ -22,7 +22,7 @@ async def _run_project_audit(slug: str) -> None:
         project_id = row["id"]
         root_url = row["root_url"]
         language = row["language"]
-        max_pages = row["max_pages"] or 20
+        max_pages = row["max_pages"] or None  # 0/NULL → keine Begrenzung
         project_type = row["project_type"] or "website"
     finally:
         db.close()

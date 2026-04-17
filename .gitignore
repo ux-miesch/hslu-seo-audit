@@ -1,5 +1,8 @@
+.env
 backend/gtm_credentials.json
 .DS_Store
 backend/.DS_Store
 frontend/.DS_Store
 venv/
+backend/hslu_seo.db
+backend/gtm_credentials.json

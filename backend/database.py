@@ -84,6 +84,34 @@ def migrate_all() -> None:
                 pass
 
 
+GLOBAL_DB_PATH = os.path.join(_DIR, "spelling.db")
+
+
+def get_global_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(GLOBAL_DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_global_db() -> None:
+    conn = get_global_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS spelling_candidates (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            word        TEXT NOT NULL,
+            message     TEXT,
+            rule_id     TEXT,
+            url         TEXT,
+            status      TEXT DEFAULT 'neu',
+            first_seen  TEXT,
+            last_seen   TEXT,
+            UNIQUE(word, rule_id)
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+
 def list_all_projects() -> list[dict]:
     """Liest alle Projekt-DBs aus PROJECTS_DIR und gibt ihre Metadaten zurück."""
     if not os.path.isdir(PROJECTS_DIR):

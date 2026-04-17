@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rechtschreibkandidaten – SEO Audit HSLU</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;padding-bottom:48px;}
+
+.header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
+.header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;}
+
+.footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;position:fixed;bottom:0;left:0;right:0;z-index:100;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
+
+main{max-width:100%;margin:0;padding:88px 24px 52px;}
+
+.section-title{font-family:'Verdana',sans-serif;font-size:16px;font-weight:700;color:#000;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #1a1a1a;}
+
+/* ── Stats row ── */
+.stats-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+.stat-box{background:#f4f4f4;border-left:4px solid #77C5D8;padding:8px 16px;font-size:12px;}
+.stat-box strong{font-size:16px;display:block;}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px;}
+.filter-btn{padding:7px 14px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#e8e8e8;color:#555;border:none;cursor:pointer;}
+.filter-btn.active{background:#1a1a1a;color:#fff;}
+.filter-btn:hover:not(.active){background:#d4d4d4;color:#000;}
+.count-badge{display:inline-block;margin-left:5px;background:#aaa;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;vertical-align:middle;}
+.filter-btn.active .count-badge{background:#555;}
+.btn-apply{padding:7px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#ADCA2A;color:#000;border:none;cursor:pointer;margin-left:auto;}
+.btn-apply:hover{background:#99b520;}
+.btn-apply:disabled{background:#bbb;cursor:not-allowed;}
+
+/* ── Table ── */
+#table-wrap{width:100%;max-width:100%;}
+.table-wrap{width:100%;max-width:100%;overflow-x:hidden;margin:0;padding:0;}
+table{border-collapse:collapse;width:100%;table-layout:fixed;margin:0;}
+
+col.col-word   {width:15%;}
+col.col-msg    {width:22%;}
+col.col-url    {width:20%;}
+col.col-date   {width:8%;}
+col.col-rule   {width:12%;}
+col.col-info   {width:0;}
+col.col-status {width:8%;}
+col.col-actions{width:15%;}
+
+thead th{
+  background:#1a1a1a;color:#fff;text-align:left;
+  padding:9px 8px;font-size:11px;font-weight:normal;
+  white-space:nowrap;cursor:pointer;user-select:none;overflow:hidden;
+}
+thead th:hover{background:#333;}
+thead th .sort-icon{margin-left:4px;opacity:.5;font-size:10px;}
+thead th.sort-active .sort-icon{opacity:1;}
+thead th.col-info{cursor:default;}
+thead th.col-info:hover{background:#1a1a1a;}
+
+tbody tr{border-bottom:1px solid #e8e8e8;}
+tbody tr:hover{background:#f5fbfd;}
+td{padding:9px 8px;vertical-align:middle;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+td.word-cell{font-weight:700;font-family:monospace;font-size:12px;white-space:normal;overflow:hidden;text-overflow:clip;}
+td.col-status{overflow:visible;}
+td.col-actions{overflow:visible;}
+td.msg-cell{color:#555;white-space:normal;line-height:1.4;}
+td.url-cell a{color:#1a1a1a;text-decoration:none;}
+td.url-cell a:hover{text-decoration:underline;}
+td.date-cell{color:#777;font-size:11px;}
+td.rule-cell{color:#777;font-size:11px;}
+
+/* ── Info button (hidden on wide screens, but keeps column slot) ── */
+.col-info-th, td.col-info{visibility:hidden;padding:0;overflow:hidden;}
+
+/* ── Info-Popover ── */
+.info-popover{
+  display:none;position:fixed;z-index:300;
+  background:#fff;border:1px solid #ddd;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);
+  padding:12px 16px;min-width:240px;max-width:320px;
+  font-family:'Verdana',sans-serif;font-size:12px;
+}
+.info-popover.open{display:block;}
+.info-pop-row{margin-bottom:9px;}
+.info-pop-row:last-child{margin-bottom:0;}
+.info-pop-label{font-size:10px;color:#777;display:block;margin-bottom:2px;font-weight:700;text-transform:uppercase;}
+.info-pop-value{color:#1a1a1a;word-break:break-all;line-height:1.4;}
+.info-pop-value a{color:#1a1a1a;}
+
+/* ── Info icon button (same style as gear in projects.html) ── */
+.btn-info{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;
+  background:#444;color:#fff;
+  border:none;cursor:pointer;
+  font-weight:700;font-size:11px;
+  font-family:'Verdana',sans-serif;
+  border-radius:0;
+  flex-shrink:0;
+}
+.btn-info:hover{background:#666;}
+
+/* ── Status label ── */
+.status-label{display:inline-block;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap;}
+.status-neu       {background:#FCC300;color:#1a1a1a;}
+.status-whitelist {background:#ADCA2A;color:#1a1a1a;}
+.status-ignorieren{background:#ccc;color:#555;}
+
+/* ── Action buttons ── */
+.btn-action{padding:4px 8px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap;}
+.btn-whitelist {background:#ADCA2A;color:#000;}
+.btn-whitelist:hover{background:#8fb818;}
+.btn-ignore    {background:#ddd;color:#444;}
+.btn-ignore:hover{background:#bbb;}
+.btn-reactivate{background:#77C5D8;color:#000;}
+.btn-reactivate:hover{background:#55a8bc;}
+.btn-actions-cell{display:flex;flex-direction:row;gap:4px;flex-wrap:nowrap;}
+
+/* ── Notify / empty states ── */
+.state-msg  {font-size:13px;color:#777;padding:28px 0;}
+.error-box  {background:#fde8e8;border-left:3px solid #c00;padding:10px 14px;font-size:12px;color:#a00;margin-bottom:12px;}
+.success-box{background:#edfce5;border-left:3px solid #ADCA2A;padding:10px 14px;font-size:12px;color:#3a6200;margin-bottom:12px;}
+
+/* ── Mobile Cards ── */
+@media (max-width: 1085px) {
+  .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
+  .table-wrap thead{display:none;}
+  .table-wrap tbody tr{
+    border:1px solid #ddd;border-left:4px solid #77C5D8;
+    margin-bottom:12px;padding:12px 14px;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  .table-wrap td{padding:4px 0;border:none;white-space:normal;overflow:visible;text-overflow:clip;}
+  .table-wrap td[data-label]::before{content:attr(data-label)": ";font-size:10px;color:#777;font-weight:700;text-transform:uppercase;display:block;margin-bottom:2px;}
+  /* Show all columns in card mode (override narrow-table hiding) */
+  td.col-url, td.col-date, td.col-rule { display: block !important; }
+  /* Hide info button – all info is directly visible in card */
+  td.col-info { visibility: hidden !important; padding: 0 !important; }
+  .btn-actions-cell{flex-wrap:wrap;}
+}
+@media print{.header,.footer-bar{display:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;"
+       onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
+  <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
+    <span style="font-family:'Verdana',sans-serif;font-size:24px;font-weight:700;color:#fff;">HSLU</span>
+    <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
+  </div>
+  <div class="header-right">SEO-Audit Rechtschreibkandidaten</div>
+</div>
+
+<!-- Shared info popover -->
+<div class="info-popover" id="info-popover"
+  onmouseenter="if(_popTimer){clearTimeout(_popTimer);_popTimer=null;}"
+  onmouseleave="scheduleClosePopover()"></div>
+
+<main>
+  <div class="section-title">Rechtschreibkandidaten</div>
+  <div class="stats-row" id="stats-row"></div>
+
+  <div class="toolbar">
+    <button class="filter-btn active" data-filter="all"        onclick="setFilter('all')">Alle<span class="count-badge" id="cnt-all">0</span></button>
+    <button class="filter-btn"        data-filter="neu"        onclick="setFilter('neu')">Nur Neu<span class="count-badge" id="cnt-neu">0</span></button>
+    <button class="filter-btn"        data-filter="whitelist"  onclick="setFilter('whitelist')">Whitelist<span class="count-badge" id="cnt-whitelist">0</span></button>
+    <button class="filter-btn"        data-filter="ignorieren" onclick="setFilter('ignorieren')">Ignorieren<span class="count-badge" id="cnt-ignorieren">0</span></button>
+    <button class="btn-apply" id="btn-apply" onclick="applyWhitelist()">Whitelist anwenden →</button>
+  </div>
+
+  <div id="notify" style="display:none;"></div>
+  <div id="table-wrap"><div class="state-msg">Lade Kandidaten…</div></div>
+</main>
+
+<div class="footer-bar">
+  <span>hslu-seo-audit by DMS</span>
+  <span id="footer-ts"></span>
+</div>
+
+<script>
+const API = "http://localhost:8000";
+const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
+let _all = [];
+let _filter = "all";
+let _sortCol = "last_seen";
+let _sortDir = "desc";
+
+/* ── Columns (key=null → not sortable, info=true → only on narrow) ── */
+const COLS = [
+  { key: "word",      label: "Wort",         cls: "col-word"    },
+  { key: "message",   label: "Fehlermeldung", cls: "col-msg"     },
+  { key: "url",       label: "URL",           cls: "col-url"     },
+  { key: "last_seen", label: "Datum",         cls: "col-date"    },
+  { key: "rule_id",   label: "Regel",         cls: "col-rule"    },
+  { key: null,        label: "",              cls: "col-info", info: true },
+  { key: "status",    label: "Status",        cls: "col-status"  },
+  { key: null,        label: "Aktionen",      cls: "col-actions" },
+];
+
+/* ── Load ── */
+async function load() {
+  if (_projectSlug) {
+    try {
+      const pr = await fetch(`${API}/projects/${_projectSlug}`);
+      if (pr.ok) {
+        const proj = await pr.json();
+        const title = `Rechtschreibfehler – ${proj.name || _projectSlug}`;
+        document.querySelector(".section-title").textContent = title;
+        document.querySelector(".header-right").textContent  = title;
+        document.title = title;
+      }
+    } catch { /* ignore */ }
+  }
+
+  const url = _projectSlug
+    ? `${API}/spelling-candidates/?project=${encodeURIComponent(_projectSlug)}`
+    : `${API}/spelling-candidates/`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    _all = await r.json();
+    updateCounts();
+    render();
+  } catch (err) {
+    document.getElementById("table-wrap").innerHTML =
+      `<div class="error-box">Fehler beim Laden: ${err.message}</div>`;
+  }
+}
+
+/* ── Counts ── */
+function updateCounts() {
+  const c = { all: _all.length, neu: 0, whitelist: 0, ignorieren: 0 };
+  for (const x of _all) c[x.status] = (c[x.status] || 0) + 1;
+  document.getElementById("cnt-all").textContent       = c.all;
+  document.getElementById("cnt-neu").textContent       = c.neu;
+  document.getElementById("cnt-whitelist").textContent = c.whitelist;
+  document.getElementById("cnt-ignorieren").textContent= c.ignorieren;
+  document.getElementById("stats-row").innerHTML = `
+    <div class="stat-box"><strong>${c.all}</strong>Total</div>
+    <div class="stat-box" style="border-color:#FCC300"><strong>${c.neu}</strong>Neu</div>
+    <div class="stat-box" style="border-color:#ADCA2A"><strong>${c.whitelist}</strong>Whitelist</div>
+    <div class="stat-box" style="border-color:#ccc"><strong>${c.ignorieren}</strong>Ignorieren</div>`;
+  document.getElementById("btn-apply").disabled = c.whitelist === 0;
+}
+
+/* ── Filter ── */
+function setFilter(f) {
+  _filter = f;
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === f));
+  render();
+}
+
+/* ── Sort ── */
+function sortBy(key) {
+  if (!key) return;
+  _sortDir = _sortCol === key ? (_sortDir === "asc" ? "desc" : "asc") : "asc";
+  _sortCol = key;
+  render();
+}
+
+function sorted(list) {
+  if (!_sortCol) return list;
+  return [...list].sort((a, b) => {
+    const va = (a[_sortCol] || "").toLowerCase();
+    const vb = (b[_sortCol] || "").toLowerCase();
+    const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+    return _sortDir === "asc" ? cmp : -cmp;
+  });
+}
+
+/* ── Render ── */
+function render() {
+  let list = _filter === "all" ? _all : _all.filter(c => c.status === _filter);
+  list = sorted(list);
+
+  if (!list.length) {
+    document.getElementById("table-wrap").innerHTML =
+      `<div class="state-msg">Keine Einträge für diesen Filter.</div>`;
+    return;
+  }
+
+  const thCells = COLS.map(col => {
+    if (col.info) return `<th class="col-info-th"></th>`;
+    const active = col.key === _sortCol ? " sort-active" : "";
+    const icon   = col.key
+      ? `<span class="sort-icon">${col.key === _sortCol ? (_sortDir === "asc" ? "↑" : "↓") : "⇅"}</span>`
+      : "";
+    const click  = col.key ? `onclick="sortBy('${col.key}')"` : "";
+    return `<th class="${col.cls}${active}" ${click}>${col.label}${icon}</th>`;
+  }).join("");
+
+  const rows = list.map(c => {
+    const statusLabel = `<span class="status-label status-${c.status}">${capFirst(c.status)}</span>`;
+    const urlShort    = c.url ? c.url.replace(/^https?:\/\/[^/]+/, "…") : "—";
+    const urlLink     = c.url ? `<a href="${esc(c.url)}" target="_blank" title="${esc(c.url)}">${esc(urlShort)}</a>` : "—";
+    const date        = c.last_seen ? c.last_seen.slice(0, 10) : "—";
+
+    // Info button data
+    const infoUrl  = esc(c.url || "");
+    const infoRule = esc(c.rule_id || "—");
+
+    const infoBtn = `<button class="btn-info"
+      onmouseenter="openInfoPopover(this,'${infoUrl}','${date}','${infoRule}')"
+      onmouseleave="scheduleClosePopover()"
+      onclick="openInfoPopover(this,'${infoUrl}','${date}','${infoRule}')">i</button>`;
+
+    let actions = c.status === "neu"
+      ? `<button class="btn-action btn-whitelist" onclick="setStatus(${c.id},'whitelist')">Whitelist</button>
+         <button class="btn-action btn-ignore"    onclick="setStatus(${c.id},'ignorieren')">Ignorieren</button>`
+      : `<button class="btn-action btn-reactivate" onclick="setStatus(${c.id},'neu')">Reaktivieren</button>`;
+
+    return `<tr id="row-${c.id}">
+      <td class="word-cell col-word"  data-label="Wort">${esc(c.word)}</td>
+      <td class="msg-cell  col-msg"   data-label="Fehlermeldung">${esc(c.message || "—")}</td>
+      <td class="url-cell  col-url"   data-label="URL">${urlLink}</td>
+      <td class="date-cell col-date"  data-label="Datum">${date}</td>
+      <td class="rule-cell col-rule"  data-label="Regel">${esc(c.rule_id || "—")}</td>
+      <td class="col-info">${infoBtn}</td>
+      <td class="col-status"          data-label="Status">${statusLabel}</td>
+      <td class="col-actions"         data-label="Aktionen"><div class="btn-actions-cell">${actions}</div></td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("table-wrap").innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col class="col-word"><col class="col-msg"><col class="col-url">
+          <col class="col-date"><col class="col-rule"><col class="col-info">
+          <col class="col-status"><col class="col-actions">
+        </colgroup>
+        <thead><tr>${thCells}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ── Info Popover ── */
+let _popTimer = null;
+
+function openInfoPopover(btn, url, date, ruleId) {
+  if (_popTimer) { clearTimeout(_popTimer); _popTimer = null; }
+  const pop = document.getElementById("info-popover");
+  pop._srcBtn = btn;
+
+  const urlHtml = url
+    ? `<a href="${url}" target="_blank">${url}</a>`
+    : "—";
+
+  pop.innerHTML = `
+    <div class="info-pop-row">
+      <span class="info-pop-label">URL</span>
+      <span class="info-pop-value">${urlHtml}</span>
+    </div>
+    <div class="info-pop-row">
+      <span class="info-pop-label">Datum</span>
+      <span class="info-pop-value">${date || "—"}</span>
+    </div>
+    <div class="info-pop-row">
+      <span class="info-pop-label">Regel</span>
+      <span class="info-pop-value">${ruleId || "—"}</span>
+    </div>`;
+
+  pop.style.visibility = "hidden";
+  pop.classList.add("open");
+
+  const rect = btn.getBoundingClientRect();
+  const pw   = pop.offsetWidth  || 260;
+  const ph   = pop.offsetHeight || 130;
+  let left = rect.right - pw;
+  if (left < 6) left = rect.left;
+  left = Math.min(left, window.innerWidth - pw - 6);
+  const top  = window.innerHeight - rect.bottom < ph + 10
+    ? rect.top - ph - 6
+    : rect.bottom + 6;
+
+  pop.style.left = Math.max(4, left) + "px";
+  pop.style.top  = top + "px";
+  pop.style.visibility = "";
+}
+
+function scheduleClosePopover() {
+  _popTimer = setTimeout(closeInfoPopover, 150);
+}
+
+function closeInfoPopover() {
+  _popTimer = null;
+  const pop = document.getElementById("info-popover");
+  pop.classList.remove("open");
+  pop._srcBtn = null;
+}
+
+// Close on click outside (for touch devices)
+document.addEventListener("click", e => {
+  const pop = document.getElementById("info-popover");
+  if (!pop.classList.contains("open")) return;
+  if (!pop.contains(e.target) && !e.target.closest(".btn-info")) closeInfoPopover();
+});
+
+/* ── PATCH status ── */
+async function setStatus(id, status) {
+  try {
+    const r = await fetch(`${API}/spelling-candidates/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const updated = await r.json();
+    const idx = _all.findIndex(c => c.id === id);
+    if (idx !== -1) _all[idx] = updated;
+    updateCounts();
+    render();
+  } catch (err) { showNotify(`Fehler: ${err.message}`, "error"); }
+}
+
+/* ── Apply whitelist ── */
+async function applyWhitelist() {
+  const btn = document.getElementById("btn-apply");
+  btn.disabled = true;
+  btn.textContent = "Wird angewendet…";
+  try {
+    const r = await fetch(`${API}/spelling-candidates/apply-whitelist`, { method: "POST" });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    showNotify(
+      data.added > 0
+        ? `${data.added} Wörter in whitelist.py eingetragen: ${data.words.join(", ")}`
+        : "Keine neuen Wörter (bereits alle in Whitelist).",
+      "success"
+    );
+    await load();
+  } catch (err) {
+    showNotify(`Fehler: ${err.message}`, "error");
+    btn.disabled = false;
+  }
+  btn.textContent = "Whitelist anwenden →";
+}
+
+/* ── Notify ── */
+function showNotify(msg, type) {
+  const el = document.getElementById("notify");
+  el.className = type === "error" ? "error-box" : "success-box";
+  el.textContent = msg;
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 6000);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+
+document.getElementById("footer-ts").textContent = new Date().toLocaleDateString("de-CH");
+load();
+</script>
+</body>
+</html>

@@ -21,12 +21,16 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 MAX_CRAWL_PAGES = 200
 
+# In-Memory-Projektstatus (wird während Crawl/Audit befüllt)
+_project_state: dict = {}
+# Format: slug -> {status, pages_crawled, pages_total, pages_audited, recently_audited, current_url}
+
 REPORT_BASE_URL = os.getenv("REPORT_BASE_URL", "https://ux-miesch.github.io/hslu-seo-audit")
 
-SMTP_HOST = "mail.metanet.ch"
-SMTP_PORT = 465
-SMTP_USER = "seo@miesch.com"
-SMTP_PASS = "SEO785235.ch"
+SMTP_HOST = os.environ.get("SMTP_HOST", "heine.metanet.ch")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 
 class ProjectCreate(BaseModel):
@@ -34,7 +38,7 @@ class ProjectCreate(BaseModel):
     root_url: str
     page_type: Optional[str] = None
     language: Optional[str] = None
-    max_pages: int = 20
+    max_pages: Optional[int] = None  # None = alle Seiten (bis MAX_CRAWL_PAGES)
     notification_email: Optional[str] = None
     project_type: str = "website"  # "website" oder "blog"
 
@@ -66,22 +70,29 @@ def _slugify(name: str) -> str:
 # Background tasks
 # ---------------------------------------------------------------------------
 
-def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float) -> None:
+def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float, spelling_count: int = 0) -> None:
     """Sendet E-Mail-Benachrichtigung nach abgeschlossenem Audit."""
-    report_url = f"{REPORT_BASE_URL}/report.html?project={slug}"
+    if not SMTP_USER or not SMTP_PASS:
+        print("[EMAIL] SMTP_USER/SMTP_PASS nicht gesetzt – E-Mail übersprungen.", flush=True)
+        return
+    report_url   = f"{REPORT_BASE_URL}/report.html?project={slug}"
+    spelling_url = f"{REPORT_BASE_URL}/spelling.html?project={slug}"
     msg = MIMEMultipart("alternative")
     msg["From"] = SMTP_USER
     msg["To"] = to
-    msg["Subject"] = f"SEO Audit abgeschlossen – {project_name}"
+    msg["Subject"] = f"SEO-Audit abgeschlossen: {project_name}"
 
     html_body = f"""
-    <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;">
-    <p>Der SEO Audit für das Projekt <strong>{project_name}</strong> ist abgeschlossen.</p>
-    <ul>
-      <li>Auditierte Seiten: <strong>{page_count}</strong></li>
-      <li>Durchschnittsscore: <strong>{avg_score}</strong> / 100</li>
-    </ul>
-    <p><a href="{report_url}" style="background:#77C5D8;color:#000;padding:8px 16px;text-decoration:none;font-weight:700;">Rapport anzeigen →</a></p>
+    <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;">
+    <p style="font-size:15px;font-weight:700;">Crawl abgeschlossen: {project_name}</p>
+    <p style="color:#555;">
+      <strong>{page_count}</strong> Seiten geprüft &nbsp;·&nbsp; Ø Score: <strong>{avg_score}</strong><br>
+      <strong>{spelling_count}</strong> Rechtschreibfehler gefunden
+    </p>
+    <p style="margin-top:20px;">
+      <a href="{spelling_url}" style="display:inline-block;background:#FCC300;color:#1a1a1a;padding:9px 18px;text-decoration:none;font-weight:700;margin-right:10px;">Rechtschreibfehler anzeigen →</a>
+      <a href="{report_url}"   style="display:inline-block;background:#77C5D8;color:#1a1a1a;padding:9px 18px;text-decoration:none;font-weight:700;">Rapport anzeigen →</a>
+    </p>
     </body></html>
     """
     msg.attach(MIMEText(html_body, "html"))
@@ -95,17 +106,27 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
         print(f"[EMAIL] Fehler beim Senden: {exc}", flush=True)
 
 
-async def _crawl(project_id: int, root_url: str, slug: str, max_pages: int = 20) -> None:
-    """BFS-Crawl ab root_url, max max_pages Seiten, gleiche Domain."""
+async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[int] = None) -> None:
+    """BFS-Crawl ab root_url. max_pages=None/0 → kein Limit (bis MAX_CRAWL_PAGES)."""
+    effective_max = max_pages if max_pages and max_pages > 0 else MAX_CRAWL_PAGES
     parsed_root = urlparse(root_url)
     root_path_prefix = parsed_root.path.rstrip("/")
-    print(f"[CRAWL] Start: {root_url} | netloc={parsed_root.netloc} | prefix={root_path_prefix}", flush=True)
+    print(f"[CRAWL] Start: {root_url} | netloc={parsed_root.netloc} | prefix={root_path_prefix} | max={effective_max}", flush=True)
 
     def _normalise(u: str) -> str:
         stripped = u.rstrip("/")
         return stripped if stripped else u
 
     canonical_root = _normalise(root_url.split("#")[0])
+
+    _project_state[slug] = {
+        "status": "crawling",
+        "pages_crawled": 0,
+        "pages_total": effective_max,
+        "pages_audited": 0,
+        "recently_audited": [],
+        "current_url": None,
+    }
 
     visited: set[str] = set()
     queue: list[str] = [canonical_root]
@@ -116,7 +137,7 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: int = 20)
         follow_redirects=True,
         headers={"User-Agent": "HSLU-SEO-Audit-Bot/1.0"},
     ) as client:
-        while queue and len(found) < max_pages:
+        while queue and len(found) < effective_max:
             url = queue.pop(0)
             url = _normalise(url)
             if url in visited:
@@ -148,6 +169,8 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: int = 20)
             _path = urlparse(save_url).path
             if "/category/" not in _path and "/tag/" not in _path and "download" not in _path:
                 found.append(save_url)
+                _project_state[slug]["pages_crawled"] = len(found)
+                _project_state[slug]["current_url"] = save_url
 
             links = soup.find_all("a", href=True)
             print(f"[CRAWL] Seite OK: {url} | {len(links)} Links gefunden", flush=True)
@@ -173,6 +196,7 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: int = 20)
                     added += 1
             print(f"[CRAWL] -> {added} neue interne Links zur Queue | Queue={len(queue)} | found={len(found)}", flush=True)
 
+    _project_state[slug]["pages_total"] = len(found)
     print(f"[CRAWL] Fertig: {len(found)} Seiten gefunden -> speichere in DB ({slug}.db)", flush=True)
     db = get_db(slug)
     try:
@@ -196,10 +220,27 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
     finally:
         db.close()
 
+    if slug in _project_state:
+        _project_state[slug]["status"] = "auditing"
+        _project_state[slug]["pages_total"] = len(pages)
+        _project_state[slug]["pages_audited"] = 0
+        _project_state[slug]["recently_audited"] = []
+        _project_state[slug]["current_url"] = None
+    else:
+        _project_state[slug] = {
+            "status": "auditing",
+            "pages_crawled": len(pages),
+            "pages_total": len(pages),
+            "pages_audited": 0,
+            "recently_audited": [],
+            "current_url": None,
+        }
+
     sem = asyncio.Semaphore(5)
 
     async def _audit_one(page_id: int, url: str) -> None:
         async with sem:
+            _project_state[slug]["current_url"] = url
             try:
                 results = await asyncio.wait_for(
                     run_checks(url, language=language, mode_weights=mode_weights),
@@ -225,8 +266,17 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                 db.commit()
             finally:
                 db.close()
+            state = _project_state.get(slug, {})
+            state["pages_audited"] = state.get("pages_audited", 0) + 1
+            recently = state.get("recently_audited", [])
+            recently.insert(0, {"url": url, "score": round(avg_score, 1)})
+            state["recently_audited"] = recently[:5]
+            _project_state[slug] = state
 
     await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in pages])
+
+    if slug in _project_state:
+        _project_state[slug]["status"] = "done"
 
     # E-Mail-Benachrichtigung: immer senden wenn notification_email gesetzt ist
     db2 = get_db(slug)
@@ -251,12 +301,30 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             page_count = len(score_rows)
             scores = [r["score"] for r in score_rows if r["score"] is not None]
             avg = round(sum(scores) / len(scores), 1) if scores else 0.0
+            # Spelling-Fehler zählen (aus globaler spelling.db)
+            spelling_count = 0
+            try:
+                from backend.database import get_global_db
+                page_urls = [r["url"] for r in db2.execute(
+                    "SELECT url FROM pages WHERE project_id = ?", (project_id,)
+                ).fetchall()]
+                if page_urls:
+                    g = get_global_db()
+                    placeholders = ",".join("?" * len(page_urls))
+                    spelling_count = g.execute(
+                        f"SELECT COUNT(*) FROM spelling_candidates WHERE url IN ({placeholders}) AND status != 'ignorieren'",
+                        page_urls,
+                    ).fetchone()[0]
+                    g.close()
+            except Exception:
+                pass
             _send_notification_email(
                 to=proj["notification_email"],
                 project_name=proj["name"],
                 slug=slug,
                 page_count=page_count,
                 avg_score=avg,
+                spelling_count=spelling_count,
             )
     finally:
         db2.close()
@@ -278,7 +346,7 @@ async def create_project(body: ProjectCreate, background_tasks: BackgroundTasks)
     try:
         db.execute(
             "INSERT INTO projects (name, slug, root_url, page_type, language, notification_email, max_pages, project_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (body.name, slug, body.root_url, body.page_type, body.language, body.notification_email, body.max_pages, body.project_type),
+            (body.name, slug, body.root_url, body.page_type, body.language, body.notification_email, body.max_pages or 0, body.project_type),
         )
         db.commit()
         row = db.execute("SELECT * FROM projects WHERE slug = ?", (slug,)).fetchone()
@@ -294,6 +362,50 @@ async def create_project(body: ProjectCreate, background_tasks: BackgroundTasks)
 @router.get("/")
 def list_projects():
     return list_all_projects()
+
+
+@router.get("/{slug}/status")
+def get_project_status(slug: str):
+    """Gibt den aktuellen Crawl-/Audit-Fortschritt zurück (In-Memory + DB-Fallback)."""
+    state = _project_state.get(slug)
+    if state is not None:
+        return state
+    # Fallback: Status aus DB ableiten
+    try:
+        db = get_db(slug)
+        try:
+            proj = db.execute("SELECT id, last_crawled_at FROM projects WHERE slug = ?", (slug,)).fetchone()
+            if proj is None:
+                raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+            page_count = db.execute(
+                "SELECT COUNT(*) FROM pages WHERE project_id = ?", (proj["id"],)
+            ).fetchone()[0]
+            audit_count = db.execute(
+                "SELECT COUNT(DISTINCT ar.page_id) FROM audit_results ar "
+                "JOIN pages p ON ar.page_id = p.id WHERE p.project_id = ?",
+                (proj["id"],)
+            ).fetchone()[0]
+            recent_rows = db.execute(
+                """SELECT p.url, ar.score FROM audit_results ar
+                   JOIN pages p ON ar.page_id = p.id
+                   WHERE p.project_id = ?
+                   ORDER BY ar.crawled_at DESC LIMIT 5""",
+                (proj["id"],),
+            ).fetchall()
+        finally:
+            db.close()
+        return {
+            "status": "done" if proj["last_crawled_at"] and audit_count > 0 else "idle",
+            "pages_crawled": page_count,
+            "pages_total": page_count,
+            "pages_audited": audit_count,
+            "recently_audited": [{"url": r["url"], "score": r["score"]} for r in recent_rows],
+            "current_url": None,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.get("/{slug}")
@@ -389,7 +501,7 @@ async def crawl_project(slug: str, background_tasks: BackgroundTasks):
         if row is None:
             raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
         project_id, root_url = row["id"], row["root_url"]
-        max_pages = row["max_pages"] or 20
+        max_pages = row["max_pages"] or None  # 0/NULL → keine Begrenzung
         db.execute(
             "DELETE FROM audit_results WHERE page_id IN (SELECT id FROM pages WHERE project_id = ?)",
             (project_id,),

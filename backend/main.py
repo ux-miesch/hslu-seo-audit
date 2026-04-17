@@ -1,4 +1,6 @@
 from __future__ import annotations
+from dotenv import load_dotenv
+load_dotenv()
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,15 +10,17 @@ import sys, os, asyncio
 sys.path.insert(0, os.path.dirname(__file__))
 from crawler import fetch_page
 from backend.routers import projects
+from backend.routers import spelling_candidates
 from backend.audit_runner import run_checks
 from checks.sea import check_sea
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from backend.database import migrate_all
+    from backend.database import migrate_all, init_global_db
     from backend.scheduler import init_scheduler, shutdown_scheduler
     migrate_all()
+    init_global_db()
     init_scheduler()
     yield
     shutdown_scheduler()
@@ -25,6 +29,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="SEO Audit API", version="0.2.0", lifespan=lifespan)
 
 app.include_router(projects.router)
+app.include_router(spelling_candidates.router)
 
 app.add_middleware(
     CORSMiddleware,
