@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anmelden – SEO Audit HSLU</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;}
+.header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
+.header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:80px 24px 48px;}
+.login-box{width:100%;max-width:360px;}
+.login-title{font-family:'Verdana',sans-serif;font-size:20px;font-weight:700;color:#000;margin-bottom:24px;}
+label{font-family:'Verdana',sans-serif;font-size:13px;color:#000;display:block;margin-bottom:4px;}
+input[type=password]{width:100%;padding:10px 12px;font-family:'Verdana',sans-serif;font-size:13px;border:1px solid #bbb;background:#fff;color:#000;margin-bottom:16px;}
+input[type=password]:focus{outline:none;border-color:#77C5D8;}
+.btn-login{width:100%;padding:12px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
+.btn-login:hover{background:#55a8bc;}
+.error-msg{background:#fde8e8;border-left:3px solid #c00;padding:10px 14px;font-size:12px;color:#a00;margin-bottom:16px;display:none;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;"
+       onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
+  <div id="logo-fb" style="display:none;align-items:center;gap:10px;">
+    <span style="font-family:'Verdana',sans-serif;font-size:24px;font-weight:700;color:#fff;">HSLU</span>
+    <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
+  </div>
+  <div class="header-right">SEO-Audit</div>
+</div>
+
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-title">Anmelden</div>
+    <div class="error-msg" id="error-msg">Falsches Passwort. Bitte erneut versuchen.</div>
+    <label for="pw">Passwort</label>
+    <input type="password" id="pw" placeholder="Passwort eingeben" autofocus onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-login" onclick="login()">Anmelden</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  if (localStorage.getItem('seo_auth') === 'hslu2026') {
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirect || 'projects.html';
+  }
+})();
+
+function login() {
+  const pw = document.getElementById('pw').value;
+  if (pw === 'hslu2026') {
+    localStorage.setItem('seo_auth', 'hslu2026');
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirect || 'projects.html';
+  } else {
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+  }
+}
+</script>
+</body>
+</html>
