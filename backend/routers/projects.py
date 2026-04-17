@@ -107,8 +107,8 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
 
 
 async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[int] = None) -> None:
-    """BFS-Crawl ab root_url. max_pages=None/0 → kein Limit (bis MAX_CRAWL_PAGES)."""
-    effective_max = max_pages if max_pages and max_pages > 0 else MAX_CRAWL_PAGES
+    """BFS-Crawl ab root_url. max_pages=None/0 → kein Limit."""
+    effective_max = max_pages if max_pages and max_pages > 0 else None
     parsed_root = urlparse(root_url)
     root_path_prefix = parsed_root.path.rstrip("/")
     print(f"[CRAWL] Start: {root_url} | netloc={parsed_root.netloc} | prefix={root_path_prefix} | max={effective_max}", flush=True)
@@ -122,7 +122,7 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[
     _project_state[slug] = {
         "status": "crawling",
         "pages_crawled": 0,
-        "pages_total": effective_max,
+        "pages_total": effective_max or "∞",
         "pages_audited": 0,
         "recently_audited": [],
         "current_url": None,
@@ -137,7 +137,7 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[
         follow_redirects=True,
         headers={"User-Agent": "HSLU-SEO-Audit-Bot/1.0"},
     ) as client:
-        while queue and len(found) < effective_max:
+        while queue and (effective_max is None or len(found) < effective_max):
             url = queue.pop(0)
             url = _normalise(url)
             if url in visited:
