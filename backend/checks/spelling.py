@@ -1,8 +1,67 @@
 from bs4 import BeautifulSoup
 import httpx
+import sqlite3
+import os
 import unicodedata
+from datetime import datetime
 from typing import Optional
 from whitelist import SPELLING_WHITELIST
+
+_GLOBAL_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "spelling.db")
+
+# Rule-IDs die grundsätzlich nicht gespeichert werden (Leerzeichen-/Whitespace-Regeln)
+_SKIP_RULE_KEYWORDS = ("LEERZEICHEN", "WHITESPACE", "REPEAT")
+_SKIP_RULE_IDS = {
+    "COMMA_PARENTHESIS_WHITESPACE",
+    "LEERZEICHEN_NACH_VOR_ANFUEHRUNGSZEICHEN",
+    "AUSLASSUNGSPUNKTE_LEERZEICHEN",
+    "LEERZEICHEN_VOR_AUSRUFEZEICHEN_ETC",
+    "EINHEIT_LEERZEICHEN",
+}
+
+
+def _is_skipped_rule(rule_id: str) -> bool:
+    if rule_id in _SKIP_RULE_IDS:
+        return True
+    return any(kw in rule_id for kw in _SKIP_RULE_KEYWORDS)
+
+
+def _get_ignored_pairs() -> set:
+    """Gibt alle (word, rule_id)-Paare zurück die ignoriert werden sollen."""
+    try:
+        conn = sqlite3.connect(_GLOBAL_DB, check_same_thread=False)
+        rows = conn.execute(
+            "SELECT word, rule_id FROM spelling_candidates WHERE status = 'ignorieren'"
+        ).fetchall()
+        conn.close()
+        return {(r[0], r[1]) for r in rows}
+    except Exception:
+        return set()
+
+
+def _save_candidates(errors: list, url: str) -> None:
+    """Upsert Fehler in spelling_candidates: neu → anlegen, vorhanden → last_seen + url updaten."""
+    try:
+        conn = sqlite3.connect(_GLOBAL_DB, check_same_thread=False)
+        now = datetime.utcnow().isoformat()
+        for e in errors:
+            word = e["text"].strip()
+            rule_id = e.get("rule_id", "")
+            if not word or not rule_id:
+                continue
+            if _is_skipped_rule(rule_id):
+                continue
+            conn.execute("""
+                INSERT INTO spelling_candidates (word, message, rule_id, url, status, first_seen, last_seen)
+                VALUES (?, ?, ?, ?, 'neu', ?, ?)
+                ON CONFLICT(word, rule_id) DO UPDATE SET
+                    last_seen = excluded.last_seen,
+                    url       = excluded.url
+            """, (word, e.get("message", ""), rule_id, url, now, now))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass  # Nicht kritisch – Spell-Check läuft trotzdem
 
 LANGUAGETOOL_API = "https://api.languagetool.org/v2/check"
 
@@ -71,7 +130,7 @@ def detect_language(soup: BeautifulSoup) -> str:
     return "de-CH"
 
 
-def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
+def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] = None) -> dict:
     issues = []
     warnings = []
     infos = []
@@ -97,6 +156,7 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
         })
         return _build_result(issues, warnings, passed, data)
 
+    ignored_pairs = _get_ignored_pairs()
     all_errors = []
     error_count = 0
 
@@ -173,6 +233,10 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
         if error_text.lower() in SPELLING_WHITELIST:
             continue
 
+        # Ignorieren-Kandidaten überspringen
+        if (error_text.lower(), rule_id) in ignored_pairs:
+            continue
+
         context_start = max(0, offset - 40)
         context_end = min(len(full_text), offset + length + 40)
         context = full_text[context_start:context_end]
@@ -201,6 +265,10 @@ def check_spelling(soup: BeautifulSoup, language: Optional[str] = None) -> dict:
 
     data["errors"] = all_errors
     data["error_count"] = len(all_errors)
+
+    # Fehler in spelling_candidates persistieren (nur wenn URL bekannt)
+    if url and all_errors:
+        _save_candidates(all_errors, url)
 
     for error in all_errors:
         entry = {

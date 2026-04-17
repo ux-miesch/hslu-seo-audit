@@ -36,7 +36,7 @@ async def run_checks(
         "headings":       asyncio.to_thread(check_headings, soup),
         "broken_links":   check_broken_links(soup, url),
         "alt_attributes": asyncio.to_thread(check_alt_attributes, soup, url),
-        "spelling":       asyncio.to_thread(check_spelling, soup, language=language),
+        "spelling":       asyncio.to_thread(check_spelling, soup, url, language=language),
         "keywords":       asyncio.to_thread(check_keywords, soup, keywords=keywords),
         "url_slug":       asyncio.to_thread(check_url_slug, url),
         "mode_analysis":  asyncio.to_thread(check_mode_analysis, soup, url, mode_weights),
