@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import httpx
+import re
 import sqlite3
 import os
 import unicodedata
@@ -223,11 +224,20 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         if category in ("STYLE", "REDUNDANCY"):
             continue
 
-        offset = match["offset"]
-        length = match["length"]
         msg = match.get("message", "")
+        o = max(0, match.get("offset", 0))
+        l = match.get("length", 0)
         is_whitespace_err = rule_id in DEDUPE_BY_RULE_ONLY or any(msg.startswith(p) for p in DEDUPE_BY_MESSAGE_PREFIX)
-        error_text = "Leerzeichen vor Satzzeichen" if is_whitespace_err else full_text[offset:offset + length]
+        if is_whitespace_err:
+            error_text = "Leerzeichen vor Satzzeichen"
+        else:
+            error_text = full_text[o:min(o + l, len(full_text))]
+
+        # Zu kurze oder satzzeichenbehaftete Treffer filtern
+        if len(error_text.strip()) < 2:
+            continue
+        if re.match(r'^[^a-zA-ZäöüÄÖÜ]', error_text) or re.search(r'[^\w]$', error_text):
+            continue
 
         # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
         if error_text.lower() in SPELLING_WHITELIST:
@@ -237,8 +247,8 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         if (error_text.lower(), rule_id) in ignored_pairs:
             continue
 
-        context_start = max(0, offset - 40)
-        context_end = min(len(full_text), offset + length + 40)
+        context_start = max(0, o - 40)
+        context_end = min(len(full_text), o + l + 40)
         context = full_text[context_start:context_end]
 
         suggestions = [r["value"] for r in match.get("replacements", [])[:3]]
