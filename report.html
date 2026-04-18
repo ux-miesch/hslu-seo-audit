@@ -106,20 +106,20 @@
     .stat .val { font-size: 22px; font-weight: bold; }
     .stat .lbl { font-size: 11px; opacity: 0.6; margin-top: 2px; }
 
-    /* ── Avg-score with dot grid ── */
+    /* ── Avg-score ── */
     .avg-score {
       text-align: right;
       position: relative;
       padding: 16px;
       background-color: #f4f4f4;
-      background-image: radial-gradient(circle, #bbb 1px, transparent 1px);
-      background-size: 8px 8px;
     }
     .avg-score .big {
       font-size: 56px;
       font-weight: bold;
       line-height: 1;
       position: relative;
+      display: inline-block;
+      padding: 16px 24px;
     }
     .avg-score .lbl {
       font-size: 11px;
@@ -207,18 +207,15 @@
     .score-cyan    { background:#77C5D8; color:#1a1a1a; }
     .score-yellow  { background:#FCC300; color:#1a1a1a; }
     .score-magenta { background:#EE6A87; }
-    @media (max-width:700px) {
+    @media (max-width:768px) {
       .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
       .table-wrap thead{display:none;}
       .table-wrap tbody tr{border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;cursor:pointer;}
       .table-wrap td{padding:4px 0;border:none;font-size:13px;}
       .table-wrap td[data-label]::before{content:attr(data-label)": ";font-size:11px;color:#777;display:block;margin-bottom:2px;}
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 600px) {
       .summary { grid-template-columns: 1fr; }
       .avg-score { text-align: left; }
+      .avg-score .big { display: block; text-align: left; }
     }
   </style>
 </head>
@@ -255,7 +252,7 @@
 <script>
 (function(){if(!window.location.search.includes('project=')&&localStorage.getItem('seo_auth')!=='SEO@hslu.ch'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
 function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
-const VERSION='260418-0615';
+const VERSION='260418-0651';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 
 /* ── Helpers ── */
@@ -352,6 +349,7 @@ function render(data) {
   const scores = pages.map(p => p.score).filter(s => typeof s === "number");
   const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
+  const slug = new URLSearchParams(window.location.search).get("project") || "";
   const summaryHtml = `
     <div class="summary">
       <div>
@@ -362,6 +360,9 @@ function render(data) {
           <div class="stat"><div class="val">${pages.length}</div><div class="lbl">Seiten auditiert</div></div>
           <div class="stat"><div class="val">${project.page_type || "–"}</div><div class="lbl">Seitentyp</div></div>
           <div class="stat"><div class="val">${project.language || "–"}</div><div class="lbl">Sprache</div></div>
+        </div>
+        <div style="margin-top:16px;">
+          <a href="spelling.html?project=${encodeURIComponent(slug)}" style="display:inline-block;padding:8px 16px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#77C5D8;color:#000;text-decoration:none;">Rechtschreibkandidaten →</a>
         </div>
       </div>
       <div class="avg-score">
