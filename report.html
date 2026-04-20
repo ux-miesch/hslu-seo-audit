@@ -184,11 +184,20 @@
       gap: 14px;
     }
     .kachel-wrap { border: 1px solid var(--border); overflow: hidden; margin-bottom: 12px; }
-    .kachel-head { padding: 9px 12px; font-family: 'Verdana', sans-serif; font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .kachel-body { background: #F0F0F0; padding: 12px; font-family: 'Verdana', sans-serif; font-size: 12px; color: #000; }
+    .kachel-head { padding: 10px 14px; font-family: 'Verdana', sans-serif; font-size: 13px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: space-between; }
+    .kachel-score { font-family: 'Verdana', sans-serif; font-size: 12px; font-weight: 700; opacity: 0.9; }
+    .kachel-body { background: #F0F0F0; padding: 0; font-family: 'Verdana', sans-serif; font-size: 12px; color: #000; }
     .kachel-body p { padding: 4px 0; border-bottom: 1px solid #e0e0e0; line-height: 1.5; }
     .kachel-body p:last-child { border-bottom: none; }
-    .no-items  { font-size: 11px; opacity: 0.45; font-style: italic; }
+    .no-items { font-size: 11px; opacity: 0.45; font-style: italic; }
+    .aufgabe-section { padding: 10px 14px; border-bottom: 1px solid #e0e0e0; }
+    .aufgabe-section:last-child { border-bottom: none; }
+    .aufgabe-action { font-family: 'Verdana', sans-serif; font-size: 12px; color: #000; line-height: 1.6; background: #fff; padding: 8px 10px; border-left: 3px solid #77C5D8; margin-top: 8px; }
+    .aufgabe-cta { display: inline-block; margin-top: 10px; padding: 5px 12px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; color: #000; border: 1.5px solid #000; text-decoration: none; }
+    .aufgabe-cta:hover { background: #000; color: #fff; }
+    .issue-list { margin: 6px 0 0 0; list-style: none; }
+    .issue-list li { padding: 3px 0; font-family: 'Verdana', sans-serif; font-size: 12px; line-height: 1.6; border-bottom: 1px solid #e8e8e8; }
+    .issue-list li:last-child { border-bottom: none; }
 
     /* ── States ── */
     .state {
@@ -252,7 +261,7 @@
 <script>
 (function(){if(!window.location.search.includes('project=')&&localStorage.getItem('seo_auth')!=='SEO@hslu.ch'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
 function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
-const VERSION='260420-0721';
+const VERSION='260420-0730';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 
 /* ── Helpers ── */
@@ -264,9 +273,9 @@ function scoreClass(s) {
 }
 
 function scoreColor(s) {
-  if (s >= 80) return "#ADCA2A";
-  if (s >= 60) return "#77C5D8";
-  if (s >= 40) return "#FCC300";
+  if (s >= 99) return "#ADCA2A";
+  if (s >= 66) return "#77C5D8";
+  if (s >= 33) return "#FCC300";
   return "#EE6A87";
 }
 
@@ -290,13 +299,14 @@ function fmtDate(iso) {
 }
 
 const CHECK_LABELS = {
-  meta:           "Meta-Tags",
+  meta:           "Meta-Texte",
   headings:       "Überschriften",
-  broken_links:   "Broken Links",
+  broken_links:   "Defekte Links",
   alt_attributes: "Alt-Attribute",
   spelling:       "Rechtschreibung",
-  keywords:       "Keywords",
-  url_slug:       "URL-Slug",
+  keywords:       "Keywords & Semantik",
+  url_slug:       "URL / Slug",
+  sea:            "Kampagnen-Check",
   mode_analysis:  "Seitentyp-Analyse",
 };
 const ANLEITUNG_BASE = "https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs";
@@ -310,47 +320,155 @@ const ANLEITUNG_URLS = {
   url_slug:       ANLEITUNG_BASE + "#url-slug",
   mode_analysis:  ANLEITUNG_BASE,
 };
+const AUFGABE_TEXTE = {
+  meta: {
+    issue:   { action: "Ergänze einen aussagekräftigen Title (30–60 Zeichen) und eine Meta-Description (70–160 Zeichen) direkt im CMS." },
+    warning: { action: "Kürze Title oder Description auf die empfohlene Zeichenzahl." },
+  },
+  headings: {
+    issue:   { action: "Stelle sicher, dass die Seite genau eine H1 hat. Weitere Abschnitte mit H2 und H3 strukturieren." },
+    warning: { action: "Prüfe die Reihenfolge der Überschriften und fülle fehlende Ebenen auf." },
+  },
+  broken_links: {
+    issue:   { action: "Ersetze oder entferne alle defekten Links. Interne 404-Fehler haben höchste Priorität." },
+    warning: { action: "Aktualisiere interne Weiterleitungen direkt auf die Ziel-URL." },
+  },
+  alt_attributes: {
+    issue:   { action: "Ergänze für jedes Bild einen kurzen, beschreibenden Alt-Text im CMS." },
+    warning: { action: "Prüfe die aufgelisteten Bilder und ergänze die fehlenden Texte." },
+  },
+  spelling: {
+    issue:   { action: "Korrigiere die gefundenen Fehler direkt im CMS." },
+    warning: { action: "Schau die Liste durch und korrigiere echte Fehler im CMS." },
+  },
+  keywords: {
+    issue:   { action: "Verwende die wichtigsten Keywords natürlich im Text, in der H1 und in der Meta-Description." },
+    warning: { action: "Überarbeite den Text so, dass Keywords natürlich und in angemessener Häufigkeit vorkommen." },
+  },
+  url_slug: {
+    issue:   { action: "Kürze die URL, entferne Sonderzeichen und Umlaute und halte die Tiefe unter 5 Ebenen." },
+    warning: { action: "Passe die URL wenn möglich an – am besten bei der nächsten inhaltlichen Überarbeitung." },
+  },
+  mode_analysis: {
+    issue:   { action: "Ergänze die fehlenden Elemente gemäss der Liste unten." },
+    warning: { action: "Ergänze die fehlenden Elemente schrittweise. Die Liste zeigt was konkret fehlt." },
+  },
+};
 
-/* ── Check-Card ── */
+/* ── Check-Card (identisch index.html renderAufgaben) ── */
 function renderCheckCard(key, data) {
-  const label = CHECK_LABELS[key] || key;
-  const score = typeof data.score === "number" ? data.score : null;
-  const hdrBg = score !== null ? scoreColor(score) : "#1a1a1a";
+  const label   = CHECK_LABELS[key] || key;
+  const score   = typeof data.score === "number" ? data.score : null;
+  const hdrBg   = score !== null ? scoreColor(score) : "#1a1a1a";
+  const txKey   = AUFGABE_TEXTE[key];
+  const anlUrl  = ANLEITUNG_URLS[key] || ANLEITUNG_BASE;
 
-  let body = `<div class="kachel-body">`;
-  body += `<p style="font-size:15px;font-weight:700;padding-bottom:6px;border-bottom:1px solid #e0e0e0;">Score: ${score !== null ? score : "–"} / 100</p>`;
-  const dot = (color) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;margin-right:6px;vertical-align:middle;"></span>`;
-  (data.issues   || []).forEach(i => { body += `<p style="color:#a00;display:flex;align-items:baseline;gap:0;">${dot('#EE6A87')}${linkify(fixMsg(msgText(i)))}</p>`; });
-  (data.warnings || []).forEach(w => { body += `<p style="color:#7a5c00;display:flex;align-items:baseline;gap:0;">${dot('#FCC300')}${linkify(fixMsg(msgText(w)))}</p>`; });
-  (data.passed   || []).forEach(p => { body += `<p style="color:#1b5e20;display:flex;align-items:baseline;gap:0;">${dot('#ADCA2A')}${fixMsg(msgText(p))}</p>`; });
-  if (!(data.issues||[]).length && !(data.warnings||[]).length && !(data.passed||[]).length) {
-    body += `<p class="no-items">Keine Einträge.</p>`;
-  }
-  const anleitungUrl = ANLEITUNG_URLS[key] || ANLEITUNG_BASE;
-  body += `<p style="margin-top:10px;padding-top:8px;border-top:1px solid #e0e0e0;"><a href="${anleitungUrl}" target="_blank" style="font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#000;text-decoration:none;">→ Anleitung</a></p>`;
-  body += `</div>`;
+  const issues   = (data.issues   || []).map(m => fixMsg(msgText(m)));
+  const warnings = (data.warnings || []).map(m => fixMsg(msgText(m)));
+  const infos    = (data.infos    || []).map(m => fixMsg(msgText(m)));
+  const passed   = (data.passed   || []).map(m => fixMsg(msgText(m)));
 
-  return `<div class="kachel-wrap">
-    <div class="kachel-head" style="background:${hdrBg};">${label}</div>
-    ${body}
+  const w = document.createElement("div");
+  w.className = "kachel-wrap";
+  w.innerHTML = `<div class="kachel-head" style="background:${hdrBg};">
+    <span>${label}</span>
+    <span class="kachel-score">Score: ${score !== null ? score : "–"} / 100</span>
   </div>`;
+
+  const body = document.createElement("div");
+  body.className = "kachel-body";
+
+  const hasIssue   = issues.length > 0;
+  const hasWarning = warnings.length > 0;
+  const hasInfo    = infos.length > 0;
+
+  if (!hasIssue && !hasWarning && !hasInfo) {
+    const sec = document.createElement("div");
+    sec.className = "aufgabe-section";
+    sec.innerHTML = `<span style="color:#1b5e20;font-weight:700;">🟢 Keine Probleme gefunden</span>`;
+    body.appendChild(sec);
+    passed.forEach(p => {
+      const sec2 = document.createElement("div");
+      sec2.className = "aufgabe-section";
+      sec2.innerHTML = `<span style="color:#1b5e20;">🟢 ${p}</span>`;
+      body.appendChild(sec2);
+    });
+  } else {
+    [[issues, "issue", "#a00", "🔴"], [warnings, "warning", "#7a5c00", "🟡"], [infos, "info", "#0e7a8a", "●"]].forEach(([msgs, type, col, icon]) => {
+      if (!msgs.length) return;
+      const txEntry = txKey ? txKey[type] : null;
+      const sec = document.createElement("div");
+      sec.className = "aufgabe-section";
+      const hasLinks = msgs.some(m => m.includes("http"));
+      if (hasLinks) {
+        msgs.forEach(m => {
+          const d = document.createElement("div");
+          d.innerHTML = icon + " " + linkify(m);
+          d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
+          sec.appendChild(d);
+        });
+      } else {
+        const ul = document.createElement("ul");
+        ul.className = "issue-list";
+        msgs.forEach(m => {
+          const li = document.createElement("li");
+          li.style.color = col;
+          li.innerHTML = icon + " " + m;
+          ul.appendChild(li);
+        });
+        sec.appendChild(ul);
+      }
+      if (txEntry) {
+        const action = document.createElement("div");
+        action.className = "aufgabe-action";
+        action.innerHTML = `<strong>Was tun:</strong> ${txEntry.action}`;
+        sec.appendChild(action);
+      }
+      const cta = document.createElement("a");
+      cta.className = "aufgabe-cta";
+      cta.href = anlUrl;
+      cta.target = "_blank";
+      cta.textContent = "→ Zur Anleitung";
+      sec.appendChild(cta);
+      body.appendChild(sec);
+    });
+  }
+
+  // Immer "→ Zur Anleitung" am Ende wenn keine Sections (alles OK)
+  if (!hasIssue && !hasWarning && !hasInfo) {
+    const sec = document.createElement("div");
+    sec.className = "aufgabe-section";
+    const cta = document.createElement("a");
+    cta.className = "aufgabe-cta";
+    cta.href = anlUrl;
+    cta.target = "_blank";
+    cta.textContent = "→ Zur Anleitung";
+    sec.appendChild(cta);
+    body.appendChild(sec);
+  }
+
+  w.appendChild(body);
+  return w;
 }
 
 /* ── Detail panel ── */
 function renderDetail(page) {
   const results = page.results || {};
-  const cards = Object.entries(results)
+  const grid = document.createElement("div");
+  grid.className = "checks-grid";
+  Object.entries(results)
     .sort((a, b) => (a[1].score ?? 100) - (b[1].score ?? 100))
-    .map(([k, v]) => renderCheckCard(k, v))
-    .join("");
-  return `
-    <tr class="detail-row">
-      <td colspan="3">
-        <div class="detail-inner">
-          <div class="checks-grid">${cards}</div>
-        </div>
-      </td>
-    </tr>`;
+    .forEach(([k, v]) => grid.appendChild(renderCheckCard(k, v)));
+  const inner = document.createElement("div");
+  inner.className = "detail-inner";
+  inner.appendChild(grid);
+  const td = document.createElement("td");
+  td.colSpan = 3;
+  td.appendChild(inner);
+  const tr = document.createElement("tr");
+  tr.className = "detail-row";
+  tr.appendChild(td);
+  return tr;
 }
 
 /* ── Main render ── */
@@ -423,7 +541,7 @@ function render(data) {
 
     if (!wasOpen) {
       tr.classList.add("active");
-      tr.insertAdjacentHTML("afterend", renderDetail(pages[idx]));
+      tr.insertAdjacentElement("afterend", renderDetail(pages[idx]));
       openIdx = idx;
     }
   });
