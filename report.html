@@ -44,7 +44,7 @@
       cursor: pointer;
       user-select: none;
     }
-    .view-bar { background: transparent; padding: 12px 0; display: flex; align-items: center; gap: 8px; }
+    .view-bar { background: transparent; padding: 0 0 12px 0; margin-top: 0; display: flex; align-items: center; gap: 8px; }
     .view-bar-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #1a1a1a; white-space: nowrap; }
     .view-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; border-radius: 0; }
     .view-btn.active { background: #1a1a1a; color: #fff; }
@@ -269,7 +269,7 @@
 <script>
 (function(){if(!window.location.search.includes('project=')&&localStorage.getItem('seo_auth')!=='SEO@hslu.ch'){window.location.href='login.html?redirect='+encodeURIComponent(window.location.href);}})();
 function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
-const VERSION='260420-0854';
+const VERSION='260420-1117';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 
 const EDITOR_CHECKS = new Set(["broken_links", "spelling", "alt_attributes"]);
@@ -320,7 +320,8 @@ function msgText(m) { return typeof m === "object" ? m.message : m; }
 function fixMsg(msg) { return msg.replace(/Wird von Google abgeschnitten/gi, "Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten"); }
 function linkify(text) { return text.replace(/(https?:\/\/[^\s<"]+)/g, '<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>'); }
 
-function badge(score) {
+function badge(score, isError) {
+  if (isError) return `<span class="badge" style="background:#aaa;color:#fff;">Fehler</span>`;
   const cls = scoreClass(score);
   return `<span class="badge badge-${cls}">${score.toFixed(1)}</span>`;
 }
@@ -516,23 +517,31 @@ function renderDetail(page) {
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
       <span class="view-bar-label">Ansicht:</span>
       <div style="display:flex;align-items:center;gap:8px;">
-        <button class="view-btn${currentView === 'expert' ? ' active' : ''}" id="btn-expert" onclick="setView('expert')">SEO-Expert</button>
-        <button class="view-btn${currentView === 'editor' ? ' active' : ''}" id="btn-editor" onclick="setView('editor')">Web-Redakteur:in</button>
+        <button class="view-btn${currentView === 'expert' ? ' active' : ''}" id="btn-expert" onclick="setView('expert')">Expert</button>
+        <button class="view-btn${currentView === 'editor' ? ' active' : ''}" id="btn-editor" onclick="setView('editor')">Editor</button>
         <button class="copy-link-text" id="copy-btn" onclick="copyLink()">Link kopieren</button>
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </div>
     </div>`;
 
-  const grid = document.createElement("div");
-  grid.className = "checks-grid";
-  Object.entries(results)
-    .filter(([k]) => currentView === "expert" || EDITOR_CHECKS.has(k))
-    .sort((a, b) => (a[1].score ?? 100) - (b[1].score ?? 100))
-    .forEach(([k, v]) => grid.appendChild(renderCheckCard(k, v)));
   const inner = document.createElement("div");
   inner.className = "detail-inner";
   inner.appendChild(viewBar);
-  inner.appendChild(grid);
+
+  if (results.error) {
+    const errBox = document.createElement("div");
+    errBox.style.cssText = "background:#f4f4f4;border-left:4px solid #aaa;padding:12px 16px;font-size:13px;color:#555;margin-bottom:16px;";
+    errBox.textContent = "⚠ Diese Seite konnte nicht vollständig analysiert werden (Timeout). Bitte manuell prüfen.";
+    inner.appendChild(errBox);
+  } else {
+    const grid = document.createElement("div");
+    grid.className = "checks-grid";
+    Object.entries(results)
+      .filter(([k]) => currentView === "expert" || EDITOR_CHECKS.has(k))
+      .sort((a, b) => (a[1].score ?? 100) - (b[1].score ?? 100))
+      .forEach(([k, v]) => grid.appendChild(renderCheckCard(k, v)));
+    inner.appendChild(grid);
+  }
   const td = document.createElement("td");
   td.colSpan = 3;
   td.appendChild(inner);
@@ -574,7 +583,7 @@ function render(data) {
   const rows = pages.map((page, idx) => `
     <tr data-idx="${idx}">
       <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
-      <td>${badge(page.score)}</td>
+      <td>${badge(page.score, page.results?.error)}</td>
       <td class="ts">${fmtDate(page.crawled_at)}</td>
     </tr>`).join("");
 

@@ -244,8 +244,18 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             try:
                 results = await asyncio.wait_for(
                     run_checks(url, language=language, mode_weights=mode_weights),
-                    timeout=90,
+                    timeout=30,
                 )
+            except asyncio.TimeoutError:
+                print(f"[AUDIT] TIMEOUT {url}", flush=True)
+                results = {
+                    "error": True,
+                    "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
+                    "score": 0,
+                    "issues": [],
+                    "warnings": [],
+                    "passed": [],
+                }
             except Exception as exc:
                 print(f"[AUDIT] FEHLER {url}: {exc}", flush=True)
                 results = None
