@@ -81,20 +81,16 @@
   <main>
     <h1>Zugang verwalten</h1>
 
-    <div class="section-title">Aktive Token</div>
-    <div id="token-table-wrap">
-      <div class="empty-state">Wird geladen…</div>
+    <div class="section-title">Admin-Token</div>
+    <p style="font-size:12px;color:#555;line-height:1.6;margin-bottom:18px;">Der Admin-Token ermöglicht Zugang zu SEO-Audit Projekte. Teile den generierten Link mit berechtigten Personen.</p>
+    <div style="font-family:monospace;font-size:13px;margin-bottom:16px;">
+      Aktueller Token: <span id="admin-token-masked" style="color:#555;">Wird geladen…</span>
     </div>
-
-    <div class="section-title">Neuen Token erstellen</div>
-    <div class="new-token-row">
-      <div>
-        <label>Bezeichnung (z.B. "Team Marketing")</label>
-        <input type="text" id="new-label" placeholder="Bezeichnung">
-      </div>
-      <button class="btn" onclick="createToken()">Token generieren</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" onclick="generateAdminToken()">Neuen Admin-Token generieren</button>
+      <button class="btn btn-outline" onclick="copyAdminLink()">Link kopieren</button>
     </div>
-    <div id="create-feedback" style="font-size:12px;color:#555;margin-top:10px;display:none;"></div>
+    <div id="admin-token-feedback" style="font-size:12px;color:#555;margin-top:10px;min-height:18px;"></div>
   </main>
 </div>
 
@@ -104,6 +100,7 @@ const API = "http://localhost:8000";
 const BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
 let _adminPw = '';
+let _adminToken = null;
 
 function doLogin() {
   const pw = document.getElementById('pw-input').value;
@@ -115,7 +112,7 @@ function doLogin() {
         sessionStorage.setItem('admin_pw', pw);
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('admin-view').style.display = '';
-        loadTokens();
+        loadAdminToken();
       } else {
         document.getElementById('login-error').style.display = 'block';
       }
@@ -130,74 +127,38 @@ function adminFetch(path, opts = {}) {
   });
 }
 
-function maskToken(t) {
-  if (!t || t.length < 8) return t;
-  return t.slice(0, 4) + '••••' + t.slice(-4);
-}
-
-function fmtDate(s) {
-  if (!s) return '–';
-  return s.slice(0, 16).replace('T', ' ');
-}
-
-function loadTokens() {
-  adminFetch('/admin/tokens')
+function loadAdminToken() {
+  adminFetch('/admin/token')
     .then(r => r.json())
-    .then(tokens => renderTokenTable(tokens))
-    .catch(() => { document.getElementById('token-table-wrap').innerHTML = '<div class="empty-state">Fehler beim Laden.</div>'; });
-}
-
-function renderTokenTable(tokens) {
-  if (!tokens.length) {
-    document.getElementById('token-table-wrap').innerHTML = '<div class="empty-state">Noch keine Token vorhanden.</div>';
-    return;
-  }
-  const rows = tokens.map(t => `
-    <tr>
-      <td class="token-val">${maskToken(t.token)}</td>
-      <td>${t.label || '<span style="color:#aaa">–</span>'}</td>
-      <td><span class="badge-count">${t.usage_count}</span></td>
-      <td>${fmtDate(t.last_used)}</td>
-      <td>${fmtDate(t.created_at)}</td>
-      <td>
-        <button class="share-btn" onclick="openLink('${t.token}')">Zugangsdaten teilen</button>
-      </td>
-      <td><button class="btn btn-danger" onclick="deleteToken(${t.id})">Löschen</button></td>
-    </tr>`).join('');
-  document.getElementById('token-table-wrap').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>Token</th><th>Bezeichnung</th><th>Aufrufe</th><th>Zuletzt verwendet</th><th>Erstellt</th><th></th><th></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-function openLink(token) {
-  window.open(`${BASE_URL}/projects.html?token=${token}`, '_blank');
-}
-
-function createToken() {
-  const label = document.getElementById('new-label').value.trim();
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let token = ''; for (let i = 0; i < 32; i++) token += chars[Math.floor(Math.random() * chars.length)];
-  adminFetch('/admin/tokens', { method: 'POST', body: JSON.stringify({ label, token }) })
-    .then(r => r.json())
-    .then(t => {
-      document.getElementById('new-label').value = '';
-      const fb = document.getElementById('create-feedback');
-      fb.textContent = `Token erstellt: ${maskToken(t.token)} — Link: ${BASE_URL}/projects.html?token=${t.token}`;
-      fb.style.display = 'block';
-      loadTokens();
+    .then(data => {
+      _adminToken = data.token;
+      document.getElementById('admin-token-masked').textContent = data.masked || '(noch kein Token)';
     })
-    .catch(() => alert('Fehler beim Erstellen.'));
+    .catch(() => { document.getElementById('admin-token-masked').textContent = 'Fehler beim Laden.'; });
 }
 
-function deleteToken(id) {
-  if (!confirm('Token wirklich löschen? Alle Links mit diesem Token werden ungültig.')) return;
-  adminFetch(`/admin/tokens/${id}`, { method: 'DELETE' })
-    .then(() => loadTokens())
-    .catch(() => alert('Fehler beim Löschen.'));
+function generateAdminToken() {
+  adminFetch('/admin/token', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      _adminToken = data.token;
+      document.getElementById('admin-token-masked').textContent = data.masked;
+      showFeedback('Neuer Token generiert.');
+    })
+    .catch(() => alert('Fehler beim Generieren.'));
+}
+
+function copyAdminLink() {
+  if (!_adminToken) { showFeedback('Kein Token vorhanden. Bitte zuerst generieren.'); return; }
+  const url = `${BASE_URL}/projects.html?token=${_adminToken}`;
+  navigator.clipboard.writeText(url);
+  showFeedback('Link kopiert!');
+}
+
+function showFeedback(msg) {
+  const fb = document.getElementById('admin-token-feedback');
+  fb.textContent = msg;
+  setTimeout(() => { fb.textContent = ''; }, 2500);
 }
 
 // Auto-login from sessionStorage
@@ -209,7 +170,7 @@ if (savedPw) {
       if (r.ok) {
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('admin-view').style.display = '';
-        loadTokens();
+        loadAdminToken();
       } else {
         sessionStorage.removeItem('admin_pw');
       }

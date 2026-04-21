@@ -3,6 +3,7 @@ import asyncio
 import json
 import os
 import re
+import secrets as _secrets
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -602,3 +603,33 @@ def delete_project(slug: str):
         pass
 
     os.remove(path)
+
+
+@router.post("/{slug}/token", status_code=201)
+def generate_project_token(slug: str):
+    token = _secrets.token_urlsafe(12)
+    db = get_db(slug)
+    try:
+        row = db.execute("SELECT id FROM projects WHERE slug = ?", (slug,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        db.execute("UPDATE projects SET project_token = ? WHERE slug = ?", (token, slug))
+        db.commit()
+    finally:
+        db.close()
+    return {"token": token}
+
+
+@router.get("/{slug}/token/verify")
+def verify_project_token(slug: str, token: str):
+    db = get_db(slug)
+    try:
+        row = db.execute("SELECT project_token FROM projects WHERE slug = ?", (slug,)).fetchone()
+    finally:
+        db.close()
+    if row is None:
+        return {"valid": False}
+    stored = row["project_token"]
+    if not stored or token != stored:
+        return {"valid": False}
+    return {"valid": True}

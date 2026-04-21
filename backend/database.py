@@ -63,6 +63,7 @@ def migrate_db(slug: str) -> None:
             ("notification_email", "TEXT",    "NULL"),
             ("max_pages",          "INTEGER", "20"),
             ("project_type",       "TEXT",    "'website'"),
+            ("project_token",      "TEXT",    "NULL"),
         ]:
             try:
                 conn.execute(f"ALTER TABLE projects ADD COLUMN {col} {coltype} DEFAULT {default}")
@@ -116,6 +117,11 @@ def init_global_db() -> None:
             created_at  TEXT NOT NULL DEFAULT (datetime('now')),
             usage_count INTEGER NOT NULL DEFAULT 0,
             last_used   TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS config (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
         );
     """)
     conn.commit()

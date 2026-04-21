@@ -3,7 +3,7 @@ import secrets
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.database import get_global_db
@@ -90,3 +90,52 @@ def validate_token(token: str):
         return {"valid": True}
     finally:
         db.close()
+
+
+# ── Admin-Token (single shared access token) ──────────────────────────────
+
+def _get_admin_token() -> Optional[str]:
+    db = get_global_db()
+    try:
+        row = db.execute("SELECT value FROM config WHERE key = 'admin_token'").fetchone()
+        return row["value"] if row else None
+    finally:
+        db.close()
+
+
+def _set_admin_token(token: str) -> None:
+    db = get_global_db()
+    try:
+        db.execute(
+            "INSERT OR REPLACE INTO config (key, value) VALUES ('admin_token', ?)", (token,)
+        )
+        db.commit()
+    finally:
+        db.close()
+
+
+@router.get("/token")
+def get_admin_token_endpoint(x_admin_password: Optional[str] = Header(default=None)):
+    _check_auth(x_admin_password)
+    token = _get_admin_token()
+    if not token:
+        return {"token": None, "masked": None}
+    masked = token[:4] + "••••" + token[-4:] if len(token) >= 8 else "••••"
+    return {"token": token, "masked": masked}
+
+
+@router.post("/token")
+def generate_admin_token(x_admin_password: Optional[str] = Header(default=None)):
+    _check_auth(x_admin_password)
+    token = secrets.token_urlsafe(24)
+    _set_admin_token(token)
+    masked = token[:4] + "••••" + token[-4:]
+    return {"token": token, "masked": masked}
+
+
+@router.get("/token/verify")
+def verify_admin_token(token: str = Query(...)):
+    stored = _get_admin_token()
+    if not stored or token != stored:
+        return {"valid": False}
+    return {"valid": True}

@@ -171,6 +171,13 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <div class="flyout-section-title">Weiteres</div>
   <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung</a>
   <button class="flyout-item flyout-item-delete" onclick="openDeleteModal(_activeSlug)">Projekt löschen</button>
+  <div class="flyout-sep"></div>
+  <div class="flyout-section-title">Zugang</div>
+  <div class="flyout-status" id="flyout-token-status">Token: –</div>
+  <button class="flyout-item" onclick="generateProjectToken()">Token generieren</button>
+  <button class="flyout-item" onclick="copyRapportLink()">Rapport-Link kopieren</button>
+  <button class="flyout-item" onclick="copySpellingLink()">Spelling-Link kopieren</button>
+  <button class="flyout-item" id="btn-mail-link" style="display:none;" onclick="sendTokenByMail()">Link per Mail senden</button>
   <div class="flyout-status" id="flyout-status"></div>
 </div>
 
@@ -235,22 +242,23 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260421-1022';
+const VERSION='260421-1042';
 const API = "http://localhost:8000";
+const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 (function(){
   const urlToken = new URLSearchParams(window.location.search).get('token');
-  if (urlToken) localStorage.setItem('seo_token', urlToken);
-  const token = localStorage.getItem('seo_token');
+  if (urlToken) localStorage.setItem('admin_token', urlToken);
+  const token = localStorage.getItem('admin_token');
   if (!token) { showNoAccessOverlay(); return; }
-  fetch(`${API}/admin/validate/${token}`)
+  fetch(`${API}/admin/token/verify?token=${encodeURIComponent(token)}`)
     .then(r => r.json())
-    .then(data => { if (!data.valid) { localStorage.removeItem('seo_token'); showNoAccessOverlay(); } })
+    .then(data => { if (!data.valid) { localStorage.removeItem('admin_token'); showNoAccessOverlay(); } })
     .catch(() => {});
 })();
 function showNoAccessOverlay() {
   document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Verdana,sans-serif;font-size:14px;color:#555;text-align:center;padding:40px;">Kein gültiger Zugangslink.<br>Bitte fordere einen Link bei der zuständigen Person an.</div>';
 }
-function logout(){localStorage.removeItem('seo_token');location.reload();}
+function logout(){localStorage.removeItem('admin_token');location.reload();}
 /* ── Score helpers ── */
 function scoreClass(s) {
   if (s === null || s === undefined) return null;
@@ -526,6 +534,67 @@ function toggleNavFlyout(btn) {
   }
 }
 
+let _projectToken = null;
+let _projectEmail = null;
+
+async function loadProjectTokenStatus(slug) {
+  const statusEl = document.getElementById("flyout-token-status");
+  const mailBtn = document.getElementById("btn-mail-link");
+  statusEl.textContent = "Token: wird geladen…";
+  _projectToken = null;
+  _projectEmail = null;
+  try {
+    const r = await fetch(`${API}/projects/${slug}`);
+    if (!r.ok) return;
+    const p = await r.json();
+    _projectToken = p.project_token || null;
+    _projectEmail = p.notification_email || null;
+    statusEl.textContent = `Token: ${_projectToken ? "Vorhanden" : "Keiner"}`;
+    if (mailBtn) mailBtn.style.display = _projectEmail ? "" : "none";
+  } catch { statusEl.textContent = "Token: –"; }
+}
+
+async function generateProjectToken() {
+  if (!_activeSlug) return;
+  const statusEl = document.getElementById("flyout-status");
+  try {
+    const r = await fetch(`${API}/projects/${_activeSlug}/token`, { method: "POST" });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    _projectToken = data.token;
+    document.getElementById("flyout-token-status").textContent = "Token: Vorhanden";
+    statusEl.textContent = "Token generiert.";
+    setTimeout(() => { statusEl.textContent = ""; }, 2000);
+  } catch {
+    statusEl.textContent = "Fehler beim Generieren.";
+  }
+}
+
+function copyRapportLink() {
+  const statusEl = document.getElementById("flyout-status");
+  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; return; }
+  navigator.clipboard.writeText(`${REPORT_BASE_URL}/report.html?project=${_activeSlug}&token=${_projectToken}`);
+  statusEl.textContent = "Rapport-Link kopiert!";
+  setTimeout(() => { statusEl.textContent = ""; }, 2000);
+}
+
+function copySpellingLink() {
+  const statusEl = document.getElementById("flyout-status");
+  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; return; }
+  navigator.clipboard.writeText(`${REPORT_BASE_URL}/spelling.html?project=${_activeSlug}&token=${_projectToken}`);
+  statusEl.textContent = "Spelling-Link kopiert!";
+  setTimeout(() => { statusEl.textContent = ""; }, 2000);
+}
+
+function sendTokenByMail() {
+  if (!_projectToken || !_projectEmail) return;
+  const rapportUrl = `${REPORT_BASE_URL}/report.html?project=${_activeSlug}&token=${_projectToken}`;
+  const spellingUrl = `${REPORT_BASE_URL}/spelling.html?project=${_activeSlug}&token=${_projectToken}`;
+  const subject = encodeURIComponent(`SEO-Audit Rapport – ${_activeSlug}`);
+  const body = encodeURIComponent(`Rapport:\n${rapportUrl}\n\nRechtschreibkandidaten:\n${spellingUrl}`);
+  window.location.href = `mailto:${_projectEmail}?subject=${subject}&body=${body}`;
+}
+
 function openSettingsFlyout(slug, current, btn) {
   const flyout = document.getElementById("flyout-settings");
   const isOpen = flyout.classList.contains("open") && _activeSlug === slug;
@@ -536,6 +605,7 @@ function openSettingsFlyout(slug, current, btn) {
   flyout.querySelectorAll(".flyout-item[data-val]").forEach(el => {
     el.classList.toggle("active", el.dataset.val === (current || ""));
   });
+  loadProjectTokenStatus(slug);
   flyout.style.visibility = "hidden";
   flyout.classList.add("open");
   _positionFlyout(flyout, btn);
