@@ -234,7 +234,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 <script>
 
 function logout(){localStorage.removeItem('seo_token');location.reload();}
-const VERSION='260421-1003';
+const VERSION='260421-1008';
 const API_URL='http://localhost:8000';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -610,7 +610,7 @@ function renderAufgaben(results,selected,url){
   });
 }
 
-function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
+function exportPDF(){setTimeout(()=>window.print(),200);}
 
 async function loadAuditFromUrl(){
   const auditId=new URLSearchParams(window.location.search).get('audit');
