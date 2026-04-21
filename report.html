@@ -50,6 +50,7 @@
     .view-btn.active { background: #1a1a1a; color: #fff; }
     .view-btn:hover:not(.active) { opacity: 0.7; }
     .copy-link-text { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; cursor: pointer; background: none; border: none; padding: 0; }
+    .depth-select { padding: 4px 6px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; }
     .flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
     .flyout.open{display:block;}
     .flyout-section-title{padding:8px 14px 4px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.04em;pointer-events:none;}
@@ -270,7 +271,7 @@
 </div>
 
 <script>
-const VERSION='260421-1638';
+const VERSION='260421-1651';
 const API_URL = "http://localhost:8000";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -307,6 +308,42 @@ function logout(){
 const EDITOR_CHECKS = new Set(["broken_links", "spelling", "alt_attributes"]);
 let currentView = new URLSearchParams(window.location.search).get("view") || "expert";
 let _pages = [];
+let _allPages = [];
+const _depthParam = new URLSearchParams(window.location.search).get("depth");
+let currentDepth = _depthParam ? parseInt(_depthParam) : null;
+
+function getUrlDepth(url) {
+  const languageTags = ['de-ch', 'fr-ch', 'it-ch', 'en-us', 'de', 'fr', 'en', 'it'];
+  try {
+    const path = new URL(url).pathname;
+    const segments = path.split('/').filter(s => s.length > 0);
+    return segments.filter(s => !languageTags.includes(s.toLowerCase())).length;
+  } catch { return 0; }
+}
+
+function setDepth(val) {
+  currentDepth = val ? parseInt(val) : null;
+  const params = new URLSearchParams(window.location.search);
+  if (currentDepth) params.set("depth", currentDepth);
+  else params.delete("depth");
+  history.replaceState(null, "", "?" + params.toString());
+  applyDepthFilter();
+}
+
+function applyDepthFilter() {
+  _pages = currentDepth === null ? _allPages : _allPages.filter(p => getUrlDepth(p.url) <= currentDepth);
+  const tbody = document.getElementById("page-rows");
+  if (!tbody) return;
+  const existing = document.querySelector("tr.detail-row");
+  if (existing) existing.remove();
+  document.querySelectorAll("tr[data-idx].active").forEach(r => r.classList.remove("active"));
+  tbody.innerHTML = _pages.map((page, idx) => `
+    <tr data-idx="${idx}">
+      <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
+      <td>${badge(page.score, page.results?.error)}</td>
+      <td class="ts">${fmtDate(page.crawled_at)}</td>
+    </tr>`).join("");
+}
 
 function setView(view) {
   currentView = view;
@@ -548,9 +585,17 @@ function renderDetail(page) {
   viewBar.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
       <span class="view-bar-label">Ansicht:</span>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button class="view-btn${currentView === 'expert' ? ' active' : ''}" id="btn-expert" onclick="setView('expert')">Expert</button>
         <button class="view-btn${currentView === 'editor' ? ' active' : ''}" id="btn-editor" onclick="setView('editor')">Editor</button>
+        <span class="view-bar-label" style="margin-left:8px;">Tiefe:</span>
+        <select class="depth-select" id="depth-select" onchange="setDepth(this.value)">
+          <option value="" ${!currentDepth ? 'selected' : ''}>Alle</option>
+          <option value="2" ${currentDepth === 2 ? 'selected' : ''}>≤ 2</option>
+          <option value="3" ${currentDepth === 3 ? 'selected' : ''}>≤ 3</option>
+          <option value="4" ${currentDepth === 4 ? 'selected' : ''}>≤ 4</option>
+          <option value="5" ${currentDepth === 5 ? 'selected' : ''}>≤ 5</option>
+        </select>
         <button class="copy-link-text" id="copy-btn" onclick="copyLink()">Link kopieren</button>
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </div>
@@ -588,7 +633,8 @@ function render(data) {
   const project = data.project;
   // Tabelle aufsteigend nach Score sortieren (schlechtester zuerst)
   const pages = [...data.pages].sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
-  _pages = pages; // global für Re-Render bei View-Wechsel
+  _allPages = pages;
+  _pages = currentDepth === null ? _allPages : _allPages.filter(p => getUrlDepth(p.url) <= currentDepth);
 
   const scores = pages.map(p => p.score).filter(s => typeof s === "number");
   const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
@@ -612,7 +658,7 @@ function render(data) {
       </div>
     </div>`;
 
-  const rows = pages.map((page, idx) => `
+  const rows = _pages.map((page, idx) => `
     <tr data-idx="${idx}">
       <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
       <td>${badge(page.score, page.results?.error)}</td>

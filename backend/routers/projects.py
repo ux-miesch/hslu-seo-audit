@@ -84,17 +84,7 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
     msg = MIMEMultipart("alternative")
     msg["From"] = SMTP_USER
     msg["To"] = to
-    msg["Subject"] = f"SEO-Audit {project_name} liegt bereit."
-
-    low_pages_html = ""
-    if low_score_pages:
-        items = "".join(
-            f'<li style="margin-bottom:4px;"><a href="{p["url"]}" style="color:#1a1a1a;">{p["url"]}</a> – Score: <strong>{p["score"]}</strong></li>'
-            for p in low_score_pages
-        )
-        low_pages_html = f"""
-        <p style="margin-top:20px;font-weight:700;">Seiten mit dem tiefsten Score:</p>
-        <ul style="margin:8px 0 0 0;padding-left:18px;color:#555;">{items}</ul>"""
+    msg["Subject"] = f"SEO-Audit {project_name} ist bereit 🎉"
 
     html_body = f"""
     <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;max-width:600px;">
@@ -103,7 +93,6 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
       <strong>{page_count}</strong> Seiten geprüft &nbsp;·&nbsp; Ø Score: <strong>{avg_score}</strong><br>
       <strong>{spelling_count}</strong> Rechtschreibfehler gefunden
     </p>
-    {low_pages_html}
     <p style="margin-top:24px;">
       <a href="{report_url}" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
       <a href="{spelling_url}" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>

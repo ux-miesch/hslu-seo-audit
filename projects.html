@@ -307,7 +307,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260421-1638';
+const VERSION='260421-1651';
 const API = "http://localhost:8000";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 (function(){
@@ -673,7 +673,7 @@ async function confirmGenerateToken() {
 
 function copyRapportLink() {
   const statusEl = document.getElementById("flyout-status");
-  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; return; }
+  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; statusEl.style.color = "#c00"; return; }
   navigator.clipboard.writeText(`${REPORT_BASE_URL}/report.html?project=${_activeSlug}&token=${_projectToken}`);
   closeAllFlyouts();
   document.getElementById("link-copied-modal").classList.add("open");
@@ -681,7 +681,7 @@ function copyRapportLink() {
 
 function copySpellingLink() {
   const statusEl = document.getElementById("flyout-status");
-  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; return; }
+  if (!_projectToken) { statusEl.textContent = "Kein Token – bitte zuerst generieren."; statusEl.style.color = "#c00"; return; }
   navigator.clipboard.writeText(`${REPORT_BASE_URL}/spelling.html?project=${_activeSlug}&token=${_projectToken}`);
   closeAllFlyouts();
   document.getElementById("link-copied-modal").classList.add("open");
@@ -717,7 +717,7 @@ function openSettingsFlyout(slug, current, btn) {
   closeAllFlyouts();
   if (isOpen) return;
   _activeSlug = slug;
-  document.getElementById("flyout-status").textContent = "";
+  const _fs = document.getElementById("flyout-status"); _fs.textContent = ""; _fs.style.color = "";
   flyout.querySelectorAll(".flyout-item[data-val]").forEach(el => {
     el.classList.toggle("active", el.dataset.val === (current || ""));
   });
