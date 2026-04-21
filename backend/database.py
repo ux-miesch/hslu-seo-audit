@@ -3,7 +3,8 @@ import os
 import sqlite3
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECTS_DIR = os.path.join(_DIR, "projects")
+DB_BASE = os.environ.get("DB_PATH", _DIR)
+PROJECTS_DIR = os.path.join(DB_BASE, "projects")
 
 
 def db_path(slug: str) -> str:
@@ -84,7 +85,7 @@ def migrate_all() -> None:
                 pass
 
 
-GLOBAL_DB_PATH = os.path.join(_DIR, "spelling.db")
+GLOBAL_DB_PATH = os.path.join(DB_BASE, "spelling.db")
 
 
 def get_global_db() -> sqlite3.Connection:
