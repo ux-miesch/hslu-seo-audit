@@ -202,7 +202,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260421-1703';
+const VERSION='260421-1717';
 const API = "http://localhost:8000";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -214,7 +214,7 @@ const API = "http://localhost:8000";
     if (!token) { _showNoAccess(); return; }
     fetch(`${API}/projects/${slug}/token/verify?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
-      .then(data => { if (!data.valid) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } })
+      .then(data => { if (data.valid === false) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } })
       .catch(() => {});
   } else {
     if (urlToken) localStorage.setItem('admin_token', urlToken);
@@ -222,7 +222,7 @@ const API = "http://localhost:8000";
     if (!token) { _showNoAccess(); return; }
     fetch(`${API}/admin/token/verify?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
-      .then(data => { if (!data.valid) { localStorage.removeItem('admin_token'); _showNoAccess(); } })
+      .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); _showNoAccess(); } })
       .catch(() => {});
   }
 })();

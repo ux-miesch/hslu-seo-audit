@@ -200,12 +200,12 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <button class="flyout-item" data-val="monthly" onclick="pickSchedule('monthly')">Monatlich (1. des Monats)</button>
   <div class="flyout-sep"></div>
   <div class="flyout-section-title">Zugang</div>
-  <div class="flyout-status" id="flyout-token-status">Token: –</div>
-  <button class="flyout-item" onclick="generateProjectToken()">Token generieren</button>
   <button class="flyout-item" onclick="copyRapportLink()">Rapport-Link kopieren</button>
   <button class="flyout-item" onclick="copySpellingLink()">Spelling-Link kopieren</button>
   <button class="flyout-item" id="btn-mail-link" style="display:none;" onclick="sendTokenByMail()">Link per Mail senden</button>
   <div class="flyout-status" id="flyout-status"></div>
+  <button class="flyout-item" onclick="generateProjectToken()">Token generieren</button>
+  <div class="flyout-status" id="flyout-token-status">Token: –</div>
   <div class="flyout-sep"></div>
   <div class="flyout-section-title">Weiteres</div>
   <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung</a>
@@ -307,7 +307,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260421-1703';
+const VERSION='260421-1717';
 const API = "http://localhost:8000";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 (function(){
@@ -317,7 +317,7 @@ const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
   if (!token) { showNoAccessOverlay(); return; }
   fetch(`${API}/admin/token/verify?token=${encodeURIComponent(token)}`)
     .then(r => r.json())
-    .then(data => { if (!data.valid) { localStorage.removeItem('admin_token'); showNoAccessOverlay(); } })
+    .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); showNoAccessOverlay(); } })
     .catch(() => {});
 })();
 function showNoAccessOverlay() {
