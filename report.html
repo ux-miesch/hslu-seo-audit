@@ -51,6 +51,10 @@
     .view-btn:hover:not(.active) { opacity: 0.7; }
     .copy-link-text { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; cursor: pointer; background: none; border: none; padding: 0; }
     .depth-select { padding: 4px 6px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; }
+    .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
+    .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
+    thead th.th-sort { cursor: pointer; user-select: none; }
+    thead th.th-sort:hover { opacity: 0.75; }
     .flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
     .flyout.open{display:block;}
     .flyout-section-title{padding:8px 14px 4px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.04em;pointer-events:none;}
@@ -271,7 +275,7 @@
 </div>
 
 <script>
-const VERSION='260421-1651';
+const VERSION='260421-1703';
 const API_URL = "http://localhost:8000";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -309,8 +313,11 @@ const EDITOR_CHECKS = new Set(["broken_links", "spelling", "alt_attributes"]);
 let currentView = new URLSearchParams(window.location.search).get("view") || "expert";
 let _pages = [];
 let _allPages = [];
+let _openIdx = null;
 const _depthParam = new URLSearchParams(window.location.search).get("depth");
 let currentDepth = _depthParam ? parseInt(_depthParam) : null;
+let currentSort = new URLSearchParams(window.location.search).get("sort") || "score";
+let currentSortDir = new URLSearchParams(window.location.search).get("sortdir") || "asc";
 
 function getUrlDepth(url) {
   const languageTags = ['de-ch', 'fr-ch', 'it-ch', 'en-us', 'de', 'fr', 'en', 'it'];
@@ -324,25 +331,60 @@ function getUrlDepth(url) {
 function setDepth(val) {
   currentDepth = val ? parseInt(val) : null;
   const params = new URLSearchParams(window.location.search);
-  if (currentDepth) params.set("depth", currentDepth);
-  else params.delete("depth");
+  if (currentDepth) params.set("depth", currentDepth); else params.delete("depth");
+  history.replaceState(null, "", "?" + params.toString());
+  applyDepthFilter();
+}
+
+function setSort(col) {
+  if (currentSort === col) {
+    currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+  } else {
+    currentSort = col;
+    currentSortDir = "asc";
+  }
+  const params = new URLSearchParams(window.location.search);
+  params.set("sort", currentSort);
+  params.set("sortdir", currentSortDir);
   history.replaceState(null, "", "?" + params.toString());
   applyDepthFilter();
 }
 
 function applyDepthFilter() {
-  _pages = currentDepth === null ? _allPages : _allPages.filter(p => getUrlDepth(p.url) <= currentDepth);
+  // Filter
+  const filtered = currentDepth === null ? [..._allPages] : _allPages.filter(p => getUrlDepth(p.url) <= currentDepth);
+  // Sort
+  const dir = currentSortDir === "asc" ? 1 : -1;
+  filtered.sort((a, b) => {
+    if (currentSort === "url")   return dir * a.url.localeCompare(b.url);
+    if (currentSort === "depth") return dir * (getUrlDepth(a.url) - getUrlDepth(b.url));
+    if (currentSort === "date")  return dir * ((a.crawled_at || "").localeCompare(b.crawled_at || ""));
+    return dir * ((a.score ?? 0) - (b.score ?? 0));
+  });
+  _pages = filtered;
+  // Render rows
   const tbody = document.getElementById("page-rows");
   if (!tbody) return;
   const existing = document.querySelector("tr.detail-row");
   if (existing) existing.remove();
   document.querySelectorAll("tr[data-idx].active").forEach(r => r.classList.remove("active"));
+  _openIdx = null;
   tbody.innerHTML = _pages.map((page, idx) => `
     <tr data-idx="${idx}">
       <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
+      <td class="ts">${getUrlDepth(page.url)}</td>
       <td>${badge(page.score, page.results?.error)}</td>
       <td class="ts">${fmtDate(page.crawled_at)}</td>
     </tr>`).join("");
+  // Sort-Indikatoren in Headers
+  const colLabels = { url: "URL", depth: "Tiefe", score: "Score", date: "Auditiert am" };
+  ["url", "depth", "score", "date"].forEach(col => {
+    const th = document.getElementById("th-" + col);
+    if (th) th.textContent = colLabels[col] + (currentSort === col ? (currentSortDir === "asc" ? " ↑" : " ↓") : "");
+  });
+  // Depth-Select sync
+  const sel = document.getElementById("depth-select");
+  if (sel) sel.value = currentDepth ? String(currentDepth) : "";
 }
 
 function setView(view) {
@@ -588,14 +630,6 @@ function renderDetail(page) {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button class="view-btn${currentView === 'expert' ? ' active' : ''}" id="btn-expert" onclick="setView('expert')">Expert</button>
         <button class="view-btn${currentView === 'editor' ? ' active' : ''}" id="btn-editor" onclick="setView('editor')">Editor</button>
-        <span class="view-bar-label" style="margin-left:8px;">Tiefe:</span>
-        <select class="depth-select" id="depth-select" onchange="setDepth(this.value)">
-          <option value="" ${!currentDepth ? 'selected' : ''}>Alle</option>
-          <option value="2" ${currentDepth === 2 ? 'selected' : ''}>≤ 2</option>
-          <option value="3" ${currentDepth === 3 ? 'selected' : ''}>≤ 3</option>
-          <option value="4" ${currentDepth === 4 ? 'selected' : ''}>≤ 4</option>
-          <option value="5" ${currentDepth === 5 ? 'selected' : ''}>≤ 5</option>
-        </select>
         <button class="copy-link-text" id="copy-btn" onclick="copyLink()">Link kopieren</button>
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </div>
@@ -620,7 +654,7 @@ function renderDetail(page) {
     inner.appendChild(grid);
   }
   const td = document.createElement("td");
-  td.colSpan = 3;
+  td.colSpan = 4;
   td.appendChild(inner);
   const tr = document.createElement("tr");
   tr.className = "detail-row";
@@ -631,15 +665,11 @@ function renderDetail(page) {
 /* ── Main render ── */
 function render(data) {
   const project = data.project;
-  // Tabelle aufsteigend nach Score sortieren (schlechtester zuerst)
-  const pages = [...data.pages].sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
-  _allPages = pages;
-  _pages = currentDepth === null ? _allPages : _allPages.filter(p => getUrlDepth(p.url) <= currentDepth);
+  _allPages = [...data.pages];
 
-  const scores = pages.map(p => p.score).filter(s => typeof s === "number");
+  const scores = data.pages.map(p => p.score).filter(s => typeof s === "number");
   const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
-  const slug = new URLSearchParams(window.location.search).get("project") || "";
   const summaryHtml = `
     <div class="summary">
       <div>
@@ -647,7 +677,7 @@ function render(data) {
         <div class="meta"><a href="${project.root_url}" target="_blank">${project.root_url}</a></div>
         <div class="meta">Letzter Crawl: ${fmtDate(project.last_crawled_at)}</div>
         <div class="stats">
-          <div class="stat"><div class="val">${pages.length}</div><div class="lbl">Seiten auditiert</div></div>
+          <div class="stat"><div class="val">${data.pages.length}</div><div class="lbl">Seiten auditiert</div></div>
           <div class="stat"><div class="val">${project.page_type || "–"}</div><div class="lbl">Seitentyp</div></div>
           <div class="stat"><div class="val">${project.language || "–"}</div><div class="lbl">Sprache</div></div>
         </div>
@@ -658,49 +688,54 @@ function render(data) {
       </div>
     </div>`;
 
-  const rows = _pages.map((page, idx) => `
-    <tr data-idx="${idx}">
-      <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
-      <td>${badge(page.score, page.results?.error)}</td>
-      <td class="ts">${fmtDate(page.crawled_at)}</td>
-    </tr>`).join("");
+  const filterBar = `
+    <div class="filter-bar">
+      <span class="filter-label">Tiefe:</span>
+      <select class="depth-select" id="depth-select" onchange="setDepth(this.value)">
+        <option value="">Alle</option>
+        <option value="2">≤ 2</option>
+        <option value="3">≤ 3</option>
+        <option value="4">≤ 4</option>
+        <option value="5">≤ 5</option>
+      </select>
+    </div>`;
 
   const tableHtml = `
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>URL</th>
-            <th>Score ↑</th>
-            <th>Auditiert am</th>
+            <th class="th-sort" id="th-url" onclick="setSort('url')">URL</th>
+            <th class="th-sort" id="th-depth" onclick="setSort('depth')">Tiefe</th>
+            <th class="th-sort" id="th-score" onclick="setSort('score')">Score</th>
+            <th class="th-sort" id="th-date" onclick="setSort('date')">Auditiert am</th>
           </tr>
         </thead>
-        <tbody id="page-rows">${rows}</tbody>
+        <tbody id="page-rows"></tbody>
       </table>
     </div>`;
 
-  document.getElementById("app").innerHTML = summaryHtml + tableHtml;
+  document.getElementById("app").innerHTML = summaryHtml + filterBar + tableHtml;
 
   /* ── Row click → detail ── */
-  let openIdx = null;
+  _openIdx = null;
   document.getElementById("page-rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-idx]");
     if (!tr) return;
     const idx = parseInt(tr.dataset.idx, 10);
-
     const existing = document.querySelector("tr.detail-row");
     if (existing) existing.remove();
-
-    const wasOpen = openIdx === idx;
+    const wasOpen = _openIdx === idx;
     document.querySelectorAll("tr.active").forEach(r => r.classList.remove("active"));
-    openIdx = null;
-
+    _openIdx = null;
     if (!wasOpen) {
       tr.classList.add("active");
-      tr.insertAdjacentElement("afterend", renderDetail(pages[idx]));
-      openIdx = idx;
+      tr.insertAdjacentElement("afterend", renderDetail(_pages[idx]));
+      _openIdx = idx;
     }
   });
+
+  applyDepthFilter();
 }
 
 /* ── Score helpers (Projektliste) ── */
