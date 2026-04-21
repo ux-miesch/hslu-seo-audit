@@ -45,8 +45,8 @@
     .new-token-row input { padding: 8px 12px; font-family: Verdana, sans-serif; font-size: 13px; border: 1px solid #bbb; width: 220px; }
     .new-token-row input:focus { outline: none; border-color: var(--cyan); }
 
-    .copy-cell button { background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0.6; padding: 2px 4px; }
-    .copy-cell button:hover { opacity: 1; }
+    .share-btn { background: none; border: 1.5px solid var(--black); cursor: pointer; font-family: Verdana, sans-serif; font-size: 11px; font-weight: 700; color: var(--black); padding: 4px 10px; white-space: nowrap; }
+    .share-btn:hover { background: var(--black); color: #fff; }
 
     .logout-link { font-size: 11px; color: #555; cursor: pointer; background: none; border: none; font-family: Verdana, sans-serif; }
     .logout-link:hover { text-decoration: underline; }
@@ -159,9 +159,8 @@ function renderTokenTable(tokens) {
       <td><span class="badge-count">${t.usage_count}</span></td>
       <td>${fmtDate(t.last_used)}</td>
       <td>${fmtDate(t.created_at)}</td>
-      <td class="copy-cell">
-        <button onclick="copyLink('${t.token}')" title="Link kopieren">📋</button>
-        <span id="copied-${t.id}" style="font-size:11px;color:#555;display:none;">Kopiert!</span>
+      <td>
+        <button class="share-btn" onclick="openLink('${t.token}')">Zugangsdaten teilen</button>
       </td>
       <td><button class="btn btn-danger" onclick="deleteToken(${t.id})">Löschen</button></td>
     </tr>`).join('');
@@ -174,9 +173,8 @@ function renderTokenTable(tokens) {
     </table>`;
 }
 
-function copyLink(token) {
-  const url = `${BASE_URL}/projects.html?token=${token}`;
-  navigator.clipboard.writeText(url);
+function openLink(token) {
+  window.open(`${BASE_URL}/projects.html?token=${token}`, '_blank');
 }
 
 function createToken() {
