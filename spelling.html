@@ -169,6 +169,8 @@ td.rule-cell{color:#777;font-size:11px;}
   <a class="flyout-item" href="projects.html">SEO-Audit Projekte</a>
   <a class="flyout-item" href="report.html">SEO-Audit Rapport</a>
   <a class="flyout-item active" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
+  <div class="flyout-sep"></div>
+  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
 </div>
 
 <!-- Shared info popover -->
@@ -194,12 +196,12 @@ td.rule-cell{color:#777;font-size:11px;}
 
 <div class="footer-bar">
   <span>hslu-seo-audit by DMS</span>
-  <span style="position:absolute;left:50%;transform:translateX(-50%);"><a onclick="logout()" style="font-family:'Verdana',sans-serif;font-size:11px;color:#555;cursor:pointer;text-decoration:none;">Abmelden</a></span>
+  <span style="position:absolute;left:50%;transform:translateX(-50%);"></span>
   <span id="footer-ts"></span>
 </div>
 
 <script>
-const VERSION='260421-0949';
+const VERSION='260421-1003';
 const API = "http://localhost:8000";
 (function(){
   const urlToken = new URLSearchParams(window.location.search).get('token');
