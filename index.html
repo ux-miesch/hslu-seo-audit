@@ -183,6 +183,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
       <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
       <div class="audit-running-title">Audit läuft...</div>
       <div class="audit-running-sub">Bitte warten – die Seite wird gerade analysiert.<br>Dies kann bis zu 60 Sekunden dauern.</div>
+      <div style="font-family:'Verdana',sans-serif;font-size:13px;color:#EE6A87;margin-top:12px;">Dieser Audit ist anschliessend über den Link in der URL für 30 Tage abrufbar. Danach wird er automatisch gelöscht.</div>
     </div>
     <div class="protocol-wrap">
       <div style="font-weight:700;margin-bottom:6px;font-family:'Verdana',sans-serif;font-size:12px;">Protokoll</div>
@@ -233,7 +234,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 <script>
 
 function logout(){localStorage.removeItem('seo_token');location.reload();}
-const VERSION='260421-0935';
+const VERSION='260421-0949';
 const API_URL='http://localhost:8000';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -396,6 +397,7 @@ function resetAll(){
   document.getElementById('aufgaben-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   document.getElementById('analyse-content').innerHTML='<div class="empty-state">Noch kein Audit durchgeführt.</div>';
   initWeights();buildSliders();buildModeCards();
+  window.history.replaceState({},'',window.location.pathname);
   showStep(1);
 }
 function ts(){return new Date().toLocaleTimeString('de-CH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -438,6 +440,10 @@ async function startAudit(){
     addLog('✓ Audit abgeschlossen','done');
     renderAnalyse(results,selected,url);
     renderAufgaben(results,selected,url);
+    try{
+      const saveResp=await fetch(API_URL+'/single-audits/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,result:{url,selected,checks:results}})});
+      if(saveResp.ok){const saveData=await saveResp.json();window.history.replaceState({},'',`?audit=${saveData.id}`);}
+    }catch(e){}
     setTimeout(()=>{showStep('results');},800);
   }catch(err){
     if(err.name==='AbortError'){
@@ -606,6 +612,25 @@ function renderAufgaben(results,selected,url){
 
 function exportPDF(){showResultTab(1);setTimeout(()=>window.print(),200);}
 
+async function loadAuditFromUrl(){
+  const auditId=new URLSearchParams(window.location.search).get('audit');
+  if(!auditId)return;
+  try{
+    const resp=await fetch(API_URL+'/single-audits/'+auditId);
+    if(!resp.ok)return;
+    const data=await resp.json();
+    if(data.error==='expired'){
+      document.getElementById('aufgaben-content').innerHTML='<div class="error-box">Dieser Audit-Link ist abgelaufen (30 Tage überschritten).</div>';
+      document.getElementById('analyse-content').innerHTML='';
+      showStep('results');return;
+    }
+    const{url,selected,checks}=data.result;
+    renderAnalyse(checks,selected,url);
+    renderAufgaben(checks,selected,url);
+    showStep('results');
+  }catch(e){}
+}
+
 initWeights();
 document.addEventListener('DOMContentLoaded',()=>{
   buildModeCards();buildSliders();showStep(1);
@@ -613,6 +638,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!localStorage.getItem('hslu_seo_welcome_accepted')){
     document.getElementById('welcome-modal').classList.add('active');
   }
+  loadAuditFromUrl();
 });
 function closeWelcomeModal(){
   localStorage.setItem('hslu_seo_welcome_accepted','1');

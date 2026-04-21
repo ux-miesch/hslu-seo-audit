@@ -5,3 +5,4 @@ backend/hslu_seo.db
 backend/.DS_Store
 frontend/.DS_Store
 venv/
+backend/single-audits.db

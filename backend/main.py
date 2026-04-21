@@ -12,6 +12,7 @@ from crawler import fetch_page
 from backend.routers import projects
 from backend.routers import spelling_candidates
 from backend.routers import admin
+from backend.routers import single_audits
 from backend.audit_runner import run_checks
 from checks.sea import check_sea
 
@@ -20,8 +21,11 @@ from checks.sea import check_sea
 async def lifespan(app: FastAPI):
     from backend.database import migrate_all, init_global_db
     from backend.scheduler import init_scheduler, shutdown_scheduler
+    from backend.single_audits import init_single_audits_db, cleanup_expired
     migrate_all()
     init_global_db()
+    init_single_audits_db()
+    cleanup_expired()
     init_scheduler()
     yield
     shutdown_scheduler()
@@ -32,6 +36,7 @@ app = FastAPI(title="SEO Audit API", version="0.2.0", lifespan=lifespan)
 app.include_router(projects.router)
 app.include_router(spelling_candidates.router)
 app.include_router(admin.router)
+app.include_router(single_audits.router)
 
 app.add_middleware(
     CORSMiddleware,
