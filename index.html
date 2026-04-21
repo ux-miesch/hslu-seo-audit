@@ -232,9 +232,9 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 
 <script>
 
-function logout(){localStorage.removeItem('seo_auth');window.location.href='login.html';}
+function logout(){localStorage.removeItem('seo_token');location.reload();}
 const VERSION='260420-1117';
-const API_URL='https://hslu-seo-audit.onrender.com';
+const API_URL='http://localhost:8000';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
   meta:'https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#meta-texte',

@@ -70,7 +70,7 @@ def _slugify(name: str) -> str:
 # Background tasks
 # ---------------------------------------------------------------------------
 
-def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float, spelling_count: int = 0) -> None:
+def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float, spelling_count: int = 0, low_score_pages: Optional[list] = None) -> None:
     """Sendet E-Mail-Benachrichtigung nach abgeschlossenem Audit."""
     if not SMTP_USER or not SMTP_PASS:
         print("[EMAIL] SMTP_USER/SMTP_PASS nicht gesetzt – E-Mail übersprungen.", flush=True)
@@ -80,18 +80,29 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
     msg = MIMEMultipart("alternative")
     msg["From"] = SMTP_USER
     msg["To"] = to
-    msg["Subject"] = f"SEO-Audit abgeschlossen: {project_name}"
+    msg["Subject"] = f"SEO-Audit {project_name} liegt bereit."
+
+    low_pages_html = ""
+    if low_score_pages:
+        items = "".join(
+            f'<li style="margin-bottom:4px;"><a href="{p["url"]}" style="color:#1a1a1a;">{p["url"]}</a> – Score: <strong>{p["score"]}</strong></li>'
+            for p in low_score_pages
+        )
+        low_pages_html = f"""
+        <p style="margin-top:20px;font-weight:700;">Seiten mit dem tiefsten Score:</p>
+        <ul style="margin:8px 0 0 0;padding-left:18px;color:#555;">{items}</ul>"""
 
     html_body = f"""
-    <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;">
-    <p style="font-size:15px;font-weight:700;">Crawl abgeschlossen: {project_name}</p>
-    <p style="color:#555;">
+    <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;max-width:600px;">
+    <p style="font-size:15px;font-weight:700;margin-bottom:12px;">Crawl abgeschlossen: {project_name}</p>
+    <p style="color:#555;margin:0;">
       <strong>{page_count}</strong> Seiten geprüft &nbsp;·&nbsp; Ø Score: <strong>{avg_score}</strong><br>
       <strong>{spelling_count}</strong> Rechtschreibfehler gefunden
     </p>
-    <p style="margin-top:20px;">
-      <a href="{spelling_url}" style="display:inline-block;background:#FCC300;color:#1a1a1a;padding:9px 18px;text-decoration:none;font-weight:700;margin-right:10px;">Rechtschreibfehler anzeigen →</a>
-      <a href="{report_url}"   style="display:inline-block;background:#77C5D8;color:#1a1a1a;padding:9px 18px;text-decoration:none;font-weight:700;">Rapport anzeigen →</a>
+    {low_pages_html}
+    <p style="margin-top:24px;">
+      <a href="{report_url}" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
+      <a href="{spelling_url}" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>
     </p>
     </body></html>
     """
@@ -297,7 +308,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
         if proj and proj["notification_email"]:
             # Nur jeweils das neueste Audit-Ergebnis pro Seite verwenden
             score_rows = db2.execute(
-                """SELECT ar.score
+                """SELECT p.url, ar.score
                    FROM audit_results ar
                    JOIN pages p ON ar.page_id = p.id
                    WHERE p.project_id = ?
@@ -311,6 +322,10 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             page_count = len(score_rows)
             scores = [r["score"] for r in score_rows if r["score"] is not None]
             avg = round(sum(scores) / len(scores), 1) if scores else 0.0
+            low_score_pages = sorted(
+                [{"url": r["url"], "score": round(r["score"], 1)} for r in score_rows if r["score"] is not None],
+                key=lambda x: x["score"]
+            )[:5]
             # Spelling-Fehler zählen (aus globaler spelling.db)
             spelling_count = 0
             try:
@@ -335,6 +350,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                 page_count=page_count,
                 avg_score=avg,
                 spelling_count=spelling_count,
+                low_score_pages=low_score_pages,
             )
     finally:
         db2.close()

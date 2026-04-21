@@ -107,6 +107,15 @@ def init_global_db() -> None:
             last_seen   TEXT,
             UNIQUE(word, rule_id)
         );
+
+        CREATE TABLE IF NOT EXISTS tokens (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            token       TEXT NOT NULL UNIQUE,
+            label       TEXT,
+            created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+            usage_count INTEGER NOT NULL DEFAULT 0,
+            last_used   TEXT
+        );
     """)
     conn.commit()
     conn.close()
