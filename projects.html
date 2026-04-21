@@ -91,6 +91,10 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 .flyout-item-delete{color:#c00!important;}
 .flyout-item-delete:hover{background:#fde8e8!important;}
 .flyout-status{font-size:11px;color:#555;padding:4px 14px;min-height:18px;}
+.flyout-input{display:block;width:calc(100% - 28px);margin:2px 14px 4px;padding:6px 8px;font-family:'Verdana',sans-serif;font-size:12px;border:1px solid #bbb;background:#fff;}
+.flyout-input:focus{outline:none;border-color:#77C5D8;}
+.flyout-save-btn{display:inline-block;margin:0 14px 8px;padding:5px 14px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
+.flyout-save-btn:hover{background:#55a8bc;}
 
 /* ── Delete Modal ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;}
@@ -163,14 +167,14 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 
 <!-- ── Flyout: Einstellungen ── -->
 <div class="flyout" id="flyout-settings">
+  <div class="flyout-section-title">E-Mail-Adresse</div>
+  <input type="email" class="flyout-input" id="flyout-email" placeholder="name@beispiel.ch">
+  <button class="flyout-save-btn" onclick="saveProjectEmail()">Speichern</button>
+  <div class="flyout-sep"></div>
   <div class="flyout-section-title">Planen</div>
   <button class="flyout-item" data-val=""        onclick="pickSchedule('')">Deaktiviert</button>
   <button class="flyout-item" data-val="weekly"  onclick="pickSchedule('weekly')">Wöchentlich (jeden Montag)</button>
   <button class="flyout-item" data-val="monthly" onclick="pickSchedule('monthly')">Monatlich (1. des Monats)</button>
-  <div class="flyout-sep"></div>
-  <div class="flyout-section-title">Weiteres</div>
-  <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung</a>
-  <button class="flyout-item flyout-item-delete" onclick="openDeleteModal(_activeSlug)">Projekt löschen</button>
   <div class="flyout-sep"></div>
   <div class="flyout-section-title">Zugang</div>
   <div class="flyout-status" id="flyout-token-status">Token: –</div>
@@ -179,6 +183,10 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <button class="flyout-item" onclick="copySpellingLink()">Spelling-Link kopieren</button>
   <button class="flyout-item" id="btn-mail-link" style="display:none;" onclick="sendTokenByMail()">Link per Mail senden</button>
   <div class="flyout-status" id="flyout-status"></div>
+  <div class="flyout-sep"></div>
+  <div class="flyout-section-title">Weiteres</div>
+  <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung</a>
+  <button class="flyout-item flyout-item-delete" onclick="openDeleteModal(_activeSlug)">Projekt löschen</button>
 </div>
 
 <!-- ── Delete Modal (shared) ── -->
@@ -208,9 +216,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
     <input type="text" id="proj-name" placeholder="z.B. w-ibr-blog">
     <label for="proj-url">Webseiten-Adresse</label>
     <input type="text" id="proj-url" placeholder="https://www.hslu.ch/de-ch/wirtschaft">
-    <label for="proj-max-pages">Anz. untersuchter Seiten</label>
-    <input type="number" id="proj-max-pages" min="1" max="500" placeholder="Limmitieren falls nötig">
-    <label for="proj-email">E-Mail für Benachrichtigung <span style="font-weight:400;color:#777;">(optional)</span></label>
+    <label for="proj-email">E-Mail für Benachrichtigung <span style="color:#c00;font-weight:400;">*</span></label>
     <input type="email" id="proj-email" placeholder="name@beispiel.ch">
     <div style="margin-top:18px;">
       <button class="btn-primary" id="btn-create" onclick="createProject()">Projekt erstellen →</button>
@@ -242,7 +248,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260421-1042';
+const VERSION='260421-1532';
 const API = "http://localhost:8000";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 (function(){
@@ -347,8 +353,6 @@ async function createProject() {
   const projectType = document.getElementById("proj-type").value;
   const name        = document.getElementById("proj-name").value.trim();
   const url         = document.getElementById("proj-url").value.trim();
-  const maxPagesRaw = document.getElementById("proj-max-pages").value.trim();
-  const maxPages    = maxPagesRaw ? parseInt(maxPagesRaw) : null;
   const email       = document.getElementById("proj-email").value.trim();
   const errBox      = document.getElementById("form-error");
   errBox.style.display = "none";
@@ -360,6 +364,11 @@ async function createProject() {
   }
   if (!name || !url) {
     errBox.textContent = "Bitte Projektname und Root-URL angeben.";
+    errBox.style.display = "block";
+    return;
+  }
+  if (!email) {
+    errBox.textContent = "Bitte eine E-Mail-Adresse angeben.";
     errBox.style.display = "block";
     return;
   }
@@ -380,7 +389,7 @@ async function createProject() {
 
   try {
     // 1. Create project
-    const body = { name, root_url: url, max_pages: maxPages, project_type: projectType };
+    const body = { name, root_url: url, project_type: projectType };
     if (email) body.notification_email = email;
     const createRes = await fetch(`${API}/projects/`, {
       method: "POST",
@@ -551,11 +560,36 @@ async function loadProjectTokenStatus(slug) {
     _projectEmail = p.notification_email || null;
     statusEl.textContent = `Token: ${_projectToken ? "Vorhanden" : "Keiner"}`;
     if (mailBtn) mailBtn.style.display = _projectEmail ? "" : "none";
+    const emailInput = document.getElementById("flyout-email");
+    if (emailInput) emailInput.value = _projectEmail || "";
   } catch { statusEl.textContent = "Token: –"; }
+}
+
+async function saveProjectEmail() {
+  if (!_activeSlug) return;
+  const emailInput = document.getElementById("flyout-email");
+  const email = emailInput ? emailInput.value.trim() : "";
+  const statusEl = document.getElementById("flyout-status");
+  try {
+    const r = await fetch(`${API}/projects/${_activeSlug}/email`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notification_email: email || null }),
+    });
+    if (!r.ok) throw new Error();
+    _projectEmail = email || null;
+    const mailBtn = document.getElementById("btn-mail-link");
+    if (mailBtn) mailBtn.style.display = _projectEmail ? "" : "none";
+    statusEl.textContent = "E-Mail gespeichert.";
+    setTimeout(() => { statusEl.textContent = ""; }, 2000);
+  } catch {
+    statusEl.textContent = "Fehler beim Speichern.";
+  }
 }
 
 async function generateProjectToken() {
   if (!_activeSlug) return;
+  if (!confirm('Achtung: Der bestehende Token wird ungültig. Alle bestehenden Links mit diesem Token funktionieren nicht mehr. Fortfahren?')) return;
   const statusEl = document.getElementById("flyout-status");
   try {
     const r = await fetch(`${API}/projects/${_activeSlug}/token`, { method: "POST" });

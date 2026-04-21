@@ -47,6 +47,9 @@ class ProjectCreate(BaseModel):
 class ScheduleUpdate(BaseModel):
     schedule: Optional[str] = None  # "weekly", "monthly" oder None
 
+class EmailUpdate(BaseModel):
+    notification_email: Optional[str] = None
+
 
 def _mode_weights_for(project_type: Optional[str]) -> dict:
     """Leitet mode_weights aus project_type ab.
@@ -569,6 +572,20 @@ async def audit_project(slug: str, background_tasks: BackgroundTasks):
     mode_weights = _mode_weights_for(project_type)
     background_tasks.add_task(_audit, project_id, language, mode_weights, slug)
     return {"slug": slug, "audit_status": "started", "pages": page_count}
+
+
+@router.patch("/{slug}/email", status_code=200)
+def update_email(slug: str, body: EmailUpdate):
+    db = get_db(slug)
+    try:
+        row = db.execute("SELECT id FROM projects WHERE slug = ?", (slug,)).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        db.execute("UPDATE projects SET notification_email = ? WHERE slug = ?", (body.notification_email, slug))
+        db.commit()
+    finally:
+        db.close()
+    return {"slug": slug, "notification_email": body.notification_email}
 
 
 @router.patch("/{slug}/schedule", status_code=200)
