@@ -307,7 +307,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260422-0629';
+const VERSION='260422-0704';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 (function(){
@@ -527,7 +527,7 @@ function updateProgressUI(s) {
 }
 
 async function pollCrawl(slug) {
-  const deadline = Date.now() + 10 * 60 * 1000;
+  const deadline = Date.now() + 60 * 60 * 1000;
   while (Date.now() < deadline) {
     await sleep(3000);
     try {
