@@ -181,7 +181,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <a class="flyout-item active" href="projects.html">SEO-Audit Projekte</a>
   <a class="flyout-item" href="report.html">SEO-Audit Rapport</a>
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
-  <a class="flyout-item" href="single-audits.html">V1-Einzel-Audits</a>
+  <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item" href="admin.html">Zugang verwalten →</a>
   <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
@@ -318,7 +318,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260422-0802';
+const VERSION='260422-0910';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -567,7 +567,7 @@ function updateProgressUI(s) {
 }
 
 async function pollCrawl(slug) {
-  const deadline = Date.now() + 60 * 60 * 1000;
+  const deadline = Date.now() + 120 * 60 * 1000;
   while (Date.now() < deadline) {
     await sleep(3000);
     try {
@@ -586,7 +586,7 @@ async function pollCrawl(slug) {
 }
 
 async function pollAudit(slug) {
-  const deadline = Date.now() + 60 * 60 * 1000;
+  const deadline = Date.now() + 120 * 60 * 1000;
   while (Date.now() < deadline) {
     await sleep(3000);
     try {

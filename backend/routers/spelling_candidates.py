@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import re
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from pydantic import BaseModel
 
 from backend.database import get_global_db, get_db, db_path
@@ -10,8 +10,30 @@ from backend.database import get_global_db, get_db, db_path
 router = APIRouter(prefix="/spelling-candidates", tags=["spelling"])
 
 WHITELIST_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "whitelist.py")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 
 VALID_STATUSES = {"neu", "whitelist", "ignorieren"}
+
+
+def _require_admin(x_admin_password: Optional[str]) -> None:
+    if not ADMIN_PASSWORD:
+        raise HTTPException(status_code=503, detail="ADMIN_PASSWORD nicht konfiguriert.")
+    if x_admin_password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Ungültiger Zugang.")
+
+
+def _verify_project_token(slug: str, token: Optional[str]) -> None:
+    if not token:
+        raise HTTPException(status_code=401, detail="Token fehlt.")
+    if not os.path.exists(db_path(slug)):
+        raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+    db = get_db(slug)
+    try:
+        row = db.execute("SELECT project_token FROM projects WHERE slug = ?", (slug,)).fetchone()
+    finally:
+        db.close()
+    if row is None or not row["project_token"] or token != row["project_token"]:
+        raise HTTPException(status_code=401, detail="Ungültiger Token.")
 
 
 class StatusUpdate(BaseModel):
@@ -19,7 +41,16 @@ class StatusUpdate(BaseModel):
 
 
 @router.get("/")
-def list_candidates(project: Optional[str] = Query(default=None)):
+def list_candidates(
+    project: Optional[str] = Query(default=None),
+    token: Optional[str] = Query(default=None),
+    x_admin_password: Optional[str] = Header(default=None),
+):
+    if project:
+        _verify_project_token(project, token)
+    else:
+        _require_admin(x_admin_password)
+
     conn = get_global_db()
     try:
         if project:
@@ -55,7 +86,12 @@ def list_candidates(project: Optional[str] = Query(default=None)):
 
 
 @router.patch("/{candidate_id}")
-def update_status(candidate_id: int, body: StatusUpdate):
+def update_status(
+    candidate_id: int,
+    body: StatusUpdate,
+    x_admin_password: Optional[str] = Header(default=None),
+):
+    _require_admin(x_admin_password)
     if body.status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"Ungültiger Status: {body.status}")
     conn = get_global_db()
@@ -79,8 +115,9 @@ def update_status(candidate_id: int, body: StatusUpdate):
 
 
 @router.post("/apply-whitelist")
-def apply_whitelist():
+def apply_whitelist(x_admin_password: Optional[str] = Header(default=None)):
     """Schreibt alle Einträge mit status='whitelist' in whitelist.py."""
+    _require_admin(x_admin_password)
     conn = get_global_db()
     try:
         rows = conn.execute(
@@ -109,7 +146,6 @@ def apply_whitelist():
 
     if new_words:
         new_entries = "    " + ",\n    ".join(f'"{w}"' for w in new_words) + ","
-        # Einfügen vor der schliessenden } der Menge
         updated_content = content[:match.start(1)] + match.group(1).rstrip() + "\n" + new_entries + "\n" + content[match.end(1):]
         with open(WHITELIST_PATH, "w", encoding="utf-8") as f:
             f.write(updated_content)

@@ -153,6 +153,16 @@ td.rule-cell{color:#777;font-size:11px;}
 </head>
 <body>
 
+<!-- Password overlay (nur für Admin-Zugang ohne Projekt-Token) -->
+<div id="pw-overlay" style="display:flex;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#f4f4f4;border-left:4px solid #77C5D8;padding:32px;max-width:360px;width:100%;margin:0 16px;">
+    <div style="font-family:Verdana,sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;">Zugang</div>
+    <input type="password" id="pw-input" placeholder="Passwort" style="width:100%;padding:9px 12px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" style="padding:9px 18px;font-family:Verdana,sans-serif;font-size:13px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;width:100%;">Anmelden</button>
+    <div id="pw-error" style="color:#c00;font-size:12px;margin-top:8px;display:none;">Falsches Passwort.</div>
+  </div>
+</div>
+
 <div class="header">
   <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;"
        onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';">
@@ -170,7 +180,7 @@ td.rule-cell{color:#777;font-size:11px;}
   <a class="flyout-item" href="projects.html">SEO-Audit Projekte</a>
   <a class="flyout-item" href="report.html">SEO-Audit Rapport</a>
   <a class="flyout-item active" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
-  <a class="flyout-item" href="single-audits.html">V1-Einzel-Audits</a>
+  <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
 </div>
@@ -203,40 +213,95 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260422-0802';
+const VERSION='260422-0910';
 const API = "https://hslu-seo-audit.onrender.com";
-(function(){
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get('project');
-  const urlToken = params.get('token');
-  if (slug) {
-    if (urlToken) localStorage.setItem(`project_token_${slug}`, urlToken);
-    const token = urlToken || localStorage.getItem(`project_token_${slug}`);
-    if (!token) { _showNoAccess(); return; }
-    fetch(`${API}/projects/${slug}/token/verify?token=${encodeURIComponent(token)}`)
-      .then(r => r.json())
-      .then(data => { if (data.valid === false) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } })
-      .catch(() => {});
+
+const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
+const _urlToken    = new URLSearchParams(window.location.search).get("token")   || null;
+let _adminPw       = "";
+let _projectToken  = "";
+
+/* ── Auth ── */
+async function verifyPw(pw) {
+  try {
+    const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
+    const d = await r.json();
+    return d.valid === true;
+  } catch { return false; }
+}
+
+async function verifyProjectToken(slug, tok) {
+  try {
+    const r = await fetch(`${API}/projects/${slug}/token/verify?token=${encodeURIComponent(tok)}`);
+    const d = await r.json();
+    return d.valid === true;
+  } catch { return false; }
+}
+
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (!pw) return;
+  document.getElementById('pw-error').style.display = 'none';
+  const ok = await verifyPw(pw);
+  if (ok) {
+    _adminPw = pw;
+    localStorage.setItem('admin_pw', pw);
+    document.getElementById('pw-overlay').style.display = 'none';
+    init();
   } else {
-    if (urlToken) localStorage.setItem('admin_token', urlToken);
-    const token = localStorage.getItem('admin_token');
-    if (!token) { _showNoAccess(); return; }
-    fetch(`${API}/admin/token/verify?token=${encodeURIComponent(token)}`)
-      .then(r => r.json())
-      .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); _showNoAccess(); } })
-      .catch(() => {});
+    document.getElementById('pw-error').style.display = 'block';
   }
+}
+
+function logout() {
+  if (_projectSlug) localStorage.removeItem(`project_token_${_projectSlug}`);
+  else localStorage.removeItem('admin_pw');
+  location.reload();
+}
+
+/* ── authFetch: fügt automatisch den richtigen Auth-Header hinzu ── */
+function authFetch(url, opts = {}) {
+  const headers = { ...(opts.headers || {}) };
+  if (_adminPw) headers['X-Admin-Password'] = _adminPw;
+  return fetch(url, { ...opts, headers });
+}
+
+/* ── Init ── */
+async function init() {
+  load();
+}
+
+(async function initAuth() {
+  if (_projectSlug) {
+    // Projekt-Token-Modus
+    const tok = _urlToken || localStorage.getItem(`project_token_${_projectSlug}`);
+    if (!tok) { _showNoAccess(); return; }
+    const ok = await verifyProjectToken(_projectSlug, tok);
+    if (!ok) { localStorage.removeItem(`project_token_${_projectSlug}`); _showNoAccess(); return; }
+    if (_urlToken) localStorage.setItem(`project_token_${_projectSlug}`, _urlToken);
+    _projectToken = tok;
+    document.getElementById('pw-overlay').style.display = 'none';
+    init();
+    return;
+  }
+  // Admin-Passwort-Modus
+  const pw = localStorage.getItem('admin_pw');
+  if (pw) {
+    const ok = await verifyPw(pw);
+    if (ok) {
+      _adminPw = pw;
+      document.getElementById('pw-overlay').style.display = 'none';
+      init();
+      return;
+    }
+    localStorage.removeItem('admin_pw');
+  }
+  // Overlay bleibt sichtbar
 })();
+
 function _showNoAccess() {
   document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Verdana,sans-serif;font-size:14px;color:#555;text-align:center;padding:40px;">Kein gültiger Zugangslink.<br>Bitte fordere einen Link bei der zuständigen Person an.</div>';
 }
-function logout(){
-  const slug = new URLSearchParams(window.location.search).get('project');
-  if (slug) localStorage.removeItem(`project_token_${slug}`);
-  else localStorage.removeItem('admin_token');
-  location.reload();
-}
-const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
 let _all = [];
 let _filter = "all";
 let _sortCol = "last_seen";
@@ -270,10 +335,10 @@ async function load() {
   }
 
   const url = _projectSlug
-    ? `${API}/spelling-candidates/?project=${encodeURIComponent(_projectSlug)}`
+    ? `${API}/spelling-candidates/?project=${encodeURIComponent(_projectSlug)}&token=${encodeURIComponent(_projectToken)}`
     : `${API}/spelling-candidates/`;
   try {
-    const r = await fetch(url);
+    const r = await authFetch(url);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     _all = await r.json();
     updateCounts();
@@ -361,10 +426,12 @@ function render() {
       onmouseleave="scheduleClosePopover()"
       onclick="openInfoPopover(this,'${infoUrl}','${date}','${infoRule}')">i</button>`;
 
-    let actions = c.status === "neu"
-      ? `<button class="btn-action btn-whitelist" onclick="setStatus(${c.id},'whitelist')">Whitelist</button>
-         <button class="btn-action btn-ignore"    onclick="setStatus(${c.id},'ignorieren')">Ignorieren</button>`
-      : `<button class="btn-action btn-reactivate" onclick="setStatus(${c.id},'neu')">Reaktivieren</button>`;
+    let actions = _adminPw
+      ? (c.status === "neu"
+          ? `<button class="btn-action btn-whitelist" onclick="setStatus(${c.id},'whitelist')">Whitelist</button>
+             <button class="btn-action btn-ignore"    onclick="setStatus(${c.id},'ignorieren')">Ignorieren</button>`
+          : `<button class="btn-action btn-reactivate" onclick="setStatus(${c.id},'neu')">Reaktivieren</button>`)
+      : `<span style="font-size:11px;color:#aaa;">—</span>`;
 
     return `<tr id="row-${c.id}">
       <td class="word-cell col-word"  data-label="Wort">${esc(c.word)}</td>
@@ -457,7 +524,7 @@ document.addEventListener("click", e => {
 /* ── PATCH status ── */
 async function setStatus(id, status) {
   try {
-    const r = await fetch(`${API}/spelling-candidates/${id}`, {
+    const r = await authFetch(`${API}/spelling-candidates/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -477,7 +544,7 @@ async function applyWhitelist() {
   btn.disabled = true;
   btn.textContent = "Wird angewendet…";
   try {
-    const r = await fetch(`${API}/spelling-candidates/apply-whitelist`, { method: "POST" });
+    const r = await authFetch(`${API}/spelling-candidates/apply-whitelist`, { method: "POST" });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     showNotify(
