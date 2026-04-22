@@ -74,13 +74,14 @@ def _slugify(name: str) -> str:
 # Background tasks
 # ---------------------------------------------------------------------------
 
-def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float, spelling_count: int = 0, low_score_pages: Optional[list] = None) -> None:
+def _send_notification_email(to: str, project_name: str, slug: str, page_count: int, avg_score: float, spelling_count: int = 0, low_score_pages: Optional[list] = None, project_token: Optional[str] = None) -> None:
     """Sendet E-Mail-Benachrichtigung nach abgeschlossenem Audit."""
     if not SMTP_USER or not SMTP_PASS:
         print("[EMAIL] SMTP_USER/SMTP_PASS nicht gesetzt – E-Mail übersprungen.", flush=True)
         return
-    report_url   = f"{REPORT_BASE_URL}/report.html?project={slug}"
-    spelling_url = f"{REPORT_BASE_URL}/spelling.html?project={slug}"
+    token_param  = f"&token={project_token}" if project_token else ""
+    report_url   = f"{REPORT_BASE_URL}/report.html?project={slug}{token_param}"
+    spelling_url = f"{REPORT_BASE_URL}/spelling.html?project={slug}{token_param}"
     msg = MIMEMultipart("alternative")
     msg["From"] = SMTP_USER
     msg["To"] = to
@@ -296,7 +297,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
     db2 = get_db(slug)
     try:
         proj = db2.execute(
-            "SELECT name, notification_email FROM projects WHERE id = ?", (project_id,)
+            "SELECT name, notification_email, project_token FROM projects WHERE id = ?", (project_id,)
         ).fetchone()
         if proj and proj["notification_email"]:
             # Nur jeweils das neueste Audit-Ergebnis pro Seite verwenden
@@ -344,6 +345,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                 avg_score=avg,
                 spelling_count=spelling_count,
                 low_score_pages=low_score_pages,
+                project_token=proj["project_token"],
             )
     finally:
         db2.close()
@@ -361,11 +363,12 @@ async def create_project(body: ProjectCreate, background_tasks: BackgroundTasks)
         raise HTTPException(status_code=400, detail=f"Projekt '{slug}' existiert bereits.")
 
     init_db(slug)
+    project_token = _secrets.token_urlsafe(12)
     db = get_db(slug)
     try:
         db.execute(
-            "INSERT INTO projects (name, slug, root_url, page_type, language, notification_email, max_pages, project_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (body.name, slug, body.root_url, body.page_type, body.language, body.notification_email, body.max_pages or 0, body.project_type),
+            "INSERT INTO projects (name, slug, root_url, page_type, language, notification_email, max_pages, project_type, project_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (body.name, slug, body.root_url, body.page_type, body.language, body.notification_email, body.max_pages or 0, body.project_type, project_token),
         )
         db.commit()
         row = db.execute("SELECT * FROM projects WHERE slug = ?", (slug,)).fetchone()
@@ -627,7 +630,7 @@ def generate_project_token(slug: str):
 
 
 @router.get("/{slug}/token/verify")
-def verify_project_token(slug: str, token: str):
+def verify_project_token(slug: str, token: Optional[str] = None):
     db = get_db(slug)
     try:
         row = db.execute("SELECT project_token FROM projects WHERE slug = ?", (slug,)).fetchone()

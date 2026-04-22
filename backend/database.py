@@ -33,7 +33,8 @@ def init_db(slug: str) -> None:
             schedule           TEXT,
             notification_email TEXT,
             max_pages          INTEGER NOT NULL DEFAULT 20,
-            project_type       TEXT    NOT NULL DEFAULT 'website'
+            project_type       TEXT    NOT NULL DEFAULT 'website',
+            project_token      TEXT    DEFAULT NULL
         );
 
         CREATE TABLE IF NOT EXISTS pages (
