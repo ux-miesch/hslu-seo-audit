@@ -1,8 +1,11 @@
 .env
 backend/gtm_credentials.json
 backend/hslu_seo.db
+hslu_seo.db
 .DS_Store
 backend/.DS_Store
 frontend/.DS_Store
 venv/
 backend/single-audits.db
+backend/spelling.db
+backend/projects/*.db

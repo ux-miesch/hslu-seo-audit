@@ -3,7 +3,7 @@ services:
     name: seo-audit-api
     runtime: python
     region: frankfurt
-    plan: free
+    plan: starter
     buildCommand: pip install -r backend/requirements.txt
     startCommand: bash start.sh
     envVars:
