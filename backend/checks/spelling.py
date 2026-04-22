@@ -8,7 +8,9 @@ from datetime import datetime
 from typing import Optional
 from whitelist import SPELLING_WHITELIST
 
-_GLOBAL_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "spelling.db")
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_DB_BASE = os.environ.get("DB_PATH", _BACKEND_DIR)
+_GLOBAL_DB = os.path.join(_DB_BASE, "spelling.db")
 
 # Rule-IDs die grundsätzlich nicht gespeichert werden (Leerzeichen-/Whitespace-Regeln)
 _SKIP_RULE_KEYWORDS = ("LEERZEICHEN", "WHITESPACE", "REPEAT")

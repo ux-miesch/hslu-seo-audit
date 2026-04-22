@@ -11,6 +11,7 @@ from backend.database import get_global_db
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+FIXED_ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 
 
 def _check_auth(x_admin_password: Optional[str]) -> None:
@@ -95,6 +96,8 @@ def validate_token(token: str):
 # ── Admin-Token (single shared access token) ──────────────────────────────
 
 def _get_admin_token() -> Optional[str]:
+    if FIXED_ADMIN_TOKEN:
+        return FIXED_ADMIN_TOKEN
     db = get_global_db()
     try:
         row = db.execute("SELECT value FROM config WHERE key = 'admin_token'").fetchone()
@@ -104,6 +107,8 @@ def _get_admin_token() -> Optional[str]:
 
 
 def _set_admin_token(token: str) -> None:
+    if FIXED_ADMIN_TOKEN:
+        return
     db = get_global_db()
     try:
         db.execute(
@@ -127,6 +132,9 @@ def get_admin_token_endpoint(x_admin_password: Optional[str] = Header(default=No
 @router.post("/token")
 def generate_admin_token(x_admin_password: Optional[str] = Header(default=None)):
     _check_auth(x_admin_password)
+    if FIXED_ADMIN_TOKEN:
+        masked = FIXED_ADMIN_TOKEN[:4] + "••••" + FIXED_ADMIN_TOKEN[-4:]
+        return {"token": FIXED_ADMIN_TOKEN, "masked": masked}
     token = secrets.token_urlsafe(24)
     _set_admin_token(token)
     masked = token[:4] + "••••" + token[-4:]
