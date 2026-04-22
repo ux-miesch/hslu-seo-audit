@@ -181,9 +181,20 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <a class="flyout-item active" href="projects.html">SEO-Audit Projekte</a>
   <a class="flyout-item" href="report.html">SEO-Audit Rapport</a>
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
+  <a class="flyout-item" href="single-audits.html">V1-Einzel-Audits</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item" href="admin.html">Zugang verwalten →</a>
   <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+</div>
+
+<!-- Password overlay -->
+<div id="pw-overlay" style="display:flex;position:fixed;inset:0;background:#fff;z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#f4f4f4;border-left:4px solid #77C5D8;padding:32px;max-width:360px;width:100%;margin:0 16px;">
+    <div style="font-family:Verdana,sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;">Zugang</div>
+    <input type="password" id="pw-input" placeholder="Passwort" style="width:100%;padding:9px 12px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" style="padding:9px 18px;font-family:Verdana,sans-serif;font-size:13px;font-weight:700;background:#000;color:#fff;border:none;cursor:pointer;width:100%;">Anmelden</button>
+    <div id="pw-error" style="color:#c00;font-size:12px;margin-top:8px;display:none;">Falsches Passwort.</div>
+  </div>
 </div>
 
 <div id="sheet-backdrop" onclick="closeAllFlyouts()"></div>
@@ -307,23 +318,52 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260422-0704';
+const VERSION='260422-0802';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
-(function(){
-  const urlToken = new URLSearchParams(window.location.search).get('token');
-  if (urlToken) localStorage.setItem('admin_token', urlToken);
-  const token = localStorage.getItem('admin_token');
-  if (!token) { showNoAccessOverlay(); return; }
-  fetch(`${API}/admin/token/verify?token=${encodeURIComponent(token)}`)
-    .then(r => r.json())
-    .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); showNoAccessOverlay(); } })
-    .catch(() => {});
-})();
-function showNoAccessOverlay() {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Verdana,sans-serif;font-size:14px;color:#555;text-align:center;padding:40px;">Kein gültiger Zugangslink.<br>Bitte fordere einen Link bei der zuständigen Person an.</div>';
+
+/* ── Auth ── */
+async function verifyPw(pw) {
+  try {
+    const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
+    const d = await r.json();
+    return d.valid === true;
+  } catch { return false; }
 }
-function logout(){localStorage.removeItem('admin_token');location.reload();}
+
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (!pw) return;
+  document.getElementById('pw-error').style.display = 'none';
+  const ok = await verifyPw(pw);
+  if (ok) {
+    localStorage.setItem('admin_pw', pw);
+    document.getElementById('pw-overlay').style.display = 'none';
+    initPage();
+  } else {
+    document.getElementById('pw-error').style.display = 'block';
+  }
+}
+
+function logout() { localStorage.removeItem('admin_pw'); location.reload(); }
+
+(async function initAuth() {
+  const pw = localStorage.getItem('admin_pw');
+  if (pw) {
+    const ok = await verifyPw(pw);
+    if (ok) {
+      document.getElementById('pw-overlay').style.display = 'none';
+      initPage();
+      return;
+    }
+    localStorage.removeItem('admin_pw');
+  }
+})();
+
+function initPage() {
+  document.getElementById('footer-ts').textContent = 'Beta · v' + VERSION;
+  loadProjects();
+}
 /* ── Score helpers ── */
 function scoreClass(s) {
   if (s === null || s === undefined) return null;
@@ -813,8 +853,6 @@ window.addEventListener("beforeunload", function(e) {
   }
 });
 
-document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
-loadProjects();
 </script>
 </body>
 </html>

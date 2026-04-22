@@ -147,3 +147,11 @@ def verify_admin_token(token: str = Query(...)):
     if not stored or token != stored:
         return {"valid": False}
     return {"valid": True}
+
+
+@router.get("/password/verify")
+def verify_admin_password(password: str = Query(...)):
+    """Öffentlicher Endpunkt – prüft ADMIN_PASSWORD."""
+    if not ADMIN_PASSWORD:
+        return {"valid": False}
+    return {"valid": password == ADMIN_PASSWORD}

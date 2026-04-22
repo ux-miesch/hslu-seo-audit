@@ -21,6 +21,34 @@ class SingleAuditCreate(BaseModel):
     result: dict
 
 
+@router.get("/")
+def list_single_audits():
+    conn = get_single_audits_db()
+    try:
+        rows = conn.execute(
+            "SELECT id, url, result, created_at, expires_at FROM single_audits ORDER BY created_at DESC"
+        ).fetchall()
+        result = []
+        for row in rows:
+            r = dict(row)
+            raw = r.pop("result", "{}")
+            try:
+                data = json.loads(raw)
+                checks = data.get("checks", {})
+                scores = [c["score"] for c in checks.values() if isinstance(c.get("score"), (int, float))]
+                avg_score = round(sum(scores) / len(scores), 1) if scores else None
+                lang = ((checks.get("spelling") or {}).get("data") or {}).get("language_detected") or "—"
+            except Exception:
+                avg_score = None
+                lang = "—"
+            r["score"] = avg_score
+            r["language"] = lang
+            result.append(r)
+        return result
+    finally:
+        conn.close()
+
+
 @router.post("/", status_code=201)
 def create_single_audit(body: SingleAuditCreate):
     audit_id = _gen_id()
@@ -58,3 +86,13 @@ def get_single_audit(audit_id: str):
         "created_at": row["created_at"],
         "expires_at": row["expires_at"],
     }
+
+
+@router.delete("/{audit_id}", status_code=204)
+def delete_single_audit(audit_id: str):
+    conn = get_single_audits_db()
+    try:
+        conn.execute("DELETE FROM single_audits WHERE id = ?", (audit_id,))
+        conn.commit()
+    finally:
+        conn.close()

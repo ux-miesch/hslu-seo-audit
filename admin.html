@@ -54,11 +54,33 @@
 </head>
 <body>
 
+<style>
+.flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
+.flyout.open{display:block;}
+.flyout-section-title{padding:8px 14px 4px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.04em;pointer-events:none;}
+.flyout-item{display:block;width:100%;padding:9px 14px;font-family:'Verdana',sans-serif;font-size:12px;text-align:left;background:none;border:none;cursor:pointer;color:#1a1a1a;text-decoration:none;white-space:nowrap;}
+.flyout-item:hover{background:#f0fafd;}
+.flyout-item.active{font-weight:700;}
+.flyout-item.active::before{content:"✓ ";color:#77C5D8;}
+.flyout-sep{height:1px;background:#e0e0e0;margin:4px 0;}
+</style>
 <div class="header">
   <div style="display:flex;align-items:center;gap:14px;">
     <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;" onerror="this.style.display='none'">
   </div>
-  <div class="header-right">SEO-Audit Admin</div>
+  <div class="header-right" onclick="toggleNavFlyout(this)" style="cursor:pointer;user-select:none;">SEO-Audit Admin ▾</div>
+</div>
+
+<div class="flyout" id="flyout-nav">
+  <div class="flyout-section-title">Navigation</div>
+  <a class="flyout-item" href="index.html">SEO-Audit Tool</a>
+  <a class="flyout-item" href="projects.html">SEO-Audit Projekte</a>
+  <a class="flyout-item" href="report.html">SEO-Audit Rapport</a>
+  <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
+  <a class="flyout-item" href="single-audits.html">V1-Einzel-Audits</a>
+  <div class="flyout-sep"></div>
+  <a class="flyout-item active" href="admin.html">Zugang verwalten</a>
+  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
 </div>
 
 <div class="footer-bar">
@@ -102,23 +124,30 @@ const BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 let _adminPw = '';
 let _adminToken = null;
 
-function doLogin() {
+async function verifyPw(pw) {
+  try {
+    const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
+    const d = await r.json();
+    return d.valid === true;
+  } catch { return false; }
+}
+
+async function doLogin() {
   const pw = document.getElementById('pw-input').value;
   if (!pw) return;
-  fetch(`${API}/admin/login`, { method: 'POST', headers: { 'X-Admin-Password': pw } })
-    .then(r => {
-      if (r.ok) {
-        _adminPw = pw;
-        sessionStorage.setItem('admin_pw', pw);
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('admin-view').style.display = '';
-        loadAdminToken();
-      } else {
-        document.getElementById('login-error').style.display = 'block';
-      }
-    })
-    .catch(() => { document.getElementById('login-error').textContent = 'Backend nicht erreichbar.'; document.getElementById('login-error').style.display = 'block'; });
+  const ok = await verifyPw(pw);
+  if (ok) {
+    _adminPw = pw;
+    localStorage.setItem('admin_pw', pw);
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('admin-view').style.display = '';
+    loadAdminToken();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
 }
+
+function logout() { localStorage.removeItem('admin_pw'); location.reload(); }
 
 function adminFetch(path, opts = {}) {
   return fetch(`${API}${path}`, {
@@ -161,21 +190,37 @@ function showFeedback(msg) {
   setTimeout(() => { fb.textContent = ''; }, 2500);
 }
 
-// Auto-login from sessionStorage
-const savedPw = sessionStorage.getItem('admin_pw');
-if (savedPw) {
-  _adminPw = savedPw;
-  fetch(`${API}/admin/login`, { method: 'POST', headers: { 'X-Admin-Password': savedPw } })
-    .then(r => {
-      if (r.ok) {
-        document.getElementById('login-view').style.display = 'none';
-        document.getElementById('admin-view').style.display = '';
-        loadAdminToken();
-      } else {
-        sessionStorage.removeItem('admin_pw');
-      }
-    }).catch(() => {});
+function toggleNavFlyout(btn) {
+  const flyout = document.getElementById('flyout-nav');
+  const isOpen = flyout.classList.contains('open');
+  flyout.classList.toggle('open', !isOpen);
+  if (!isOpen) {
+    const rect = btn.getBoundingClientRect();
+    flyout.style.right = (window.innerWidth - rect.right) + 'px';
+    flyout.style.left = 'auto';
+    flyout.style.top = (rect.bottom + 4) + 'px';
+  }
 }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.header-right') && !e.target.closest('#flyout-nav'))
+    document.getElementById('flyout-nav').classList.remove('open');
+});
+
+// Auto-login from localStorage
+(async function() {
+  const savedPw = localStorage.getItem('admin_pw');
+  if (savedPw) {
+    const ok = await verifyPw(savedPw);
+    if (ok) {
+      _adminPw = savedPw;
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('admin-view').style.display = '';
+      loadAdminToken();
+    } else {
+      localStorage.removeItem('admin_pw');
+    }
+  }
+})();
 
 document.getElementById('footer-info').textContent = 'Admin v' + VERSION;
 </script>
