@@ -18,6 +18,33 @@ from backend.audit_runner import run_checks
 from checks.sea import check_sea
 
 
+async def _resume_interrupted_audits() -> None:
+    """Nimmt unterbrochene Audits nach einem Backend-Neustart wieder auf."""
+    from backend.database import list_all_projects, get_db
+    from backend.routers.projects import _audit, _project_state, _mode_weights_for
+
+    projects = list_all_projects()
+    for p in projects:
+        audit_status = p.get("audit_status")
+        if not audit_status or not audit_status.startswith("auditing_package_"):
+            continue
+        slug = p["slug"]
+        resume_pkg = max(0, (p.get("current_package") or 1) - 1)  # 0-basiert
+        print(f"[RESUME] Unterbrochener Audit für {slug} – starte ab Paket {resume_pkg + 1}", flush=True)
+        db = get_db(slug)
+        try:
+            row = db.execute(
+                "SELECT id, language, project_type FROM projects WHERE slug = ?", (slug,)
+            ).fetchone()
+        finally:
+            db.close()
+        if row:
+            mode_weights = _mode_weights_for(row["project_type"] or "website")
+            asyncio.create_task(
+                _audit(row["id"], row["language"], mode_weights, slug, resume_from_package=resume_pkg)
+            )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from backend.database import migrate_all, init_global_db
@@ -28,6 +55,7 @@ async def lifespan(app: FastAPI):
     init_single_audits_db()
     cleanup_expired()
     init_scheduler()
+    await _resume_interrupted_audits()
     yield
     shutdown_scheduler()
 

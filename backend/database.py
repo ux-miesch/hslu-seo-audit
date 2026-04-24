@@ -34,7 +34,10 @@ def init_db(slug: str) -> None:
             notification_email TEXT,
             max_pages          INTEGER NOT NULL DEFAULT 20,
             project_type       TEXT    NOT NULL DEFAULT 'website',
-            project_token      TEXT    DEFAULT NULL
+            project_token      TEXT    DEFAULT NULL,
+            current_package    INTEGER NOT NULL DEFAULT 0,
+            total_packages     INTEGER NOT NULL DEFAULT 0,
+            audit_status       TEXT    DEFAULT NULL
         );
 
         CREATE TABLE IF NOT EXISTS pages (
@@ -73,6 +76,16 @@ def migrate_db(slug: str) -> None:
                 conn.commit()
             except Exception:
                 pass  # Spalte existiert bereits
+        for col, coltype, default in [
+            ("current_package", "INTEGER", "0"),
+            ("total_packages",  "INTEGER", "0"),
+            ("audit_status",    "TEXT",    "NULL"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE projects ADD COLUMN {col} {coltype} DEFAULT {default}")
+                conn.commit()
+            except Exception:
+                pass
         for col, coltype, default in [
             ("content_hash",  "TEXT",    "NULL"),
             ("audit_skipped", "INTEGER", "0"),

@@ -30,6 +30,7 @@ pyasn1_modules==0.4.2
 pydantic==2.10.6
 pydantic_core==2.27.2
 pyparsing==3.3.2
+psutil
 python-dotenv==1.2.1
 PyYAML==6.0.3
 requests==2.32.5

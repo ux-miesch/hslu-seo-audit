@@ -333,7 +333,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1934';
+const VERSION='260424-2002';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -441,7 +441,7 @@ async function loadProjects() {
         <td data-label="Seiten">${p.page_count || "—"}</td>
         <td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>
         <td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>
-        <td data-label="Audit geplant">${scheduleLabel(p.schedule)}</td>
+        <td data-label="Audit geplant" id="schedule-${p.slug}">${scheduleLabel(p.schedule)}</td>
         <td onclick="event.stopPropagation()">
           <button class="btn-gear" id="gear-btn-${p.slug}" onclick="openSettingsFlyout('${p.slug}','${p.schedule||''}',this)">Einstellungen</button>
         </td>
@@ -574,20 +574,32 @@ function updateProgressUI(s) {
     barWrap.style.display = "none";
     logEl.style.display = "none";
   } else if (s.status === "crawling") {
-    phaseEl.textContent = "Crawling läuft – Seiten werden gesammelt…";
+    const pkgHint = s.pages_crawled > 600
+      ? ` → wird in ${Math.ceil(s.pages_crawled / 600)} Pakete aufgeteilt`
+      : "";
+    phaseEl.textContent = `Crawling läuft – Seiten werden gesammelt…${pkgHint}`;
     barWrap.style.display = "block";
     const pct = s.pages_total > 0 ? Math.round(s.pages_crawled / s.pages_total * 100) : 0;
     barFill.style.width = pct + "%";
     barLabel.textContent = s.pages_crawled > 0
-      ? `${s.pages_crawled} Seiten gefunden…`
+      ? `${s.pages_crawled.toLocaleString("de-CH")} Seiten gefunden…`
       : "Verbinde…";
     logEl.style.display = "none";
-  } else if (s.status === "auditing") {
-    phaseEl.textContent = "Audit läuft – Seiten werden analysiert…";
+  } else if (s.status && s.status.startsWith("auditing_package_")) {
+    const pkgNum   = s.current_package  || 1;
+    const pkgTotal = s.total_packages   || 1;
+    const pkgPagesTotal   = s.package_pages_total   || 0;
+    const pkgPagesAudited = s.package_pages_audited || 0;
+    const pct = pkgPagesTotal > 0 ? Math.round(pkgPagesAudited / pkgPagesTotal * 100) : 0;
     barWrap.style.display = "block";
-    const pct = s.pages_total > 0 ? Math.round(s.pages_audited / s.pages_total * 100) : 0;
     barFill.style.width = pct + "%";
-    barLabel.textContent = `${s.pages_audited} von ${s.pages_total} Seiten geprüft`;
+    if (pkgTotal > 1) {
+      phaseEl.textContent = `Paket ${pkgNum} von ${pkgTotal} wird auditiert…`;
+      barLabel.textContent = `${pkgPagesAudited.toLocaleString("de-CH")} / ${pkgPagesTotal.toLocaleString("de-CH")} Seiten in Paket ${pkgNum} – gesamt ${(s.pages_audited||0).toLocaleString("de-CH")} / ${(s.pages_total||0).toLocaleString("de-CH")}`;
+    } else {
+      phaseEl.textContent = "Audit läuft – Seiten werden analysiert…";
+      barLabel.textContent = `${(s.pages_audited||0).toLocaleString("de-CH")} von ${(s.pages_total||0).toLocaleString("de-CH")} Seiten geprüft`;
+    }
     if (s.recently_audited && s.recently_audited.length > 0) {
       logEl.style.display = "block";
       logEl.innerHTML = s.recently_audited.map(p => {
@@ -595,10 +607,23 @@ function updateProgressUI(s) {
         return `<div class="progress-log-item">✓ ${p.url} – ${score}</div>`;
       }).join("");
     }
+  } else if (s.status === "waiting_memory") {
+    const pkgNum   = s.current_package || "?";
+    const pkgTotal = s.total_packages  || "?";
+    const nextPkg  = typeof pkgNum === "number" ? pkgNum + 1 : "?";
+    phaseEl.textContent = `Paket ${pkgNum} abgeschlossen – Speicher wird freigegeben…`;
+    barWrap.style.display = "block";
+    barFill.style.width = "100%";
+    const ramInfo = s.ram_available_mb ? ` Verfügbarer RAM: ${s.ram_available_mb} MB – warte auf 200 MB…` : "";
+    barLabel.textContent = `Paket ${nextPkg} von ${pkgTotal} startet sobald Speicher frei ist.${ramInfo}`;
+    logEl.style.display = "none";
   } else if (s.status === "done") {
+    const pkgTotal = s.total_packages || 1;
     phaseEl.textContent = "Fertig – Weiterleitung zum Rapport…";
     barFill.style.width = "100%";
-    barLabel.textContent = `${s.pages_audited} Seiten ausgewertet`;
+    barLabel.textContent = pkgTotal > 1
+      ? `${(s.pages_audited||0).toLocaleString("de-CH")} Seiten in ${pkgTotal} Paketen auditiert`
+      : `${(s.pages_audited||0).toLocaleString("de-CH")} Seiten ausgewertet`;
   }
 }
 
@@ -837,6 +862,8 @@ async function pickSchedule(val) {
     });
     const gearBtn = document.getElementById(`gear-btn-${slug}`);
     if (gearBtn) gearBtn.onclick = () => openSettingsFlyout(slug, val, gearBtn);
+    const schedCell = document.getElementById(`schedule-${slug}`);
+    if (schedCell) schedCell.textContent = scheduleLabel(val);
     statusEl.textContent = val
       ? `Gespeichert: ${val === "weekly" ? "Wöchentlich" : "Monatlich"}`
       : "Zeitplan deaktiviert.";

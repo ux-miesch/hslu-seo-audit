@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+import gc
 import json
 import os
 import re
@@ -9,6 +10,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
 from urllib.parse import urlparse, urljoin
+
+try:
+    import psutil as _psutil
+except ImportError:
+    _psutil = None  # type: ignore
 
 import httpx
 from bs4 import BeautifulSoup
@@ -23,6 +29,7 @@ from checks.broken_links import check_broken_links
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 MAX_CRAWL_PAGES = 200
+PACKAGE_SIZE = 600  # Seiten pro Audit-Paket (für grosse Projekte)
 
 # In-Memory-Projektstatus (wird während Crawl/Audit befüllt)
 _project_state: dict = {}
@@ -61,6 +68,33 @@ def _mode_weights_for(project_type: Optional[str]) -> dict:
     if project_type == "blog":
         return {"content": 100, "conversion": 0, "course": 0, "event": 0}
     return {"content": 0, "conversion": 100, "course": 0, "event": 0}  # default: website
+
+
+async def _wait_for_memory(slug: str, threshold_mb: int = 200, max_wait: int = 300) -> None:
+    """Wartet bis mindestens threshold_mb RAM verfügbar sind, dann GC."""
+    if _psutil is None:
+        gc.collect()
+        return
+    waited = 0
+    while waited < max_wait:
+        available = _psutil.virtual_memory().available / 1024 / 1024
+        if available >= threshold_mb:
+            break
+        print(f"[Speicher] {available:.0f}MB verfügbar – warte...", flush=True)
+        if slug in _project_state:
+            _project_state[slug]["ram_available_mb"] = round(available)
+        await asyncio.sleep(10)
+        waited += 10
+    gc.collect()
+    if _psutil:
+        available = _psutil.virtual_memory().available / 1024 / 1024
+        print(f"[Speicher] {available:.0f}MB verfügbar – bereit für nächstes Paket", flush=True)
+
+
+def _get_ram_mb() -> Optional[float]:
+    if _psutil is None:
+        return None
+    return _psutil.virtual_memory().available / 1024 / 1024
 
 
 def _slugify(name: str) -> str:
@@ -229,8 +263,10 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
         db.close()
 
 
-async def _audit(project_id: int, language: Optional[str], mode_weights: dict, slug: str) -> None:
-    """Führt run_checks() für alle pages parallel aus (max 5 gleichzeitig)."""
+async def _audit(project_id: int, language: Optional[str], mode_weights: dict, slug: str, resume_from_package: int = 0) -> None:
+    """Führt run_checks() für alle pages durch. Grosse Projekte werden in Pakete aufgeteilt."""
+    BATCH_SIZE = 10
+
     db = get_db(slug)
     try:
         pages = db.execute(
@@ -239,21 +275,25 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
     finally:
         db.close()
 
-    if slug in _project_state:
-        _project_state[slug]["status"] = "auditing"
-        _project_state[slug]["pages_total"] = len(pages)
-        _project_state[slug]["pages_audited"] = 0
-        _project_state[slug]["recently_audited"] = []
-        _project_state[slug]["current_url"] = None
-    else:
-        _project_state[slug] = {
-            "status": "auditing",
-            "pages_crawled": len(pages),
-            "pages_total": len(pages),
-            "pages_audited": 0,
-            "recently_audited": [],
-            "current_url": None,
-        }
+    packages = [pages[i:i + PACKAGE_SIZE] for i in range(0, len(pages), PACKAGE_SIZE)]
+    total_packages = max(len(packages), 1)
+    total_pages = len(pages)
+
+    if total_packages > 1:
+        print(f"[AUDIT] {total_pages} Seiten → {total_packages} Pakete à {PACKAGE_SIZE}. Starte ab Paket {resume_from_package + 1}.", flush=True)
+
+    _project_state[slug] = {
+        "status": f"auditing_package_{resume_from_package + 1}_of_{total_packages}",
+        "pages_crawled": total_pages,
+        "pages_total": total_pages,
+        "pages_audited": resume_from_package * PACKAGE_SIZE,
+        "current_package": resume_from_package + 1,
+        "total_packages": total_packages,
+        "package_pages_total": len(packages[resume_from_package]) if resume_from_package < len(packages) else 0,
+        "package_pages_audited": 0,
+        "recently_audited": [],
+        "current_url": None,
+    }
 
     sem = asyncio.Semaphore(2)
 
@@ -442,19 +482,67 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
 
             state = _project_state.get(slug, {})
             state["pages_audited"] = state.get("pages_audited", 0) + 1
+            state["package_pages_audited"] = state.get("package_pages_audited", 0) + 1
             recently = state.get("recently_audited", [])
             recently.insert(0, {"url": url, "score": round(avg_score, 1)})
             state["recently_audited"] = recently[:5]
             _project_state[slug] = state
 
-    BATCH_SIZE = 10
-    for i in range(0, len(pages), BATCH_SIZE):
-        batch = pages[i:i + BATCH_SIZE]
-        await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch])
-        print(f"[AUDIT] Batch {i // BATCH_SIZE + 1} fertig ({len(batch)} Seiten)", flush=True)
+    for pkg_idx in range(resume_from_package, len(packages)):
+        package = packages[pkg_idx]
+        current_pkg_num = pkg_idx + 1
+        pkg_start = pkg_idx * PACKAGE_SIZE + 1
+        pkg_end = pkg_idx * PACKAGE_SIZE + len(package)
+        n_batches = (len(package) + BATCH_SIZE - 1) // BATCH_SIZE
 
-    if slug in _project_state:
-        _project_state[slug]["status"] = "done"
+        print(f"[Paket {current_pkg_num}/{total_packages}] Start – Seiten {pkg_start}–{pkg_end}", flush=True)
+        _project_state[slug]["status"] = f"auditing_package_{current_pkg_num}_of_{total_packages}"
+        _project_state[slug]["current_package"] = current_pkg_num
+        _project_state[slug]["package_pages_total"] = len(package)
+        _project_state[slug]["package_pages_audited"] = 0
+
+        # Fortschritt in DB persistieren (für Resume nach Neustart)
+        _db_prog = get_db(slug)
+        try:
+            _db_prog.execute(
+                "UPDATE projects SET current_package=?, total_packages=?, audit_status=? WHERE id=?",
+                (current_pkg_num, total_packages, f"auditing_package_{current_pkg_num}_of_{total_packages}", project_id),
+            )
+            _db_prog.commit()
+        finally:
+            _db_prog.close()
+
+        for i in range(0, len(package), BATCH_SIZE):
+            batch = package[i:i + BATCH_SIZE]
+            await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch])
+            ram = _get_ram_mb()
+            pkg_done = _project_state[slug].get("package_pages_audited", 0)
+            ram_str = f"{ram:.0f}MB verfügbar" if ram is not None else "RAM unbekannt"
+            print(
+                f"[Paket {current_pkg_num}/{total_packages}] Batch {i // BATCH_SIZE + 1}/{n_batches} – "
+                f"RAM: {ram_str} – {pkg_done}/{len(package)} Seiten auditiert",
+                flush=True,
+            )
+
+        print(f"[Paket {current_pkg_num}/{total_packages}] Abgeschlossen – warte auf Speicherfreigabe...", flush=True)
+
+        if pkg_idx < len(packages) - 1:
+            _project_state[slug]["status"] = "waiting_memory"
+            await _wait_for_memory(slug)
+            print(f"[Speicher] Starte Paket {current_pkg_num + 1}/{total_packages}", flush=True)
+
+    # Audit-Status in DB zurücksetzen
+    _db_done = get_db(slug)
+    try:
+        _db_done.execute(
+            "UPDATE projects SET current_package=0, total_packages=0, audit_status=NULL WHERE id=?",
+            (project_id,),
+        )
+        _db_done.commit()
+    finally:
+        _db_done.close()
+
+    _project_state[slug]["status"] = "done"
 
     # E-Mail-Benachrichtigung: immer senden wenn notification_email gesetzt ist
     db2 = get_db(slug)
@@ -559,7 +647,7 @@ def get_project_status(slug: str):
     try:
         db = get_db(slug)
         try:
-            proj = db.execute("SELECT id, last_crawled_at FROM projects WHERE slug = ?", (slug,)).fetchone()
+            proj = db.execute("SELECT id, last_crawled_at, audit_status, current_package, total_packages FROM projects WHERE slug = ?", (slug,)).fetchone()
             if proj is None:
                 raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
             page_count = db.execute(
@@ -579,11 +667,23 @@ def get_project_status(slug: str):
             ).fetchall()
         finally:
             db.close()
+        db_status = proj["audit_status"]
+        if db_status and db_status.startswith("auditing_package_"):
+            inferred_status = db_status
+        elif proj["last_crawled_at"] and audit_count > 0:
+            inferred_status = "done"
+        else:
+            inferred_status = "idle"
+        total_pkgs = proj["total_packages"] or 1
         return {
-            "status": "done" if proj["last_crawled_at"] and audit_count > 0 else "idle",
+            "status": inferred_status,
             "pages_crawled": page_count,
             "pages_total": page_count,
             "pages_audited": audit_count,
+            "current_package": proj["current_package"] or 0,
+            "total_packages": total_pkgs,
+            "package_pages_total": PACKAGE_SIZE,
+            "package_pages_audited": audit_count % PACKAGE_SIZE,
             "recently_audited": [{"url": r["url"], "score": r["score"]} for r in recent_rows],
             "current_url": None,
         }
