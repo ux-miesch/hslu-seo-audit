@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<style>body{display:none}</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Projekte – SEO Audit HSLU</title>
@@ -320,11 +321,24 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1300';
+const VERSION='260424-1315';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
 /* ── Auth ── */
+(function() {
+  const savedPw = localStorage.getItem('seo_admin_pw');
+  document.body.style.display = '';
+  if (savedPw) {
+    const overlay = document.getElementById('pw-overlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('logout-item').style.display = '';
+    // initPage is defined later in this script block; call it directly
+    window._authReady = true;
+  }
+  // If no saved password: body is visible, overlay stays flex (visible)
+})();
+
 async function verifyPw(pw) {
   try {
     const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
@@ -339,7 +353,7 @@ async function doLogin() {
   document.getElementById('pw-error').style.display = 'none';
   const ok = await verifyPw(pw);
   if (ok) {
-    localStorage.setItem('admin_pw', pw);
+    localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
     document.getElementById('logout-item').style.display = '';
     initPage();
@@ -348,20 +362,7 @@ async function doLogin() {
   }
 }
 
-function logout() { localStorage.removeItem('admin_pw'); location.reload(); }
-
-(async function initAuth() {
-  const pw = localStorage.getItem('admin_pw');
-  if (pw) {
-    const ok = await verifyPw(pw);
-    if (ok) {
-      document.getElementById('pw-overlay').style.display = 'none';
-      initPage();
-      return;
-    }
-    localStorage.removeItem('admin_pw');
-  }
-})();
+function logout() { localStorage.removeItem('seo_admin_pw'); location.reload(); }
 
 function initPage() {
   document.getElementById('footer-ts').textContent = 'Beta · v' + VERSION;
@@ -876,6 +877,9 @@ window.addEventListener("beforeunload", function(e) {
     e.returnValue = "";
   }
 });
+
+// Trigger initPage if saved password was found during auth check
+if (window._authReady) { initPage(); }
 
 </script>
 <!-- Feedback Modal -->

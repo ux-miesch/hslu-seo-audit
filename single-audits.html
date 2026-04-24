@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<style>body{display:none}</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SEO-Einzel-Audits – SEO Audit HSLU</title>
@@ -180,6 +181,18 @@ let _filter = 'all';
 let _deleteId = null;
 
 /* ── Auth ── */
+(function() {
+  const savedPw = localStorage.getItem('seo_admin_pw');
+  document.body.style.display = '';
+  if (savedPw) {
+    const overlay = document.getElementById('pw-overlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('logout-item').style.display = '';
+    window._authReady = true;
+  }
+  // If no saved password: body visible, overlay stays flex (visible)
+})();
+
 async function verifyPw(pw) {
   try {
     const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
@@ -194,7 +207,7 @@ async function doLogin() {
   document.getElementById('pw-error').style.display = 'none';
   const ok = await verifyPw(pw);
   if (ok) {
-    localStorage.setItem('admin_pw', pw);
+    localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
     document.getElementById('logout-item').style.display = '';
     init();
@@ -204,7 +217,7 @@ async function doLogin() {
 }
 
 function logout() {
-  localStorage.removeItem('admin_pw');
+  localStorage.removeItem('seo_admin_pw');
   location.reload();
 }
 
@@ -213,20 +226,6 @@ async function init() {
   document.getElementById('footer-ts').textContent = 'Beta · v' + VERSION;
   await loadAudits();
 }
-
-(async function initAuth() {
-  const pw = localStorage.getItem('admin_pw');
-  if (pw) {
-    const ok = await verifyPw(pw);
-    if (ok) {
-      document.getElementById('pw-overlay').style.display = 'none';
-      init();
-      return;
-    }
-    localStorage.removeItem('admin_pw');
-  }
-  // overlay remains visible
-})();
 
 /* ── Data ── */
 async function loadAudits() {
@@ -363,6 +362,9 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.header-right') && !e.target.closest('#flyout-nav'))
     document.getElementById('flyout-nav').classList.remove('open');
 });
+
+// Trigger init if saved password was found during auth check
+if (window._authReady) { init(); }
 </script>
 <!-- Feedback Modal -->
 <style>

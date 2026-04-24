@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <style>body{display:none}</style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SEO-Audit Admin</title>
@@ -125,6 +126,20 @@ const BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 let _adminPw = '';
 let _adminToken = null;
 
+// Auth check: synchronous, no backend re-validation on page load
+(function() {
+  const savedPw = localStorage.getItem('seo_admin_pw');
+  document.body.style.display = '';
+  if (savedPw) {
+    _adminPw = savedPw;
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('admin-view').style.display = '';
+    document.getElementById('logout-item').style.display = '';
+    window._authReady = true;
+  }
+  // If no saved password: body visible, login-view visible (admin-view hidden by default)
+})();
+
 async function verifyPw(pw) {
   try {
     const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
@@ -139,7 +154,7 @@ async function doLogin() {
   const ok = await verifyPw(pw);
   if (ok) {
     _adminPw = pw;
-    localStorage.setItem('admin_pw', pw);
+    localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('admin-view').style.display = '';
     document.getElementById('logout-item').style.display = '';
@@ -149,7 +164,7 @@ async function doLogin() {
   }
 }
 
-function logout() { localStorage.removeItem('admin_pw'); location.reload(); }
+function logout() { localStorage.removeItem('seo_admin_pw'); location.reload(); }
 
 function adminFetch(path, opts = {}) {
   return fetch(`${API}${path}`, {
@@ -208,21 +223,8 @@ document.addEventListener('click', e => {
     document.getElementById('flyout-nav').classList.remove('open');
 });
 
-// Auto-login from localStorage
-(async function() {
-  const savedPw = localStorage.getItem('admin_pw');
-  if (savedPw) {
-    const ok = await verifyPw(savedPw);
-    if (ok) {
-      _adminPw = savedPw;
-      document.getElementById('login-view').style.display = 'none';
-      document.getElementById('admin-view').style.display = '';
-      loadAdminToken();
-    } else {
-      localStorage.removeItem('admin_pw');
-    }
-  }
-})();
+// Trigger loadAdminToken if saved password was found during auth check
+if (window._authReady) { loadAdminToken(); }
 
 document.getElementById('footer-info').textContent = 'Admin v' + VERSION;
 </script>
