@@ -276,7 +276,7 @@
 </div>
 
 <script>
-const VERSION='260424-0817';
+const VERSION='260424-0909';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -670,6 +670,9 @@ function renderDetail(page) {
   return tr;
 }
 
+const PROJECT_TYPE_LABELS = { "website": "HSLU-Website", "blog": "HSLU-Content-Blog" };
+const LANG_LABELS = { "de-CH": "Deutsch (CH)", "en-US": "Englisch", "fr": "Französisch", "it": "Italienisch" };
+
 /* ── Main render ── */
 function render(data) {
   const project = data.project;
@@ -677,6 +680,16 @@ function render(data) {
 
   const scores = data.pages.map(p => p.score).filter(s => typeof s === "number");
   const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+
+  // Häufigste erkannte Sprache aus Spelling-Check-Daten ermitteln
+  const langCounts = {};
+  for (const page of data.pages) {
+    const lang = page.results?.spelling?.data?.language_detected;
+    if (lang) langCounts[lang] = (langCounts[lang] || 0) + 1;
+  }
+  const detectedLangKey = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const detectedLangLabel = detectedLangKey ? (LANG_LABELS[detectedLangKey] || detectedLangKey) : "–";
+  const projectTypeLabel = PROJECT_TYPE_LABELS[project.project_type] || project.project_type || "–";
 
   const summaryHtml = `
     <div class="summary">
@@ -686,8 +699,8 @@ function render(data) {
         <div class="meta">Letzter Crawl: ${fmtDate(project.last_crawled_at)}</div>
         <div class="stats">
           <div class="stat"><div class="val">${data.pages.length}</div><div class="lbl">Seiten auditiert</div></div>
-          <div class="stat"><div class="val">${project.page_type || "–"}</div><div class="lbl">Seitentyp</div></div>
-          <div class="stat"><div class="val">${project.language || "–"}</div><div class="lbl">Sprache</div></div>
+          <div class="stat"><div class="val">${projectTypeLabel}</div><div class="lbl">Seitentyp</div></div>
+          <div class="stat"><div class="val">${detectedLangLabel}</div><div class="lbl">Sprache</div></div>
         </div>
       </div>
       <div class="avg-score">
