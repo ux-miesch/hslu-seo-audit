@@ -55,6 +55,11 @@ def init_db(slug: str) -> None:
             score        REAL,
             results_json TEXT
         );
+
+        CREATE INDEX IF NOT EXISTS idx_pages_project_id        ON pages(project_id);
+        CREATE INDEX IF NOT EXISTS idx_pages_url               ON pages(url);
+        CREATE INDEX IF NOT EXISTS idx_audit_results_page_id   ON audit_results(page_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_results_crawled_at ON audit_results(crawled_at);
     """)
     conn.commit()
     conn.close()
@@ -83,6 +88,18 @@ def migrate_db(slug: str) -> None:
         ]:
             try:
                 conn.execute(f"ALTER TABLE projects ADD COLUMN {col} {coltype} DEFAULT {default}")
+                conn.commit()
+            except Exception:
+                pass
+        # Indexes (idempotent dank IF NOT EXISTS)
+        for sql in [
+            "CREATE INDEX IF NOT EXISTS idx_pages_project_id        ON pages(project_id)",
+            "CREATE INDEX IF NOT EXISTS idx_pages_url               ON pages(url)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_results_page_id   ON audit_results(page_id)",
+            "CREATE INDEX IF NOT EXISTS idx_audit_results_crawled_at ON audit_results(crawled_at)",
+        ]:
+            try:
+                conn.execute(sql)
                 conn.commit()
             except Exception:
                 pass
@@ -165,6 +182,43 @@ def list_all_projects() -> list[dict]:
         try:
             conn = get_db(slug)
             row = conn.execute("SELECT * FROM projects LIMIT 1").fetchone()
+            conn.close()
+            if row:
+                results.append(dict(row))
+        except Exception:
+            continue
+    results.sort(key=lambda p: p.get("created_at", ""), reverse=True)
+    return results
+
+
+def list_all_projects_summary() -> list[dict]:
+    """Liest alle Projekt-DBs mit aggregierten Audit-Daten – ein Query pro DB, kein N+1."""
+    if not os.path.isdir(PROJECTS_DIR):
+        return []
+    results = []
+    for fname in os.listdir(PROJECTS_DIR):
+        if not fname.endswith(".db"):
+            continue
+        slug = fname[:-3]
+        try:
+            conn = get_db(slug)
+            row = conn.execute("""
+                SELECT
+                    p.slug,
+                    p.name,
+                    p.root_url,
+                    p.project_type,
+                    p.schedule,
+                    p.last_crawled_at,
+                    p.created_at,
+                    p.project_token,
+                    COUNT(DISTINCT pa.id)      AS page_count,
+                    ROUND(AVG(ar.score), 1)    AS avg_score
+                FROM projects p
+                LEFT JOIN pages pa ON pa.project_id = p.id
+                LEFT JOIN audit_results ar ON ar.page_id = pa.id
+                GROUP BY p.id
+            """).fetchone()
             conn.close()
             if row:
                 results.append(dict(row))

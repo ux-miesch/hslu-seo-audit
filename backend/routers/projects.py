@@ -637,6 +637,13 @@ def list_projects():
     return list_all_projects()
 
 
+@router.get("/summary")
+def get_projects_summary():
+    """Leichtgewichtiger Endpoint für die Projektliste – page_count + avg_score per aggregierter Query."""
+    from backend.database import list_all_projects_summary
+    return list_all_projects_summary()
+
+
 @router.get("/{slug}/status")
 def get_project_status(slug: str):
     """Gibt den aktuellen Crawl-/Audit-Fortschritt zurück (In-Memory + DB-Fallback)."""
