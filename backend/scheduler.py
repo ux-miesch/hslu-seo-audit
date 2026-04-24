@@ -7,6 +7,22 @@ from apscheduler.triggers.cron import CronTrigger
 
 scheduler = AsyncIOScheduler()
 
+SCHEDULE_OFFSET_MINUTES = 30  # Versatz pro Projekt
+
+
+def _calc_slot(schedule_type: str, slug: str) -> tuple[int, int]:
+    """Berechnet Stunde/Minute für einen Projekt-Job basierend auf Anzahl bereits geplanter Projekte."""
+    from backend.database import list_all_projects
+    projects = list_all_projects()
+    # Alle anderen Projekte mit gleichem Schedule-Typ, sortiert nach Erstellungsdatum
+    scheduled = [
+        p for p in sorted(projects, key=lambda x: x.get("created_at", ""))
+        if p.get("schedule") == schedule_type and p["slug"] != slug
+    ]
+    idx = len(scheduled)  # 0-basierter Index für dieses Projekt
+    total_minutes = idx * SCHEDULE_OFFSET_MINUTES
+    return total_minutes // 60, total_minutes % 60
+
 
 async def _run_project_audit(slug: str) -> None:
     from backend.routers.projects import _crawl, _audit
@@ -51,17 +67,21 @@ def update_project_schedule(slug: str, schedule: Optional[str]) -> None:
         scheduler.remove_job(job_id)
 
     if schedule == "weekly":
+        hour, minute = _calc_slot("weekly", slug)
+        print(f"[SCHEDULER] {slug}: wöchentlich Mo {hour:02d}:{minute:02d}", flush=True)
         scheduler.add_job(
             _run_project_audit,
-            CronTrigger(day_of_week="mon", hour=3, minute=0),
+            CronTrigger(day_of_week="mon", hour=hour, minute=minute),
             args=[slug],
             id=job_id,
             replace_existing=True,
         )
     elif schedule == "monthly":
+        hour, minute = _calc_slot("monthly", slug)
+        print(f"[SCHEDULER] {slug}: monatlich 1. {hour:02d}:{minute:02d}", flush=True)
         scheduler.add_job(
             _run_project_audit,
-            CronTrigger(day=1, hour=3, minute=0),
+            CronTrigger(day=1, hour=hour, minute=minute),
             args=[slug],
             id=job_id,
             replace_existing=True,
@@ -71,7 +91,9 @@ def update_project_schedule(slug: str, schedule: Optional[str]) -> None:
 def init_scheduler() -> None:
     from backend.database import list_all_projects
     projects = list_all_projects()
-    for p in projects:
+    # Sortiert nach Erstellungsdatum für konsistente Slot-Zuweisung
+    projects_sorted = sorted(projects, key=lambda x: x.get("created_at", ""))
+    for p in projects_sorted:
         sched = p.get("schedule")
         if sched in ("weekly", "monthly"):
             update_project_schedule(p["slug"], sched)

@@ -58,3 +58,42 @@ async def run_checks(
             results[key] = result
 
     return results
+
+
+async def run_checks_with_soup(
+    soup,
+    url: str,
+    language=None,
+    mode_weights=None,
+    keywords=[],
+) -> Optional[dict]:
+    if mode_weights is None:
+        mode_weights = {"content": 60, "conversion": 40, "course": 0, "event": 0}
+
+    tasks = {
+        "meta":           asyncio.to_thread(check_meta, soup, url),
+        "headings":       asyncio.to_thread(check_headings, soup),
+        "broken_links":   check_broken_links(soup, url),
+        "alt_attributes": asyncio.to_thread(check_alt_attributes, soup, url),
+        "spelling":       asyncio.to_thread(check_spelling, soup, url, language=language),
+        "keywords":       asyncio.to_thread(check_keywords, soup, keywords=keywords),
+        "url_slug":       asyncio.to_thread(check_url_slug, url),
+        "mode_analysis":  asyncio.to_thread(check_mode_analysis, soup, url, mode_weights),
+    }
+
+    keys = list(tasks.keys())
+    values = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+    results = {}
+    for key, result in zip(keys, values):
+        if isinstance(result, Exception):
+            results[key] = {
+                "score": 0,
+                "issues": [{"message": f"Check fehlgeschlagen: {str(result)}"}],
+                "warnings": [],
+                "passed": [],
+            }
+        else:
+            results[key] = result
+
+    return results

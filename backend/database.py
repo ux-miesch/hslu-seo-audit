@@ -38,9 +38,11 @@ def init_db(slug: str) -> None:
         );
 
         CREATE TABLE IF NOT EXISTS pages (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-            url        TEXT    NOT NULL
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id     INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+            url            TEXT    NOT NULL,
+            content_hash   TEXT    DEFAULT NULL,
+            audit_skipped  INTEGER DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS audit_results (
@@ -68,6 +70,15 @@ def migrate_db(slug: str) -> None:
         ]:
             try:
                 conn.execute(f"ALTER TABLE projects ADD COLUMN {col} {coltype} DEFAULT {default}")
+                conn.commit()
+            except Exception:
+                pass  # Spalte existiert bereits
+        for col, coltype, default in [
+            ("content_hash",  "TEXT",    "NULL"),
+            ("audit_skipped", "INTEGER", "0"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE pages ADD COLUMN {col} {coltype} DEFAULT {default}")
                 conn.commit()
             except Exception:
                 pass  # Spalte existiert bereits

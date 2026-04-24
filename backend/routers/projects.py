@@ -16,7 +16,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.database import get_db, init_db, list_all_projects, db_path
-from backend.audit_runner import run_checks
+from backend.audit_runner import run_checks, run_checks_with_soup
+from backend.crawler import fetch_page, content_hash
+from checks.broken_links import check_broken_links
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -159,6 +161,7 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
                 resp = await client.get(url)
                 final_url = _normalise(str(resp.url).split("#")[0])
                 print(f"[CRAWL] GET {url} -> {resp.status_code} | final={final_url} | CT={resp.headers.get('content-type','')[:40]}", flush=True)
+                await asyncio.sleep(1)
                 if resp.status_code != 200:
                     continue
                 content_type = resp.headers.get("content-type", "")
@@ -252,46 +255,191 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             "current_url": None,
         }
 
-    sem = asyncio.Semaphore(5)
+    sem = asyncio.Semaphore(2)
 
     async def _audit_one(page_id: int, url: str) -> None:
         async with sem:
             _project_state[slug]["current_url"] = url
             try:
-                results = await asyncio.wait_for(
-                    run_checks(url, language=language, mode_weights=mode_weights),
-                    timeout=30,
-                )
-            except asyncio.TimeoutError:
-                print(f"[AUDIT] TIMEOUT {url}", flush=True)
-                results = {
-                    "error": True,
-                    "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
-                    "score": 0,
-                    "issues": [],
-                    "warnings": [],
-                    "passed": [],
-                }
+                # Step 1: Fetch page to enable incremental hashing
+                page = await fetch_page(url)
+
+                if page is None:
+                    # Fallback: fetch failed, run full checks via URL
+                    try:
+                        results = await asyncio.wait_for(
+                            run_checks(url, language=language, mode_weights=mode_weights),
+                            timeout=30,
+                        )
+                    except asyncio.TimeoutError:
+                        print(f"[AUDIT] TIMEOUT {url}", flush=True)
+                        results = {
+                            "error": True,
+                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
+                            "score": 0,
+                            "issues": [],
+                            "warnings": [],
+                            "passed": [],
+                        }
+                    except Exception as exc:
+                        print(f"[AUDIT] FEHLER {url}: {exc}", flush=True)
+                        results = None
+                    if results is None:
+                        return
+                    scores = [
+                        v["score"]
+                        for v in results.values()
+                        if isinstance(v, dict) and "score" in v
+                    ]
+                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+                    db = get_db(slug)
+                    try:
+                        db.execute(
+                            "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
+                            (page_id, avg_score, json.dumps(results)),
+                        )
+                        db.commit()
+                    finally:
+                        db.close()
+                    state = _project_state.get(slug, {})
+                    state["pages_audited"] = state.get("pages_audited", 0) + 1
+                    recently = state.get("recently_audited", [])
+                    recently.insert(0, {"url": url, "score": round(avg_score, 1)})
+                    state["recently_audited"] = recently[:5]
+                    _project_state[slug] = state
+                    return
+
+                soup = page["soup"]
+
+                # Step 2: Compute content hash
+                new_hash = content_hash(soup, url)
+
+                # Step 3: Load stored hash from DB
+                db = get_db(slug)
+                try:
+                    stored_row = db.execute(
+                        "SELECT content_hash, audit_skipped FROM pages WHERE project_id = ? AND url = ?",
+                        (project_id, url),
+                    ).fetchone()
+                finally:
+                    db.close()
+
+                stored_hash = stored_row["content_hash"] if stored_row else None
+
+                if stored_hash is not None and stored_hash == new_hash:
+                    # Page unchanged: only re-run broken_links
+                    print(f"[AUDIT] SKIP (unchanged) {url}", flush=True)
+                    try:
+                        broken_links_result = await asyncio.wait_for(
+                            check_broken_links(soup, url),
+                            timeout=30,
+                        )
+                    except asyncio.TimeoutError:
+                        broken_links_result = {
+                            "score": 0,
+                            "issues": [{"message": "Check fehlgeschlagen: Timeout"}],
+                            "warnings": [],
+                            "passed": [],
+                        }
+                    except Exception as exc:
+                        broken_links_result = {
+                            "score": 0,
+                            "issues": [{"message": f"Check fehlgeschlagen: {str(exc)}"}],
+                            "warnings": [],
+                            "passed": [],
+                        }
+
+                    # Load most recent old results_json
+                    db = get_db(slug)
+                    try:
+                        old_row = db.execute(
+                            """SELECT ar.results_json
+                               FROM audit_results ar
+                               WHERE ar.page_id = ?
+                               ORDER BY ar.crawled_at DESC
+                               LIMIT 1""",
+                            (page_id,),
+                        ).fetchone()
+                    finally:
+                        db.close()
+
+                    if old_row and old_row["results_json"]:
+                        old_results = json.loads(old_row["results_json"])
+                    else:
+                        old_results = {}
+
+                    old_results["broken_links"] = broken_links_result
+
+                    scores = [
+                        v["score"]
+                        for v in old_results.values()
+                        if isinstance(v, dict) and "score" in v
+                    ]
+                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+
+                    db = get_db(slug)
+                    try:
+                        db.execute(
+                            "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
+                            (page_id, avg_score, json.dumps(old_results)),
+                        )
+                        db.execute(
+                            "UPDATE pages SET audit_skipped = 1 WHERE url = ? AND project_id = ?",
+                            (url, project_id),
+                        )
+                        db.commit()
+                    finally:
+                        db.close()
+
+                else:
+                    # Page changed or new: run full checks with pre-fetched soup
+                    print(f"[AUDIT] FULL (new/changed) {url}", flush=True)
+                    try:
+                        results = await asyncio.wait_for(
+                            run_checks_with_soup(soup, url, language=language, mode_weights=mode_weights),
+                            timeout=30,
+                        )
+                    except asyncio.TimeoutError:
+                        print(f"[AUDIT] TIMEOUT {url}", flush=True)
+                        results = {
+                            "error": True,
+                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
+                            "score": 0,
+                            "issues": [],
+                            "warnings": [],
+                            "passed": [],
+                        }
+                    except Exception as exc:
+                        print(f"[AUDIT] FEHLER {url}: {exc}", flush=True)
+                        results = None
+                    if results is None:
+                        return
+
+                    scores = [
+                        v["score"]
+                        for v in results.values()
+                        if isinstance(v, dict) and "score" in v
+                    ]
+                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+
+                    db = get_db(slug)
+                    try:
+                        db.execute(
+                            "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
+                            (page_id, avg_score, json.dumps(results)),
+                        )
+                        db.execute(
+                            "UPDATE pages SET content_hash = ?, audit_skipped = 0 WHERE url = ? AND project_id = ?",
+                            (new_hash, url, project_id),
+                        )
+                        db.commit()
+                    finally:
+                        db.close()
+
             except Exception as exc:
                 print(f"[AUDIT] FEHLER {url}: {exc}", flush=True)
-                results = None
-            if results is None:
                 return
-            scores = [
-                v["score"]
-                for v in results.values()
-                if isinstance(v, dict) and "score" in v
-            ]
-            avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
-            db = get_db(slug)
-            try:
-                db.execute(
-                    "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
-                    (page_id, avg_score, json.dumps(results)),
-                )
-                db.commit()
-            finally:
-                db.close()
+
             state = _project_state.get(slug, {})
             state["pages_audited"] = state.get("pages_audited", 0) + 1
             recently = state.get("recently_audited", [])
@@ -299,7 +447,11 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             state["recently_audited"] = recently[:5]
             _project_state[slug] = state
 
-    await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in pages])
+    BATCH_SIZE = 10
+    for i in range(0, len(pages), BATCH_SIZE):
+        batch = pages[i:i + BATCH_SIZE]
+        await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch])
+        print(f"[AUDIT] Batch {i // BATCH_SIZE + 1} fertig ({len(batch)} Seiten)", flush=True)
 
     if slug in _project_state:
         _project_state[slug]["status"] = "done"
@@ -494,6 +646,7 @@ def get_report(slug: str):
         rows = db.execute(
             """
             SELECT p.url,
+                   p.audit_skipped,
                    ar.crawled_at,
                    ar.score,
                    ar.results_json
@@ -517,6 +670,7 @@ def get_report(slug: str):
                     "url": r["url"],
                     "crawled_at": r["crawled_at"],
                     "score": r["score"],
+                    "audit_skipped": r["audit_skipped"],
                     "results": json.loads(r["results_json"]) if r["results_json"] else None,
                 }
                 for r in rows

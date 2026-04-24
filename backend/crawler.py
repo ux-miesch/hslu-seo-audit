@@ -1,3 +1,4 @@
+import hashlib
 import httpx
 from bs4 import BeautifulSoup
 from typing import Optional
@@ -92,3 +93,27 @@ async def check_url_status(url: str) -> dict:
         return {"url": url, "status": "error", "reason": "nicht erreichbar"}
     except Exception as e:
         return {"url": url, "status": "error", "reason": str(e)}
+
+
+def content_hash(soup, url: str) -> str:
+    """Berechnet einen Hash des relevanten Seiteninhalts für inkrementelles Auditing."""
+    parts = [url]
+    for tag in soup.find_all("meta"):
+        parts.append(tag.get("name", "") + tag.get("property", "") + tag.get("content", ""))
+    title = soup.find("title")
+    if title:
+        parts.append(title.get_text(strip=True))
+    canonical = soup.find("link", rel="canonical")
+    if canonical:
+        parts.append(canonical.get("href", ""))
+    for h in soup.find_all(["h1", "h2", "h3"]):
+        parts.append(h.get_text(strip=True))
+    for a in soup.find_all("a", href=True):
+        parts.append(a["href"])
+    for img in soup.find_all("img"):
+        parts.append(img.get("src", "") + "|" + (img.get("alt") or ""))
+    for tag in soup.find_all(["p", "li", "td", "th", "blockquote"]):
+        parts.append(tag.get_text(strip=True))
+    for script in soup.find_all("script", type="application/ld+json"):
+        parts.append(script.string or "")
+    return hashlib.sha256("\n".join(parts).encode()).hexdigest()

@@ -229,6 +229,8 @@
     .score-cyan    { background:#77C5D8; color:#1a1a1a; }
     .score-yellow  { background:#FCC300; color:#1a1a1a; }
     .score-magenta { background:#EE6A87; }
+    .badge-unchanged { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#d4d4d4; color:#555; white-space:nowrap; }
+    .badge-new-audit { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#ADCA2A; color:#1a1a1a; white-space:nowrap; }
     @media (max-width:768px) {
       .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
       .table-wrap thead{display:none;}
@@ -279,7 +281,7 @@
 </div>
 
 <script>
-const VERSION='260424-1405';
+const VERSION='260424-1835';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -372,10 +374,11 @@ function applyDepthFilter() {
   _openIdx = null;
   tbody.innerHTML = _pages.map((page, idx) => `
     <tr data-idx="${idx}">
-      <td class="url"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
-      <td class="ts">${getUrlDepth(page.url)}</td>
-      <td>${badge(page.score, page.results?.error)}</td>
-      <td class="ts">${fmtDate(page.crawled_at)}</td>
+      <td class="url" data-label="URL"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
+      <td class="ts" data-label="Tiefe">${getUrlDepth(page.url)}</td>
+      <td data-label="Score">${badge(page.score, page.results?.error)}</td>
+      <td class="ts" data-label="Auditiert am">${fmtDate(page.crawled_at)}</td>
+      <td data-label="Status">${auditStatusBadge(page)}</td>
     </tr>`).join("");
   // Sort-Indikatoren in Headers
   const colLabels = { url: "URL", depth: "Tiefe", score: "Score", date: "Auditiert am" };
@@ -453,6 +456,12 @@ function bigScore(score) {
 function fmtDate(iso) {
   if (!iso) return "—";
   return iso.replace("T", " ").slice(0, 16);
+}
+
+function auditStatusBadge(page) {
+  if (page.audit_skipped === 1) return `<span class="badge-unchanged">Unverändert</span>`;
+  if (page.audit_skipped === 0) return `<span class="badge-new-audit">Neu auditiert</span>`;
+  return '';
 }
 
 const CHECK_LABELS = {
@@ -647,6 +656,13 @@ function renderDetail(page) {
   inner.className = "detail-inner";
   inner.appendChild(viewBar);
 
+  if (page.audit_skipped === 1) {
+    const skipBox = document.createElement("div");
+    skipBox.style.cssText = "background:#f4f4f4;border-left:4px solid #aaa;padding:12px 16px;font-size:12px;color:#555;margin-bottom:16px;";
+    skipBox.innerHTML = "⏭ <strong>Unverändert</strong> – Der Seiteninhalt hat sich seit dem letzten Audit nicht geändert. Die Ergebnisse unten stammen vom letzten vollständigen Audit. Defekte Links wurden erneut geprüft.";
+    inner.appendChild(skipBox);
+  }
+
   if (results.error) {
     const errBox = document.createElement("div");
     errBox.style.cssText = "background:#f4f4f4;border-left:4px solid #aaa;padding:12px 16px;font-size:13px;color:#555;margin-bottom:16px;";
@@ -662,7 +678,7 @@ function renderDetail(page) {
     inner.appendChild(grid);
   }
   const td = document.createElement("td");
-  td.colSpan = 4;
+  td.colSpan = 5;
   td.appendChild(inner);
   const tr = document.createElement("tr");
   tr.className = "detail-row";
@@ -730,6 +746,7 @@ function render(data) {
             <th class="th-sort" id="th-depth" onclick="setSort('depth')">Tiefe</th>
             <th class="th-sort" id="th-score" onclick="setSort('score')">Score</th>
             <th class="th-sort" id="th-date" onclick="setSort('date')">Auditiert am</th>
+            <th>Status</th>
           </tr>
         </thead>
         <tbody id="page-rows"></tbody>
