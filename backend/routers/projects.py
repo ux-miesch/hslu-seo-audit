@@ -12,7 +12,7 @@ from urllib.parse import urlparse, urljoin
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.database import get_db, init_db, list_all_projects, db_path
@@ -357,7 +357,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
 # ---------------------------------------------------------------------------
 
 @router.post("/", status_code=201)
-async def create_project(body: ProjectCreate, background_tasks: BackgroundTasks):
+async def create_project(body: ProjectCreate):
     slug = _slugify(body.name)
 
     if os.path.exists(db_path(slug)):
@@ -517,7 +517,7 @@ def get_report(slug: str):
 
 
 @router.post("/{slug}/crawl", status_code=202)
-async def crawl_project(slug: str, background_tasks: BackgroundTasks):
+async def crawl_project(slug: str):
     db = get_db(slug)
     try:
         row = db.execute("SELECT id, root_url, max_pages FROM projects WHERE slug = ?", (slug,)).fetchone()
@@ -543,12 +543,12 @@ async def crawl_project(slug: str, background_tasks: BackgroundTasks):
         "recently_audited": [],
         "current_url": None,
     }
-    background_tasks.add_task(_crawl, project_id, root_url, slug, max_pages)
+    asyncio.create_task(_crawl(project_id, root_url, slug, max_pages))
     return {"slug": slug, "crawl_status": "started"}
 
 
 @router.post("/{slug}/audit", status_code=202)
-async def audit_project(slug: str, background_tasks: BackgroundTasks):
+async def audit_project(slug: str):
     db = get_db(slug)
     try:
         row = db.execute(
@@ -571,7 +571,7 @@ async def audit_project(slug: str, background_tasks: BackgroundTasks):
         db.close()
 
     mode_weights = _mode_weights_for(project_type)
-    background_tasks.add_task(_audit, project_id, language, mode_weights, slug)
+    asyncio.create_task(_audit(project_id, language, mode_weights, slug))
     return {"slug": slug, "audit_status": "started", "pages": page_count}
 
 
