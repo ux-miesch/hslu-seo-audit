@@ -278,7 +278,7 @@
 </div>
 
 <script>
-const VERSION='260424-1051';
+const VERSION='260424-1132';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -303,7 +303,7 @@ const API_URL = "https://hslu-seo-audit.onrender.com";
   }
 })();
 function _showNoAccess() {
-  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Verdana,sans-serif;font-size:14px;color:#555;text-align:center;padding:40px;">Kein gültiger Zugangslink.<br>Bitte fordere einen Link bei der zuständigen Person an.</div>';
+  document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Verdana,sans-serif;font-size:14px;color:#555;text-align:center;padding:40px;">Dieser Rapport ist nur über einen persönlichen Zugangslink erreichbar.<br>Den Link findest du in der Benachrichtigungs-E-Mail.</div>';
 }
 function logout(){
   const slug = new URLSearchParams(window.location.search).get('project');

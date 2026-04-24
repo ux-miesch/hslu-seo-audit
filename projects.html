@@ -320,7 +320,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1051';
+const VERSION='260424-1132';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -416,7 +416,7 @@ async function loadProjects() {
     }));
 
     const rows = enriched.map(p => `
-      <tr data-slug="${p.slug}" onclick="window.location.href='report.html?project=${p.slug}'">
+      <tr data-slug="${p.slug}" onclick="openReport('${p.slug}','${p.project_token||''}')">
         <td data-label="Projektname"><strong>${p.name}</strong></td>
         <td class="url-cell" data-label="Root-URL">${p.root_url}</td>
         <td data-label="Seiten">${p.page_count || "—"}</td>
@@ -502,6 +502,7 @@ async function createProject() {
     }
     const project = await createRes.json();
     const slug = project.slug;
+    const projectToken = project.project_token || null;
 
     // 2. Trigger crawl
     setProgress("Crawl läuft – Seiten werden gesammelt…");
@@ -520,7 +521,8 @@ async function createProject() {
     // 6. Redirect to report
     crawlRunning = false;
     setProgress("Fertig – Weiterleitung zum Rapport…");
-    window.location.href = `report.html?project=${slug}`;
+    const tokenParam = projectToken ? `&token=${encodeURIComponent(projectToken)}` : '';
+    window.location.href = `report.html?project=${slug}${tokenParam}`;
 
   } catch (err) {
     crawlRunning = false;
@@ -573,6 +575,10 @@ function updateProgressUI(s) {
     barFill.style.width = "100%";
     barLabel.textContent = `${s.pages_audited} Seiten ausgewertet`;
   }
+}
+
+function openReport(slug, token) {
+  window.location.href = 'report.html?project=' + slug + (token ? '&token=' + encodeURIComponent(token) : '');
 }
 
 async function pollCrawl(slug) {

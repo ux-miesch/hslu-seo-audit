@@ -98,6 +98,11 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
       <a href="{report_url}" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
       <a href="{spelling_url}" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>
     </p>
+    <p style="margin-top:32px;padding:12px 16px;background:#f4f4f4;border-left:3px solid #ccc;font-size:11px;color:#777;line-height:1.5;">
+      <strong>Hinweis:</strong> Die obigen Links sind persönliche Zugangslinks.
+      Jede Person mit diesen Links hat vollen Zugriff auf den SEO-Audit.
+      Bitte Links nicht öffentlich teilen.
+    </p>
     </body></html>
     """
     msg.attach(MIMEText(html_body, "html"))
