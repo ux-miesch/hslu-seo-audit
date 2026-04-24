@@ -7,6 +7,7 @@ import unicodedata
 from datetime import datetime
 from typing import Optional
 from whitelist import SPELLING_WHITELIST
+from langdetect import detect, LangDetectException
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DB_BASE = os.environ.get("DB_PATH", _BACKEND_DIR)
@@ -120,16 +121,35 @@ def extract_main_text(soup: BeautifulSoup) -> list[dict]:
     return blocks
 
 
-def detect_language(soup: BeautifulSoup) -> str:
+def detect_language(soup: BeautifulSoup, text: str = "") -> str:
+    # Schritt 1: HTML lang-Tag prüfen
     html_tag = soup.find("html")
     if html_tag:
         lang = html_tag.get("lang", "").lower()
-        if lang.startswith("fr"):
-            return "fr"
+        if lang.startswith("de"):
+            return "de-CH"
         elif lang.startswith("en"):
             return "en-US"
+        elif lang.startswith("fr"):
+            return "fr"
         elif lang.startswith("it"):
             return "it"
+
+    # Schritt 2: Falls kein lang-Tag oder unklar → Text analysieren
+    if text and len(text) >= 50:
+        try:
+            detected = detect(text)
+            mapping = {
+                "de": "de-CH",
+                "en": "en-US",
+                "fr": "fr",
+                "it": "it",
+            }
+            return mapping.get(detected, "de-CH")
+        except LangDetectException:
+            pass
+
+    # Fallback
     return "de-CH"
 
 
@@ -145,9 +165,6 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         "blocks_checked": 0,
     }
 
-    detected_lang = language or detect_language(soup)
-    data["language_detected"] = detected_lang
-
     blocks = extract_main_text(soup)
     data["blocks_checked"] = len(blocks)
 
@@ -159,12 +176,15 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         })
         return _build_result(issues, warnings, passed, data)
 
+    # Alle Blöcke zu einem Text zusammenfassen
+    full_text = "\n\n".join(block["text"] for block in blocks)
+
+    detected_lang = language or detect_language(soup, full_text)
+    data["language_detected"] = detected_lang
+
     ignored_pairs = _get_ignored_pairs()
     all_errors = []
     error_count = 0
-
-    # Alle Blöcke zu einem Text zusammenfassen
-    full_text = "\n\n".join(block["text"] for block in blocks)
 
     # Einen einzigen API-Call
     with httpx.Client(timeout=30) as client:
