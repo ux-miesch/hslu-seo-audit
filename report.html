@@ -262,7 +262,7 @@
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
-  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <main>
@@ -276,7 +276,7 @@
 </div>
 
 <script>
-const VERSION='260422-1317';
+const VERSION='260424-0756';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -288,7 +288,7 @@ const API_URL = "https://hslu-seo-audit.onrender.com";
     if (!token) { _showNoAccess(); return; }
     fetch(`${API_URL}/projects/${slug}/token/verify?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
-      .then(data => { if (data.valid === false) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } })
+      .then(data => { if (data.valid === false) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } else { document.getElementById('logout-item').style.display = ''; } })
       .catch(() => {});
   } else {
     if (urlToken) localStorage.setItem('admin_token', urlToken);
@@ -296,7 +296,7 @@ const API_URL = "https://hslu-seo-audit.onrender.com";
     if (!token) { _showNoAccess(); return; }
     fetch(`${API_URL}/admin/token/verify?token=${encodeURIComponent(token)}`)
       .then(r => r.json())
-      .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); _showNoAccess(); } })
+      .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); _showNoAccess(); } else { document.getElementById('logout-item').style.display = ''; } })
       .catch(() => {});
   }
 })();

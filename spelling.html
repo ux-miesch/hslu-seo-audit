@@ -182,7 +182,7 @@ td.rule-cell{color:#777;font-size:11px;}
   <a class="flyout-item active" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
-  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <!-- Shared info popover -->
@@ -213,7 +213,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260422-1317';
+const VERSION='260424-0756';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -268,6 +268,7 @@ function authFetch(url, opts = {}) {
 
 /* ── Init ── */
 async function init() {
+  document.getElementById('logout-item').style.display = '';
   load();
 }
 

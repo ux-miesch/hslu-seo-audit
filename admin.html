@@ -80,7 +80,7 @@
   <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item active" href="admin.html">Zugang verwalten</a>
-  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <div class="footer-bar">
@@ -141,6 +141,7 @@ async function doLogin() {
     localStorage.setItem('admin_pw', pw);
     document.getElementById('login-view').style.display = 'none';
     document.getElementById('admin-view').style.display = '';
+    document.getElementById('logout-item').style.display = '';
     loadAdminToken();
   } else {
     document.getElementById('login-error').style.display = 'block';

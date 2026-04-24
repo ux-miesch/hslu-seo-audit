@@ -234,7 +234,8 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 <script>
 
 function logout(){localStorage.removeItem('seo_token');location.reload();}
-const VERSION='260422-1317';
+if (localStorage.getItem('seo_token')) document.getElementById('logout-item').style.display = '';
+const VERSION='260424-0756';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -674,7 +675,7 @@ document.addEventListener("click", e => {
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
-  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <div class="modal-overlay" id="welcome-modal" style="z-index:9999;">

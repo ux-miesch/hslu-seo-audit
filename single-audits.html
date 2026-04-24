@@ -137,7 +137,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <a class="flyout-item active" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item" href="admin.html">Zugang verwalten →</a>
-  <a class="flyout-item" onclick="logout()" style="cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <div class="modal-overlay" id="delete-modal">
@@ -194,6 +194,7 @@ async function doLogin() {
   if (ok) {
     localStorage.setItem('admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
+    document.getElementById('logout-item').style.display = '';
     init();
   } else {
     document.getElementById('pw-error').style.display = 'block';
