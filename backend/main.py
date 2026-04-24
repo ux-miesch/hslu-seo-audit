@@ -70,6 +70,14 @@ def root():
     return {"message": "SEO Audit API läuft ✓", "version": "0.2.0"}
 
 
+@app.get("/outbound-ip")
+async def outbound_ip():
+    import httpx
+    async with httpx.AsyncClient() as client:
+        r = await client.get("https://api.ipify.org?format=json", timeout=10)
+        return r.json()
+
+
 @app.post("/audit", response_model=AuditResponse)
 async def run_audit(request: AuditRequest):
     results = await run_checks(

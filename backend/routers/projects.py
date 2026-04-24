@@ -208,6 +208,11 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
             print(f"[CRAWL] -> {added} neue interne Links zur Queue | Queue={len(queue)} | found={len(found)}", flush=True)
 
     _project_state[slug]["pages_total"] = len(found)
+    if len(found) == 0:
+        _project_state[slug]["status"] = "error"
+        _project_state[slug]["error"] = "Keine Seiten gefunden – Root-URL nicht erreichbar oder keine internen Links."
+        print(f"[CRAWL] Abgebrochen: 0 Seiten gefunden für {slug}", flush=True)
+        return
     print(f"[CRAWL] Fertig: {len(found)} Seiten gefunden -> speichere in DB ({slug}.db)", flush=True)
     db = get_db(slug)
     try:

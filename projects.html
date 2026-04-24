@@ -320,7 +320,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1132';
+const VERSION='260424-1201';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -513,7 +513,11 @@ async function createProject() {
 
     // 4. Start audit
     setProgress("Audit läuft – Seiten werden analysiert…");
-    await fetch(`${API}/projects/${slug}/audit`, { method: "POST" });
+    const auditRes = await fetch(`${API}/projects/${slug}/audit`, { method: "POST" });
+    if (!auditRes.ok) {
+      const auditErr = await auditRes.json().catch(() => ({}));
+      throw new Error(auditErr.detail || `Audit fehlgeschlagen (HTTP ${auditRes.status})`);
+    }
 
     // 5. Poll until audit has results
     await pollAudit(slug);
@@ -590,12 +594,16 @@ async function pollCrawl(slug) {
         fetch(`${API}/projects/${slug}/status`),
         fetch(`${API}/projects/${slug}`),
       ]);
-      if (sr.ok) updateProgressUI(await sr.json());
+      if (sr.ok) {
+        const s = await sr.json();
+        updateProgressUI(s);
+        if (s.status === "error") throw new Error(s.error || "Crawl fehlgeschlagen – Root-URL nicht erreichbar.");
+      }
       if (pr.ok) {
         const p = await pr.json();
         if (p.last_crawled_at) return;
       }
-    } catch { /* ignore */ }
+    } catch (e) { if (e.message) throw e; }
   }
   throw new Error("Crawl-Timeout – bitte manuell prüfen.");
 }
@@ -610,8 +618,9 @@ async function pollAudit(slug) {
         const s = await r.json();
         updateProgressUI(s);
         if (s.status === "done") return;
+        if (s.status === "error") throw new Error(s.error || "Audit fehlgeschlagen.");
       }
-    } catch { /* ignore */ }
+    } catch (e) { if (e.message) throw e; }
   }
   throw new Error("Audit-Timeout – bitte manuell prüfen.");
 }
