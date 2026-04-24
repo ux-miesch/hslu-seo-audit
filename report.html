@@ -276,7 +276,7 @@
 </div>
 
 <script>
-const VERSION='260424-0804';
+const VERSION='260424-0817';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   const params = new URLSearchParams(window.location.search);
@@ -407,7 +407,14 @@ function setView(view) {
 
 
 function copyLink() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (_openIdx !== null && _pages[_openIdx]) {
+    params.set("page", _pages[_openIdx].url);
+  } else {
+    params.delete("page");
+  }
+  const url = location.origin + location.pathname + "?" + params.toString();
+  navigator.clipboard.writeText(url).then(() => {
     const fb = document.getElementById("copy-feedback");
     if (fb) { fb.style.opacity = "1"; setTimeout(() => { fb.style.opacity = "0"; }, 1500); }
   });
@@ -842,6 +849,20 @@ document.addEventListener("click", e => {
 
     render(data);
     setView(currentView);
+
+    const pageParam = new URLSearchParams(window.location.search).get("page");
+    if (pageParam) {
+      const idx = _pages.findIndex(p => p.url === pageParam);
+      if (idx !== -1) {
+        const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+        if (tr) {
+          tr.classList.add("active");
+          tr.insertAdjacentElement("afterend", renderDetail(_pages[idx]));
+          _openIdx = idx;
+          tr.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+    }
   } catch (err) {
     document.getElementById("app").innerHTML =
       `<div class="state">Fehler beim Laden der Daten: ${err.message}</div>`;
