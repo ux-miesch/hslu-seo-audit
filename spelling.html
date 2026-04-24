@@ -216,7 +216,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260424-1332';
+const VERSION='260424-1405';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -229,7 +229,7 @@ let _projectToken  = "";
 // Synchronous auth check for admin-password mode (no backend re-validation on load)
 (function() {
   // Show body immediately regardless
-  document.body.style.display = '';
+  document.body.style.display = 'block';
   // Only apply saved-pw shortcut if NOT in project-token mode
   const projectSlugCheck = new URLSearchParams(window.location.search).get("project");
   if (!projectSlugCheck) {

@@ -129,7 +129,7 @@ let _adminToken = null;
 // Auth check: synchronous, no backend re-validation on page load
 (function() {
   const savedPw = localStorage.getItem('seo_admin_pw');
-  document.body.style.display = '';
+  document.body.style.display = 'block';
   if (savedPw) {
     _adminPw = savedPw;
     document.getElementById('login-view').style.display = 'none';

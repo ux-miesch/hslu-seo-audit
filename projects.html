@@ -321,14 +321,14 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1332';
+const VERSION='260424-1405';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
 /* ── Auth ── */
 (function() {
   const savedPw = localStorage.getItem('seo_admin_pw');
-  document.body.style.display = '';
+  document.body.style.display = 'block';
   if (savedPw) {
     const overlay = document.getElementById('pw-overlay');
     if (overlay) overlay.style.display = 'none';

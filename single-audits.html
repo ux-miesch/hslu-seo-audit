@@ -183,7 +183,7 @@ let _deleteId = null;
 /* ── Auth ── */
 (function() {
   const savedPw = localStorage.getItem('seo_admin_pw');
-  document.body.style.display = '';
+  document.body.style.display = 'block';
   if (savedPw) {
     const overlay = document.getElementById('pw-overlay');
     if (overlay) overlay.style.display = 'none';
