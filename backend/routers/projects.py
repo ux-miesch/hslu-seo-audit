@@ -1,8 +1,10 @@
 from __future__ import annotations
 import asyncio
+import base64
 import gc
 import json
 import os
+import zlib
 import re
 import secrets as _secrets
 import smtplib
@@ -70,31 +72,57 @@ def _mode_weights_for(project_type: Optional[str]) -> dict:
     return {"content": 0, "conversion": 100, "course": 0, "event": 0}  # default: website
 
 
-async def _wait_for_memory(slug: str, threshold_mb: int = 200, max_wait: int = 300) -> None:
+async def _wait_for_memory(slug: str, threshold_mb: int = 150, max_wait: int = 600) -> None:
     """Wartet bis mindestens threshold_mb RAM verfügbar sind, dann GC."""
     if _psutil is None:
         gc.collect()
         return
     waited = 0
     while waited < max_wait:
-        available = _psutil.virtual_memory().available / 1024 / 1024
+        mem = _psutil.virtual_memory()
+        available = mem.available / 1024 / 1024
+        used = mem.used / 1024 / 1024
+        print(f"[RAM] {used:.0f}MB verwendet, {available:.0f}MB verfügbar", flush=True)
         if available >= threshold_mb:
             break
-        print(f"[Speicher] {available:.0f}MB verfügbar – warte...", flush=True)
+        print(f"[Speicher] Nur {available:.0f}MB verfügbar – warte 15s...", flush=True)
         if slug in _project_state:
             _project_state[slug]["ram_available_mb"] = round(available)
-        await asyncio.sleep(10)
-        waited += 10
+        await asyncio.sleep(15)
+        waited += 15
     gc.collect()
     if _psutil:
         available = _psutil.virtual_memory().available / 1024 / 1024
-        print(f"[Speicher] {available:.0f}MB verfügbar – bereit für nächstes Paket", flush=True)
+        print(f"[Speicher] {available:.0f}MB verfügbar – OK", flush=True)
 
 
 def _get_ram_mb() -> Optional[float]:
     if _psutil is None:
         return None
     return _psutil.virtual_memory().available / 1024 / 1024
+
+
+def _pack_results(results: dict) -> str:
+    """Komprimiert results_json mit zlib+base64. Prefix 'z:' markiert komprimierte Daten."""
+    compressed = zlib.compress(json.dumps(results, ensure_ascii=False).encode("utf-8"), level=6)
+    return "z:" + base64.b64encode(compressed).decode("ascii")
+
+
+def _unpack_results(data) -> Optional[dict]:
+    """Dekomprimiert oder parst results_json – unterstützt alte (plain JSON) und neue (komprimiert) Rows."""
+    if not data:
+        return None
+    try:
+        if isinstance(data, str) and data.startswith("z:"):
+            return json.loads(zlib.decompress(base64.b64decode(data[2:])).decode("utf-8"))
+        if isinstance(data, (bytes, bytearray)):
+            return json.loads(zlib.decompress(data).decode("utf-8"))
+        return json.loads(data)
+    except Exception:
+        try:
+            return json.loads(data) if isinstance(data, str) else None
+        except Exception:
+            return None
 
 
 def _slugify(name: str) -> str:
@@ -265,7 +293,7 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
 
 async def _audit(project_id: int, language: Optional[str], mode_weights: dict, slug: str, resume_from_package: int = 0) -> None:
     """Führt run_checks() für alle pages durch. Grosse Projekte werden in Pakete aufgeteilt."""
-    BATCH_SIZE = 10
+    BATCH_SIZE = 2
 
     db = get_db(slug)
     try:
@@ -336,7 +364,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     try:
                         db.execute(
                             "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
-                            (page_id, avg_score, json.dumps(results)),
+                            (page_id, avg_score, _pack_results(results)),
                         )
                         db.commit()
                     finally:
@@ -350,6 +378,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     return
 
                 soup = page["soup"]
+                page = None  # Seiteninhalt sofort freigeben
 
                 # Step 2: Compute content hash
                 new_hash = content_hash(soup, url)
@@ -404,7 +433,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                         db.close()
 
                     if old_row and old_row["results_json"]:
-                        old_results = json.loads(old_row["results_json"])
+                        old_results = _unpack_results(old_row["results_json"])
                     else:
                         old_results = {}
 
@@ -421,7 +450,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     try:
                         db.execute(
                             "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
-                            (page_id, avg_score, json.dumps(old_results)),
+                            (page_id, avg_score, _pack_results(old_results)),
                         )
                         db.execute(
                             "UPDATE pages SET audit_skipped = 1 WHERE url = ? AND project_id = ?",
@@ -466,7 +495,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     try:
                         db.execute(
                             "INSERT INTO audit_results (page_id, score, results_json) VALUES (?, ?, ?)",
-                            (page_id, avg_score, json.dumps(results)),
+                            (page_id, avg_score, _pack_results(results)),
                         )
                         db.execute(
                             "UPDATE pages SET content_hash = ?, audit_skipped = 0 WHERE url = ? AND project_id = ?",
@@ -514,7 +543,10 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
 
         for i in range(0, len(package), BATCH_SIZE):
             batch = package[i:i + BATCH_SIZE]
+            await _wait_for_memory(slug)  # Proaktiv RAM prüfen vor jedem Batch
             await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch])
+            gc.collect()  # Spelling/LanguageTool-Objekte sofort freigeben
+            await asyncio.sleep(5)  # Pause zwischen Batches
             ram = _get_ram_mb()
             pkg_done = _project_state[slug].get("package_pages_audited", 0)
             ram_str = f"{ram:.0f}MB verfügbar" if ram is not None else "RAM unbekannt"
@@ -778,7 +810,7 @@ def get_report(slug: str):
                     "crawled_at": r["crawled_at"],
                     "score": r["score"],
                     "audit_skipped": r["audit_skipped"],
-                    "results": json.loads(r["results_json"]) if r["results_json"] else None,
+                    "results": _unpack_results(r["results_json"]) if r["results_json"] else None,
                 }
                 for r in rows
             ],
