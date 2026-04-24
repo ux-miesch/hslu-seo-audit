@@ -13,6 +13,7 @@ from backend.routers import projects
 from backend.routers import spelling_candidates
 from backend.routers import admin
 from backend.routers import single_audits
+from backend.routers import feedback
 from backend.audit_runner import run_checks
 from checks.sea import check_sea
 
@@ -37,6 +38,7 @@ app.include_router(projects.router)
 app.include_router(spelling_candidates.router)
 app.include_router(admin.router)
 app.include_router(single_audits.router)
+app.include_router(feedback.router)
 
 app.add_middleware(
     CORSMiddleware,
