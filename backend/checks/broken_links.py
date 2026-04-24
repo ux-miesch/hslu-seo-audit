@@ -42,6 +42,12 @@ CONSENT_INDICATORS = [
 
 SKIP_SCHEMAS = {"mailto:", "tel:", "javascript:", "#"}
 
+SKIP_URL_PATTERNS = [
+    "/personensuche/profile/",
+    "/profile/?pid=",
+    "pid=",
+]
+
 
 def is_bot_blocked(url: str, status_code: int) -> bool:
     if status_code not in BOT_BLOCKED_CODES:
@@ -87,6 +93,12 @@ async def check_single_url(
     semaphore: asyncio.Semaphore,
 ) -> dict:
     async with semaphore:
+        if any(p in url for p in SKIP_URL_PATTERNS):
+            return {
+                "url": url, "status_code": None, "ok": True,
+                "bot_blocked": False, "consent_blocked": False,
+                "final_url": url, "redirected": False, "error": "skipped",
+            }
         if is_domain_whitelisted(url):
             return {
                 "url": url, "status_code": None, "ok": True,
