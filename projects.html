@@ -320,7 +320,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-1235';
+const VERSION='260424-1300';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -888,7 +888,7 @@ window.addEventListener("beforeunload", function(e) {
   #feedback-modal-inner{max-width:100%;width:100%;border-left:none;border-top:4px solid #77C5D8;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);}
   #feedback-modal.fm-open #feedback-modal-inner{transform:translateY(0);}
 }
-#feedback-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:#1a1a1a;color:#fff;border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.28);transition:background 0.2s,transform 0.15s;}
+#feedback-fab{position:fixed;bottom:50px;right:24px;width:52px;height:52px;background:#1a1a1a;color:#fff;border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.28);transition:background 0.2s,transform 0.15s;}
 #feedback-fab:hover{background:#77C5D8;transform:scale(1.1);}
 </style>
 <button id="feedback-fab" onclick="openFeedbackModal()" title="Feedback geben" aria-label="Feedback geben">
@@ -897,8 +897,8 @@ window.addEventListener("beforeunload", function(e) {
 <div id="feedback-modal">
   <div id="feedback-modal-inner">
     <p style="font-size:15px;font-weight:700;margin-bottom:6px;">Feedback geben</p>
-    <p style="font-size:11px;color:#888;margin-bottom:16px;line-height:1.6;">Bug entdeckt? Idee gehabt? Einfach Dampf ablassen?<br>Alles willkommen – wir lesen alles. Meistens sogar am gleichen Tag.<br><span style="font-style:italic;color:#bbb;font-size:10px;">Durch das Absenden erklärst du dich damit einverstanden, dass wir uns freuen. Mehr passiert nicht.</span></p>
-    <textarea id="feedback-text" placeholder="Dein Feedback…" style="width:100%;height:100px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;padding:10px;resize:vertical;box-sizing:border-box;"></textarea>
+    <p style="font-size:11px;color:#888;margin-bottom:16px;line-height:1.6;">Bug entdeckt? Idee gehabt?<br><br>Wir lesen fast alles. Meistens sogar am gleichen Tag.<br><span style="font-style:italic;color:#bbb;font-size:10px;">Durch das Absenden erklärst du dich damit einverstanden, dass wir uns über dein Feedback freuen und es in der Liste der möglichen Anpassungen landet.</span></p>
+    <textarea id="feedback-text" placeholder="Ich vermisse das Einhorn…" style="width:100%;height:100px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;padding:10px;resize:vertical;box-sizing:border-box;"></textarea>
     <div id="feedback-error" style="color:#c00;font-size:12px;margin-top:6px;display:none;">Bitte Feedback eingeben.</div>
     <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
       <button onclick="closeFeedbackModal()" style="padding:8px 18px;font-family:Verdana,sans-serif;font-size:12px;font-weight:700;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;cursor:pointer;">Abbrechen</button>
