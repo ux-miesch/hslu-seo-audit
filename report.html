@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+  <style>body{display:none}</style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SEO Audit Report</title>
@@ -278,9 +279,10 @@
 </div>
 
 <script>
-const VERSION='260424-1315';
+const VERSION='260424-1332';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
+  document.body.style.display = '';
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('project');
   const urlToken = params.get('token');
@@ -293,13 +295,9 @@ const API_URL = "https://hslu-seo-audit.onrender.com";
       .then(data => { if (data.valid === false) { localStorage.removeItem(`project_token_${slug}`); _showNoAccess(); } else { document.getElementById('logout-item').style.display = ''; } })
       .catch(() => {});
   } else {
-    if (urlToken) localStorage.setItem('admin_token', urlToken);
-    const token = localStorage.getItem('admin_token');
-    if (!token) { _showNoAccess(); return; }
-    fetch(`${API_URL}/admin/token/verify?token=${encodeURIComponent(token)}`)
-      .then(r => r.json())
-      .then(data => { if (data.valid === false) { localStorage.removeItem('admin_token'); _showNoAccess(); } else { document.getElementById('logout-item').style.display = ''; } })
-      .catch(() => {});
+    const pw = localStorage.getItem('seo_admin_pw');
+    if (!pw) { _showNoAccess(); return; }
+    document.getElementById('logout-item').style.display = '';
   }
 })();
 function _showNoAccess() {
@@ -308,7 +306,7 @@ function _showNoAccess() {
 function logout(){
   const slug = new URLSearchParams(window.location.search).get('project');
   if (slug) localStorage.removeItem(`project_token_${slug}`);
-  else localStorage.removeItem('admin_token');
+  else localStorage.removeItem('seo_admin_pw');
   location.reload();
 }
 
