@@ -113,6 +113,16 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
 
 async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[int] = None) -> None:
     """BFS-Crawl ab root_url. max_pages=None/0 → kein Limit."""
+    try:
+        await _crawl_inner(project_id, root_url, slug, max_pages)
+    except Exception as exc:
+        print(f"[CRAWL] FATAL ERROR für {slug}: {exc}", flush=True)
+        if slug in _project_state:
+            _project_state[slug]["status"] = "error"
+            _project_state[slug]["error"] = str(exc)
+
+
+async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Optional[int] = None) -> None:
     effective_max = max_pages if max_pages and max_pages > 0 else None
     parsed_root = urlparse(root_url)
     root_path_prefix = parsed_root.path.rstrip("/")
@@ -123,15 +133,6 @@ async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[
         return stripped if stripped else u
 
     canonical_root = _normalise(root_url.split("#")[0])
-
-    _project_state[slug] = {
-        "status": "crawling",
-        "pages_crawled": 0,
-        "pages_total": effective_max or "∞",
-        "pages_audited": 0,
-        "recently_audited": [],
-        "current_url": None,
-    }
 
     visited: set[str] = set()
     queue: list[str] = [canonical_root]
@@ -534,6 +535,14 @@ async def crawl_project(slug: str, background_tasks: BackgroundTasks):
     finally:
         db.close()
 
+    _project_state[slug] = {
+        "status": "crawling",
+        "pages_crawled": 0,
+        "pages_total": 0,
+        "pages_audited": 0,
+        "recently_audited": [],
+        "current_url": None,
+    }
     background_tasks.add_task(_crawl, project_id, root_url, slug, max_pages)
     return {"slug": slug, "crawl_status": "started"}
 

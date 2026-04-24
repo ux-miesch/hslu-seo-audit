@@ -320,7 +320,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260424-0958';
+const VERSION='260424-1038';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -542,12 +542,18 @@ function updateProgressUI(s) {
   const barLabel = document.getElementById("progress-bar-label");
   const logEl    = document.getElementById("progress-log");
 
-  if (s.status === "crawling") {
+  if (s.status === "error") {
+    phaseEl.textContent = "Fehler beim Crawl – bitte Logs prüfen.";
+    barWrap.style.display = "none";
+    logEl.style.display = "none";
+  } else if (s.status === "crawling") {
     phaseEl.textContent = "Crawling läuft – Seiten werden gesammelt…";
     barWrap.style.display = "block";
     const pct = s.pages_total > 0 ? Math.round(s.pages_crawled / s.pages_total * 100) : 0;
     barFill.style.width = pct + "%";
-    barLabel.textContent = `${s.pages_crawled} von ${s.pages_total} Seiten gefunden`;
+    barLabel.textContent = s.pages_crawled > 0
+      ? `${s.pages_crawled} Seiten gefunden…`
+      : "Verbinde…";
     logEl.style.display = "none";
   } else if (s.status === "auditing") {
     phaseEl.textContent = "Audit läuft – Seiten werden analysiert…";
