@@ -7,21 +7,25 @@ from apscheduler.triggers.cron import CronTrigger
 
 scheduler = AsyncIOScheduler()
 
-SCHEDULE_OFFSET_MINUTES = 30  # Versatz pro Projekt
+SLOTS_PER_DAY = 8  # Stunden 00–07, 1 Slot pro Stunde
 
 
 def _calc_slot(schedule_type: str, slug: str) -> tuple[int, int]:
-    """Berechnet Stunde/Minute für einen Projekt-Job basierend auf Anzahl bereits geplanter Projekte."""
+    """Berechnet Tag-Offset und Stunde für einen Projekt-Job.
+
+    Wöchentlich: Tag-Offset 0–4 → Mo–Fr, Stunde 0–7
+    Monatlich:   Tag-Offset 0–4 → 1.–5. des Monats, Stunde 0–7
+    """
     from backend.database import list_all_projects
     projects = list_all_projects()
-    # Alle anderen Projekte mit gleichem Schedule-Typ, sortiert nach Erstellungsdatum
     scheduled = [
         p for p in sorted(projects, key=lambda x: x.get("created_at", ""))
         if p.get("schedule") == schedule_type and p["slug"] != slug
     ]
-    idx = len(scheduled)  # 0-basierter Index für dieses Projekt
-    total_minutes = idx * SCHEDULE_OFFSET_MINUTES
-    return total_minutes // 60, total_minutes % 60
+    idx = len(scheduled)
+    day_offset = idx // SLOTS_PER_DAY
+    hour = idx % SLOTS_PER_DAY
+    return day_offset, hour
 
 
 async def _run_project_audit(slug: str) -> None:
@@ -66,22 +70,27 @@ def update_project_schedule(slug: str, schedule: Optional[str]) -> None:
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
 
+    WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
+
     if schedule == "weekly":
-        hour, minute = _calc_slot("weekly", slug)
-        print(f"[SCHEDULER] {slug}: wöchentlich Mo {hour:02d}:{minute:02d}", flush=True)
+        day_offset, hour = _calc_slot("weekly", slug)
+        day_offset = min(day_offset, len(WEEKDAYS) - 1)
+        day_name = WEEKDAYS[day_offset]
+        print(f"[SCHEDULER] {slug}: wöchentlich {day_name} {hour:02d}:00", flush=True)
         scheduler.add_job(
             _run_project_audit,
-            CronTrigger(day_of_week="mon", hour=hour, minute=minute),
+            CronTrigger(day_of_week=day_name, hour=hour, minute=0),
             args=[slug],
             id=job_id,
             replace_existing=True,
         )
     elif schedule == "monthly":
-        hour, minute = _calc_slot("monthly", slug)
-        print(f"[SCHEDULER] {slug}: monatlich 1. {hour:02d}:{minute:02d}", flush=True)
+        day_offset, hour = _calc_slot("monthly", slug)
+        day = min(day_offset + 1, 5)  # 1.–5. des Monats
+        print(f"[SCHEDULER] {slug}: monatlich {day}. {hour:02d}:00", flush=True)
         scheduler.add_job(
             _run_project_audit,
-            CronTrigger(day=1, hour=hour, minute=minute),
+            CronTrigger(day=day, hour=hour, minute=0),
             args=[slug],
             id=job_id,
             replace_existing=True,

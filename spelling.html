@@ -216,7 +216,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260424-1846';
+const VERSION='260424-1934';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -632,7 +632,7 @@ document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
     <textarea id="feedback-text" placeholder="Ich vermisse das Einhorn…" style="width:100%;height:100px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;padding:10px;resize:vertical;box-sizing:border-box;"></textarea>
     <div id="feedback-error" style="color:#c00;font-size:12px;margin-top:6px;display:none;">Bitte Feedback eingeben.</div>
     <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
-      <button onclick="closeFeedbackModal()" style="padding:8px 18px;font-family:Verdana,sans-serif;font-size:12px;font-weight:700;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;cursor:pointer;">Abbrechen</button>
+      <button onclick="closeFeedbackModal()" style="padding:8px 18px;font-family:Verdana,sans-serif;font-size:12px;font-weight:700;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;cursor:pointer;">Nicht jetzt</button>
       <button onclick="submitFeedback()" style="padding:8px 18px;font-family:Verdana,sans-serif;font-size:12px;font-weight:700;background:#1a1a1a;color:#fff;border:none;cursor:pointer;">Senden</button>
     </div>
     <div id="feedback-success" style="display:none;margin-top:14px;font-size:13px;color:#2a7a2a;font-weight:700;">Danke! Das macht uns besser.</div>
