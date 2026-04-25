@@ -958,6 +958,29 @@ def delete_project(slug: str):
     except Exception:
         pass
 
+    # Spelling-Kandidaten für alle Seiten dieses Projekts löschen
+    try:
+        db = get_db(slug)
+        try:
+            rows = db.execute("SELECT url FROM pages").fetchall()
+            page_urls = [r["url"] for r in rows]
+        finally:
+            db.close()
+        if page_urls:
+            from backend.database import get_global_db
+            gdb = get_global_db()
+            try:
+                placeholders = ",".join("?" * len(page_urls))
+                gdb.execute(
+                    f"DELETE FROM spelling_candidates WHERE url IN ({placeholders})",
+                    page_urls,
+                )
+                gdb.commit()
+            finally:
+                gdb.close()
+    except Exception as exc:
+        print(f"[DELETE] Fehler beim Bereinigen der Spelling-Kandidaten für {slug}: {exc}", flush=True)
+
     os.remove(path)
 
 
