@@ -29,6 +29,11 @@ main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
 .btn-primary{display:inline-block;padding:10px 22px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#77C5D8;color:#000;border:none;cursor:pointer;}
 .btn-primary:hover{background:#55a8bc;}
 .btn-primary:disabled{background:#bbb;cursor:not-allowed;}
+.field-error{font-family:'Verdana',sans-serif;font-size:11px;color:#c00;margin-top:3px;display:none;}
+.field-error.visible{display:block;}
+.form-card input.input-error{border-color:#c00;}
+.req-star{color:#c00;font-weight:400;}
+.req-hint{font-family:'Verdana',sans-serif;font-size:11px;color:#888;margin-top:8px;}
 
 /* ── Projekttyp Toggle ── */
 .type-toggle{display:flex;gap:8px;margin-top:4px;}
@@ -291,20 +296,25 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <!-- ── Neues Projekt ── -->
   <div class="section-title">Neues Projekt erstellen</div>
   <div class="form-card">
-    <label>Seitentyp <span style="color:#c00;font-weight:400;">*</span></label>
+    <label>Seitentyp</label>
     <div class="type-toggle">
       <button type="button" class="type-btn selected" id="type-website" onclick="selectType('website')">HSLU-Website</button>
       <button type="button" class="type-btn" id="type-blog" onclick="selectType('blog')">HSLU-Content-Blog</button>
     </div>
+    <div class="field-error" id="err-type"></div>
     <input type="hidden" id="proj-type" value="website">
-    <label for="proj-name">Projektname</label>
-    <input type="text" id="proj-name" placeholder="z.B. w-ibr-blog">
-    <label for="proj-url">Webseiten-Adresse</label>
-    <input type="text" id="proj-url" placeholder="https://www.hslu.ch/de-ch/wirtschaft">
-    <label for="proj-email">E-Mail für Benachrichtigung <span style="color:#c00;font-weight:400;">*</span></label>
-    <input type="email" id="proj-email" placeholder="name@beispiel.ch">
+    <label for="proj-name">Projektname <span class="req-star">*</span></label>
+    <input type="text" id="proj-name" placeholder="z.B. w-ibr-blog" oninput="clearFieldError('err-name', this)">
+    <div class="field-error" id="err-name"></div>
+    <label for="proj-url">Webseiten-Adresse <span class="req-star">*</span></label>
+    <input type="text" id="proj-url" placeholder="https://www.hslu.ch/de-ch/wirtschaft" oninput="clearFieldError('err-url', this)">
+    <div class="field-error" id="err-url"></div>
+    <label for="proj-email">E-Mail für Benachrichtigung <span class="req-star">*</span></label>
+    <input type="email" id="proj-email" placeholder="name@beispiel.ch" oninput="clearFieldError('err-email', this)">
+    <div class="field-error" id="err-email"></div>
     <div style="margin-top:18px;">
       <button class="btn-primary" id="btn-create" onclick="createProject()">Projekt erstellen →</button>
+      <p class="req-hint">* Diese Felder sind Pflichtfelder.</p>
     </div>
     <div id="loader-wrap" style="display:none;">
       <div class="hslu-loader"><span></span><span></span><span></span><span></span></div>
@@ -333,7 +343,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260425-1730';
+const VERSION='260425-1812';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -455,6 +465,28 @@ async function loadProjects() {
 }
 
 /* ── Create project → crawl → audit → redirect ── */
+function showFieldError(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add("visible");
+}
+function clearFieldError(id, input) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("visible");
+  if (input) input.classList.remove("input-error");
+}
+function clearAllFieldErrors() {
+  ["err-type","err-name","err-url","err-email"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("visible");
+  });
+  ["proj-name","proj-url","proj-email"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("input-error");
+  });
+}
+
 async function createProject() {
   const projectType = document.getElementById("proj-type").value;
   const name        = document.getElementById("proj-name").value.trim();
@@ -462,27 +494,39 @@ async function createProject() {
   const email       = document.getElementById("proj-email").value.trim();
   const errBox      = document.getElementById("form-error");
   errBox.style.display = "none";
+  clearAllFieldErrors();
+
+  let valid = true;
 
   if (!projectType) {
-    errBox.textContent = "Bitte einen Projekttyp auswählen.";
-    errBox.style.display = "block";
-    return;
+    showFieldError("err-type", "Bitte einen Seitentyp auswählen.");
+    valid = false;
   }
-  if (!name || !url) {
-    errBox.textContent = "Bitte Projektname und Root-URL angeben.";
-    errBox.style.display = "block";
-    return;
+  if (!name) {
+    showFieldError("err-name", "Bitte einen Projektnamen eingeben.");
+    document.getElementById("proj-name").classList.add("input-error");
+    valid = false;
+  }
+  if (!url) {
+    showFieldError("err-url", "Bitte eine Webseiten-Adresse eingeben.");
+    document.getElementById("proj-url").classList.add("input-error");
+    valid = false;
+  } else if (!/^https:\/\/.+/.test(url)) {
+    showFieldError("err-url", "Die Adresse muss mit https:// beginnen.");
+    document.getElementById("proj-url").classList.add("input-error");
+    valid = false;
   }
   if (!email) {
-    errBox.textContent = "Bitte eine E-Mail-Adresse angeben.";
-    errBox.style.display = "block";
-    return;
+    showFieldError("err-email", "Bitte eine E-Mail-Adresse eingeben.");
+    document.getElementById("proj-email").classList.add("input-error");
+    valid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showFieldError("err-email", "Bitte eine gültige E-Mail-Adresse eingeben.");
+    document.getElementById("proj-email").classList.add("input-error");
+    valid = false;
   }
-  if (!/^https?:\/\/.+/.test(url)) {
-    errBox.textContent = "Root-URL muss mit http:// oder https:// beginnen.";
-    errBox.style.display = "block";
-    return;
-  }
+
+  if (!valid) return;
 
   const btn = document.getElementById("btn-create");
   const loaderWrap = document.getElementById("loader-wrap");
