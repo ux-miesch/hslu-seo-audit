@@ -343,7 +343,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260425-1925';
+const VERSION='260425-1956';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -989,7 +989,7 @@ if (window._authReady) { initPage(); }
   #feedback-modal-inner{max-width:100%;width:100%;border-left:none;border-top:4px solid #77C5D8;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);}
   #feedback-modal.fm-open #feedback-modal-inner{transform:translateY(0);}
 }
-#feedback-fab{position:fixed;bottom:50px;right:24px;width:52px;height:52px;background:#1a1a1a;color:#fff;border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.28);transition:background 0.2s,transform 0.15s;}
+#feedback-fab{position:fixed;bottom:50px;left:24px;width:52px;height:52px;background:#1a1a1a;color:#fff;border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.28);transition:background 0.2s,transform 0.15s;}
 #feedback-fab:hover{background:#77C5D8;transform:scale(1.1);}
 </style>
 <button id="feedback-fab" onclick="openFeedbackModal()" title="Feedback geben" aria-label="Feedback geben">
@@ -1050,6 +1050,83 @@ if (window._authReady) { initPage(); }
       sessionStorage.setItem('feedback_shown', 'true');
     }
   }, 5 * 60 * 1000);
+})();
+</script>
+<!-- Anleitung Panel -->
+<style>
+#anleitung-fab{position:fixed;bottom:50px;right:24px;width:52px;height:52px;background:#1a1a1a;color:#fff;border:none;border-radius:50%;cursor:pointer;z-index:200;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.28);transition:background 0.2s,transform 0.15s;font-family:Verdana,sans-serif;font-size:22px;line-height:1;}
+#anleitung-fab:hover{background:#77C5D8;transform:scale(1.1);}
+#anleitung-panel{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:flex-end;justify-content:center;}
+#anleitung-panel.ap-open{display:flex;}
+#anleitung-panel-inner{background:#fff;padding:32px 32px 40px;max-width:660px;width:100%;border-top:4px solid #77C5D8;max-height:82vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;}
+#anleitung-panel.ap-open #anleitung-panel-inner{transform:translateY(0);}
+#anleitung-panel h2{font-size:15px;font-weight:700;margin:0 0 4px;}
+#anleitung-panel h3{font-size:13px;font-weight:700;margin:20px 0 6px;border-bottom:1px solid #e0e0e0;padding-bottom:4px;}
+#anleitung-panel p{margin:0 0 10px;color:#444;}
+#anleitung-panel ul{margin:0 0 10px 18px;padding:0;}
+#anleitung-panel li{margin-bottom:4px;}
+#anleitung-panel strong{color:#1a1a1a;}
+#anleitung-panel .anl-close{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:#888;line-height:1;margin-left:16px;}
+#anleitung-panel .anl-close:hover{color:#000;}
+</style>
+<button id="anleitung-fab" onclick="openAnleitungPanel()" title="Kurzanleitung" aria-label="Kurzanleitung öffnen">?</button>
+<div id="anleitung-panel">
+  <div id="anleitung-panel-inner">
+    <button class="anl-close" onclick="closeAnleitungPanel()">&#x2715;</button>
+    <h2>SEO-Audit Tool &#x2013; Kurzanleitung</h2>
+    <p style="color:#888;font-size:11px;margin-bottom:16px;">Überblick über die wichtigsten Funktionen</p>
+    <h3>Was ist das SEO-Audit Tool?</h3>
+    <p>Das SEO-Audit Tool hilft dir, Webseiten der HSLU auf häufige SEO-Fehler zu prüfen &#x2013; zum Beispiel fehlende Meta-Texte, defekte Links, Rechtschreibfehler oder fehlende Alt-Texte bei Bildern.</p>
+    <h3>Einzel-Audit (für alle)</h3>
+    <p>Auf der Startseite kannst du jederzeit eine einzelne URL prüfen. Gib die Webseiten-Adresse ein, wähle den Fokus der Seite und starte den Audit. Das Ergebnis erscheint direkt auf der Seite und ist anschliessend 30 Tage über den Link in der URL abrufbar.</p>
+    <h3>Projekt-Audits (nur mit Admin-Zugang)</h3>
+    <p>Für wiederkehrende Audits ganzer Websitebereiche gibt es die Projektübersicht. Diese ist nur mit einem Admin-Zugangslink erreichbar &#x2013; wende dich dafür an deine zuständige Person im DMS-Team.</p>
+    <p>In der Projektübersicht kannst du:</p>
+    <ul>
+      <li>Neue Projekte anlegen und einen ganzen Websitebereich crawlen lassen</li>
+      <li>Bestehende Projekte einsehen und deren Rapport öffnen</li>
+      <li>Audits wöchentlich oder monatlich planen</li>
+    </ul>
+    <h3>Zugang zum Rapport teilen (Token-Logik)</h3>
+    <p>Jedes Projekt hat einen eigenen Zugangslink, der nach einem Audit per Mail versendet wird. Die Mail enthält:</p>
+    <ul>
+      <li><strong>Rapport anzeigen</strong> &#x2013; alle SEO-Ergebnisse des Projekts</li>
+      <li><strong>Rechtschreibfehler anzeigen</strong> &#x2013; Rechtschreibkandidaten zur Überarbeitung</li>
+    </ul>
+    <p><strong>Wichtig:</strong> Der Link ist projektspezifisch. Wer den Link nicht kennt, hat keinen Zugang.</p>
+    <h3>Rapport-Ansichten</h3>
+    <ul>
+      <li><strong>Expert</strong> &#x2013; alle technischen Checks</li>
+      <li><strong>Editor</strong> &#x2013; nur redaktionell relevante Checks (Defekte Links, Rechtschreibung, Alt-Attribute)</li>
+    </ul>
+    <p>Mit <strong>&#x00AB;Link kopieren&#x00BB;</strong> kannst du den aktuellen Link inkl. Ansicht teilen.</p>
+    <h3>Rechtschreibkandidaten</h3>
+    <p>Über <strong>&#x00AB;Liste überarbeiten&#x00BB;</strong> im Rapport gelangst du zur gefilterten Rechtschreibliste deines Projekts. Pro Eintrag:</p>
+    <ul>
+      <li><strong>Whitelist</strong> &#x2013; Wort korrekt (Eigenname, Fachbegriff). Danach <strong>&#x00AB;Whitelist anwenden&#x00BB;</strong> klicken.</li>
+      <li><strong>Ignorieren</strong> &#x2013; vorerst zurückstellen, jederzeit reaktivierbar.</li>
+      <li><strong>Neu</strong> &#x2013; noch nicht bearbeitet, bitte prüfen.</li>
+    </ul>
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;">
+      <button onclick="closeAnleitungPanel()" style="padding:8px 20px;font-family:Verdana,sans-serif;font-size:12px;font-weight:700;background:#1a1a1a;color:#fff;border:none;cursor:pointer;">Schliessen</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  function openAnleitungPanel(){
+    var p=document.getElementById('anleitung-panel');
+    p.style.display='flex';
+    requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add('ap-open');});});
+  }
+  function closeAnleitungPanel(){
+    var p=document.getElementById('anleitung-panel');
+    p.classList.remove('ap-open');
+    setTimeout(function(){p.style.display='none';},360);
+  }
+  document.getElementById('anleitung-panel').addEventListener('click',function(e){if(e.target===this)closeAnleitungPanel();});
+  window.openAnleitungPanel=openAnleitungPanel;
+  window.closeAnleitungPanel=closeAnleitungPanel;
 })();
 </script>
 </body>
