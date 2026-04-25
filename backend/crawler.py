@@ -38,7 +38,7 @@ async def fetch_page(url: str) -> Optional[dict]:
                 return None
 
             html = response.text
-            soup = BeautifulSoup(html, "html.parser")
+            soup = await asyncio.to_thread(BeautifulSoup, html, "html.parser")
 
             return {
                 "url": str(response.url),          # finale URL nach Redirects

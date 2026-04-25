@@ -229,7 +229,7 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
                 content_type = resp.headers.get("content-type", "")
                 if "text/html" not in content_type:
                     continue
-                soup = BeautifulSoup(resp.text, "lxml")
+                soup = await asyncio.to_thread(BeautifulSoup, resp.text, "lxml")
             except Exception as exc:
                 print(f"[CRAWL] FEHLER bei {url}: {exc}", flush=True)
                 continue

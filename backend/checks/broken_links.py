@@ -25,8 +25,8 @@ HEADERS = {
     "sec-ch-ua-platform": '"macOS"',
 }
 
-MAX_CONCURRENT = 10
-TIMEOUT = 20
+MAX_CONCURRENT = 5
+TIMEOUT = 8
 OK_CODES = set(range(200, 400))
 
 BOT_BLOCKED_CODES = {403, 999, 429}
