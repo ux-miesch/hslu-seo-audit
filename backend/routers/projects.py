@@ -354,12 +354,15 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                         results = None
                     if results is None:
                         return
-                    scores = [
-                        v["score"]
-                        for v in results.values()
-                        if isinstance(v, dict) and "score" in v
-                    ]
-                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+                    if results.get("error"):
+                        avg_score = None
+                    else:
+                        scores = [
+                            v["score"]
+                            for v in results.values()
+                            if isinstance(v, dict) and "score" in v
+                        ]
+                        avg_score = round(sum(scores) / len(scores), 2) if scores else None
                     db = get_db(slug)
                     try:
                         db.execute(
@@ -372,7 +375,8 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     state = _project_state.get(slug, {})
                     state["pages_audited"] = state.get("pages_audited", 0) + 1
                     recently = state.get("recently_audited", [])
-                    recently.insert(0, {"url": url, "score": round(avg_score, 1)})
+                    if avg_score is not None:
+                        recently.insert(0, {"url": url, "score": round(avg_score, 1)})
                     state["recently_audited"] = recently[:5]
                     _project_state[slug] = state
                     return
@@ -484,12 +488,15 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     if results is None:
                         return
 
-                    scores = [
-                        v["score"]
-                        for v in results.values()
-                        if isinstance(v, dict) and "score" in v
-                    ]
-                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+                    if results.get("error"):
+                        avg_score = None
+                    else:
+                        scores = [
+                            v["score"]
+                            for v in results.values()
+                            if isinstance(v, dict) and "score" in v
+                        ]
+                        avg_score = round(sum(scores) / len(scores), 2) if scores else None
 
                     db = get_db(slug)
                     try:
@@ -812,6 +819,7 @@ def get_report(slug: str):
                     "crawled_at": r["crawled_at"],
                     "score": r["score"],
                     "audit_skipped": r["audit_skipped"],
+                    "has_error": r["score"] is None,
                 }
                 for r in rows
             ],
