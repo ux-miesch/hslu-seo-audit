@@ -281,7 +281,7 @@
 </div>
 
 <script>
-const VERSION='260425-1332';
+const VERSION='260425-1412';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -376,7 +376,7 @@ function applyDepthFilter() {
     <tr data-idx="${idx}">
       <td class="url" data-label="URL"><a href="${page.url}" target="_blank" onclick="event.stopPropagation()">${page.url}</a></td>
       <td class="ts" data-label="Tiefe">${getUrlDepth(page.url)}</td>
-      <td data-label="Score">${badge(page.score, page.results?.error)}</td>
+      <td data-label="Score">${badge(page.score)}</td>
       <td class="ts" data-label="Auditiert am">${fmtDate(page.crawled_at)}</td>
       <td data-label="Status">${auditStatusBadge(page)}</td>
     </tr>`).join("");
@@ -703,14 +703,8 @@ function render(data) {
   const scores = data.pages.map(p => p.score).filter(s => typeof s === "number");
   const avg    = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
-  // Häufigste erkannte Sprache aus Spelling-Check-Daten ermitteln
-  const langCounts = {};
-  for (const page of data.pages) {
-    const lang = page.results?.spelling?.data?.language_detected;
-    if (lang) langCounts[lang] = (langCounts[lang] || 0) + 1;
-  }
-  const detectedLangKey = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
-  const detectedLangLabel = detectedLangKey ? (LANG_LABELS[detectedLangKey] || detectedLangKey) : "–";
+  // Sprache aus gespeichertem Projekt-Setting (results werden lazy geladen)
+  const detectedLangLabel = project.language ? (LANG_LABELS[project.language] || project.language) : "–";
   const projectTypeLabel = PROJECT_TYPE_LABELS[project.project_type] || project.project_type || "–";
 
   const summaryHtml = `
@@ -764,6 +758,7 @@ function render(data) {
 
   /* ── Row click → detail ── */
   _openIdx = null;
+  const _reportSlug = new URLSearchParams(window.location.search).get("project") || "";
   document.getElementById("page-rows").addEventListener("click", e => {
     const tr = e.target.closest("tr[data-idx]");
     if (!tr) return;
@@ -775,8 +770,27 @@ function render(data) {
     _openIdx = null;
     if (!wasOpen) {
       tr.classList.add("active");
-      tr.insertAdjacentElement("afterend", renderDetail(_pages[idx]));
       _openIdx = idx;
+      const page = _pages[idx];
+      if (page.results) {
+        // Bereits gecacht
+        tr.insertAdjacentElement("afterend", renderDetail(page));
+      } else {
+        // Lazy load
+        const loadingTr = document.createElement("tr");
+        loadingTr.className = "detail-row";
+        loadingTr.innerHTML = `<td colspan="5" style="padding:16px;color:#777;font-size:13px;">Lade Details…</td>`;
+        tr.insertAdjacentElement("afterend", loadingTr);
+        fetch(`${API_URL}/projects/${_reportSlug}/page-results?url=${encodeURIComponent(page.url)}`)
+          .then(r => r.json())
+          .then(data => {
+            _pages[idx] = { ...page, results: data.results };
+            if (_openIdx === idx) loadingTr.replaceWith(renderDetail(_pages[idx]));
+          })
+          .catch(() => {
+            if (_openIdx === idx) loadingTr.replaceWith(renderDetail(page));
+          });
+      }
     }
   });
 
@@ -830,26 +844,14 @@ document.addEventListener("click", e => {
     const app = document.getElementById("app");
     app.innerHTML = `<div class="state-msg">Lade Projekte…</div>`;
     try {
-      const res = await fetch(`${API_URL}/projects/`);
+      const res = await fetch(`${API_URL}/projects/summary`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const projects = await res.json();
       if (!projects.length) {
         app.innerHTML = `<div class="state-msg">Noch keine Projekte vorhanden.</div>`;
         return;
       }
-      // Enrichment: Seitenanzahl + Ø Score aus Report-Daten
-      const enriched = await Promise.all(projects.map(async p => {
-        try {
-          const r = await fetch(`${API_URL}/projects/${p.slug}/report`);
-          if (!r.ok) return { ...p, page_count: 0, avg_score: null };
-          const data = await r.json();
-          const pages = data.pages || [];
-          const scores = pages.map(pg => pg.score).filter(s => typeof s === "number");
-          const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-          return { ...p, page_count: pages.length, avg_score: avg !== null ? Math.round(avg * 10) / 10 : null };
-        } catch { return { ...p, page_count: 0, avg_score: null }; }
-      }));
-      const rows = enriched.map(p => `
+      const rows = projects.map(p => `
         <tr data-slug="${p.slug}" onclick="window.location.href='report.html?project=${p.slug}'" style="cursor:pointer;">
           <td data-label="Projektname"><strong>${p.name}</strong></td>
           <td class="url-cell" data-label="Root-URL">${p.root_url}</td>
@@ -894,9 +896,22 @@ document.addEventListener("click", e => {
         const tr = document.querySelector(`tr[data-idx="${idx}"]`);
         if (tr) {
           tr.classList.add("active");
-          tr.insertAdjacentElement("afterend", renderDetail(_pages[idx]));
           _openIdx = idx;
           tr.scrollIntoView({ behavior: "smooth", block: "center" });
+          const page = _pages[idx];
+          const loadingTr = document.createElement("tr");
+          loadingTr.className = "detail-row";
+          loadingTr.innerHTML = `<td colspan="5" style="padding:16px;color:#777;font-size:13px;">Lade Details…</td>`;
+          tr.insertAdjacentElement("afterend", loadingTr);
+          fetch(`${API_URL}/projects/${slug}/page-results?url=${encodeURIComponent(page.url)}`)
+            .then(r => r.json())
+            .then(data => {
+              _pages[idx] = { ...page, results: data.results };
+              if (_openIdx === idx) loadingTr.replaceWith(renderDetail(_pages[idx]));
+            })
+            .catch(() => {
+              if (_openIdx === idx) loadingTr.replaceWith(renderDetail(page));
+            });
         }
       }
     }

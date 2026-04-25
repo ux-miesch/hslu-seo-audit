@@ -776,6 +776,7 @@ def get_pages(slug: str):
 
 @router.get("/{slug}/report")
 def get_report(slug: str):
+    """Gibt Projektmetadaten + Seitenliste mit Scores zurück – kein results_json."""
     db = get_db(slug)
     try:
         project = db.execute("SELECT * FROM projects WHERE slug = ?", (slug,)).fetchone()
@@ -784,11 +785,11 @@ def get_report(slug: str):
 
         rows = db.execute(
             """
-            SELECT p.url,
+            SELECT p.id   AS page_id,
+                   p.url,
                    p.audit_skipped,
                    ar.crawled_at,
-                   ar.score,
-                   ar.results_json
+                   ar.score
             FROM pages p
             JOIN audit_results ar ON ar.page_id = p.id
             WHERE p.project_id = ?
@@ -806,15 +807,41 @@ def get_report(slug: str):
             "project": dict(project),
             "pages": [
                 {
+                    "page_id": r["page_id"],
                     "url": r["url"],
                     "crawled_at": r["crawled_at"],
                     "score": r["score"],
                     "audit_skipped": r["audit_skipped"],
-                    "results": _unpack_results(r["results_json"]) if r["results_json"] else None,
                 }
                 for r in rows
             ],
         }
+    finally:
+        db.close()
+
+
+@router.get("/{slug}/page-results")
+def get_page_results(slug: str, url: str):
+    """Gibt die vollständigen Audit-Ergebnisse für eine einzelne Seite zurück."""
+    db = get_db(slug)
+    try:
+        project = db.execute("SELECT id FROM projects WHERE slug = ?", (slug,)).fetchone()
+        if project is None:
+            raise HTTPException(status_code=404, detail="Projekt nicht gefunden")
+        row = db.execute(
+            """
+            SELECT ar.results_json
+            FROM audit_results ar
+            JOIN pages p ON ar.page_id = p.id
+            WHERE p.project_id = ? AND p.url = ?
+            ORDER BY ar.crawled_at DESC
+            LIMIT 1
+            """,
+            (project["id"], url),
+        ).fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Keine Audit-Ergebnisse für diese Seite")
+        return {"results": _unpack_results(row["results_json"])}
     finally:
         db.close()
 
