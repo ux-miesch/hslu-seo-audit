@@ -128,6 +128,77 @@ def migrate_all() -> None:
                 pass
 
 
+def migrate_all_schema() -> None:
+    """Nur ALTER TABLE – keine Indexes. Schnell genug für den Startup."""
+    if not os.path.isdir(PROJECTS_DIR):
+        return
+    for fname in os.listdir(PROJECTS_DIR):
+        if not fname.endswith(".db"):
+            continue
+        slug = fname[:-3]
+        try:
+            conn = get_db(slug)
+            try:
+                for col, coltype, default in [
+                    ("schedule",           "TEXT",    "NULL"),
+                    ("notification_email", "TEXT",    "NULL"),
+                    ("max_pages",          "INTEGER", "20"),
+                    ("project_type",       "TEXT",    "'website'"),
+                    ("project_token",      "TEXT",    "NULL"),
+                    ("current_package",    "INTEGER", "0"),
+                    ("total_packages",     "INTEGER", "0"),
+                    ("audit_status",       "TEXT",    "NULL"),
+                ]:
+                    try:
+                        conn.execute(f"ALTER TABLE projects ADD COLUMN {col} {coltype} DEFAULT {default}")
+                        conn.commit()
+                    except Exception:
+                        pass
+                for col, coltype, default in [
+                    ("content_hash",  "TEXT",    "NULL"),
+                    ("audit_skipped", "INTEGER", "0"),
+                ]:
+                    try:
+                        conn.execute(f"ALTER TABLE pages ADD COLUMN {col} {coltype} DEFAULT {default}")
+                        conn.commit()
+                    except Exception:
+                        pass
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+
+async def migrate_all_indexes() -> None:
+    """Erstellt fehlende Indexes gestaffelt im Hintergrund (kein Startup-Block)."""
+    import asyncio
+    if not os.path.isdir(PROJECTS_DIR):
+        return
+    for fname in os.listdir(PROJECTS_DIR):
+        if not fname.endswith(".db"):
+            continue
+        slug = fname[:-3]
+        try:
+            conn = get_db(slug)
+            try:
+                for sql in [
+                    "CREATE INDEX IF NOT EXISTS idx_pages_project_id        ON pages(project_id)",
+                    "CREATE INDEX IF NOT EXISTS idx_pages_url               ON pages(url)",
+                    "CREATE INDEX IF NOT EXISTS idx_audit_results_page_id   ON audit_results(page_id)",
+                    "CREATE INDEX IF NOT EXISTS idx_audit_results_crawled_at ON audit_results(crawled_at)",
+                ]:
+                    try:
+                        conn.execute(sql)
+                        conn.commit()
+                    except Exception:
+                        pass
+            finally:
+                conn.close()
+        except Exception:
+            pass
+        await asyncio.sleep(2)  # Gestaffelt – kein RAM-Spike
+
+
 GLOBAL_DB_PATH = os.path.join(DB_BASE, "spelling.db")
 
 

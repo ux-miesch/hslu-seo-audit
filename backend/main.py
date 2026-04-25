@@ -8,14 +8,22 @@ from pydantic import BaseModel
 from typing import List, Optional
 import sys, os, asyncio
 sys.path.insert(0, os.path.dirname(__file__))
-from crawler import fetch_page
+# Router-Imports bleiben auf Modul-Ebene (FastAPI-Anforderung)
 from backend.routers import projects
 from backend.routers import spelling_candidates
 from backend.routers import admin
 from backend.routers import single_audits
 from backend.routers import feedback
-from backend.audit_runner import run_checks
-from checks.sea import check_sea
+# Schwere Checks (googleapiclient, LanguageTool etc.) werden lazy importiert
+
+
+def _log_ram(step: str) -> None:
+    try:
+        import psutil
+        mem = psutil.virtual_memory()
+        print(f"[STARTUP] {step} – RAM: {mem.used // 1024 // 1024}MB used, {mem.available // 1024 // 1024}MB free", flush=True)
+    except Exception:
+        print(f"[STARTUP] {step}", flush=True)
 
 
 async def _resume_interrupted_audits() -> None:
@@ -45,18 +53,59 @@ async def _resume_interrupted_audits() -> None:
             )
 
 
+async def _background_startup() -> None:
+    """Schwere Startup-Tasks im Hintergrund – blockiert nicht den Server-Start."""
+    import gc
+
+    _log_ram("background_startup: begin")
+
+    # 1. Schema-Migration (nur ALTER TABLE, keine Index-Erstellung)
+    from backend.database import migrate_all_schema
+    migrate_all_schema()
+    _log_ram("background_startup: schema migration done")
+
+    # 2. Scheduler-Jobs registrieren (ein Pass, kein N+1)
+    from backend.scheduler import register_all_scheduled_jobs
+    register_all_scheduled_jobs()
+    _log_ram("background_startup: scheduler jobs registered")
+
+    # 3. Unterbrochene Audits fortsetzen
+    await _resume_interrupted_audits()
+    _log_ram("background_startup: resume check done")
+
+    # 4. Index-Migration gestaffelt im Hintergrund
+    from backend.database import migrate_all_indexes
+    await migrate_all_indexes()
+    _log_ram("background_startup: index migration done")
+
+    gc.collect()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from backend.database import migrate_all, init_global_db
-    from backend.scheduler import init_scheduler, shutdown_scheduler
+    from backend.database import init_global_db
+    from backend.scheduler import init_scheduler
     from backend.single_audits import init_single_audits_db, cleanup_expired
-    migrate_all()
+
+    _log_ram("lifespan: start")
+
+    # Nur zentrale DB initialisieren – schnell, kein Projekt-DB-Scan
     init_global_db()
+    _log_ram("lifespan: global_db done")
+
     init_single_audits_db()
     cleanup_expired()
+    _log_ram("lifespan: single_audits done")
+
+    # Scheduler starten (ohne Jobs zu laden)
     init_scheduler()
-    await _resume_interrupted_audits()
+    _log_ram("lifespan: scheduler started")
+
+    # Schwere Tasks im Hintergrund
+    asyncio.create_task(_background_startup())
+
     yield
+    from backend.scheduler import shutdown_scheduler
     shutdown_scheduler()
 
 
@@ -110,6 +159,8 @@ async def outbound_ip():
 
 @app.post("/audit", response_model=AuditResponse)
 async def run_audit(request: AuditRequest):
+    from crawler import fetch_page
+    from backend.audit_runner import run_checks
     results = await run_checks(
         request.url,
         language=request.language,
@@ -128,6 +179,7 @@ async def run_audit(request: AuditRequest):
         soup = page["soup"] if page else None
         if soup:
             try:
+                from checks.sea import check_sea
                 results["sea"] = await asyncio.to_thread(check_sea, soup, request.url)
             except Exception as e:
                 results["sea"] = {

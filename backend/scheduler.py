@@ -97,15 +97,56 @@ def update_project_schedule(slug: str, schedule: Optional[str]) -> None:
         )
 
 
-def init_scheduler() -> None:
+def register_all_scheduled_jobs() -> None:
+    """Registriert alle geplanten Jobs in einem Pass – kein N+1.
+
+    Berechnet Slots inkrementell, ohne pro Job list_all_projects() aufzurufen.
+    """
     from backend.database import list_all_projects
+    WEEKDAYS = ["mon", "tue", "wed", "thu", "fri"]
+
     projects = list_all_projects()
-    # Sortiert nach Erstellungsdatum für konsistente Slot-Zuweisung
     projects_sorted = sorted(projects, key=lambda x: x.get("created_at", ""))
+
+    weekly_idx = 0
+    monthly_idx = 0
+
     for p in projects_sorted:
         sched = p.get("schedule")
-        if sched in ("weekly", "monthly"):
-            update_project_schedule(p["slug"], sched)
+        slug = p["slug"]
+        job_id = f"audit_{slug}"
+
+        if sched == "weekly":
+            day_offset = weekly_idx // SLOTS_PER_DAY
+            hour = weekly_idx % SLOTS_PER_DAY
+            day_offset = min(day_offset, len(WEEKDAYS) - 1)
+            day_name = WEEKDAYS[day_offset]
+            print(f"[SCHEDULER] {slug}: wöchentlich {day_name} {hour:02d}:00", flush=True)
+            scheduler.add_job(
+                _run_project_audit,
+                CronTrigger(day_of_week=day_name, hour=hour, minute=0),
+                args=[slug],
+                id=job_id,
+                replace_existing=True,
+            )
+            weekly_idx += 1
+        elif sched == "monthly":
+            day_offset = monthly_idx // SLOTS_PER_DAY
+            hour = monthly_idx % SLOTS_PER_DAY
+            day = min(day_offset + 1, 5)
+            print(f"[SCHEDULER] {slug}: monatlich {day}. {hour:02d}:00", flush=True)
+            scheduler.add_job(
+                _run_project_audit,
+                CronTrigger(day=day, hour=hour, minute=0),
+                args=[slug],
+                id=job_id,
+                replace_existing=True,
+            )
+            monthly_idx += 1
+
+
+def init_scheduler() -> None:
+    """Startet den Scheduler – Jobs werden separat via register_all_scheduled_jobs() geladen."""
     scheduler.start()
 
 
