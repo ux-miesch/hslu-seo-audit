@@ -187,7 +187,7 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
     error_count = 0
 
     # Einen einzigen API-Call
-    with httpx.Client(timeout=30) as client:
+    with httpx.Client(timeout=15) as client:
         try:
             response = client.post(LANGUAGETOOL_API, data={
                 "text": full_text,

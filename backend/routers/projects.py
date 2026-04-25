@@ -337,13 +337,13 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     try:
                         results = await asyncio.wait_for(
                             run_checks(url, language=language, mode_weights=mode_weights),
-                            timeout=30,
+                            timeout=90,
                         )
                     except asyncio.TimeoutError:
                         print(f"[AUDIT] TIMEOUT {url}", flush=True)
                         results = {
                             "error": True,
-                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
+                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 90 Sekunden).",
                             "score": 0,
                             "issues": [],
                             "warnings": [],
@@ -470,13 +470,13 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                     try:
                         results = await asyncio.wait_for(
                             run_checks_with_soup(soup, url, language=language, mode_weights=mode_weights),
-                            timeout=30,
+                            timeout=90,
                         )
                     except asyncio.TimeoutError:
                         print(f"[AUDIT] TIMEOUT {url}", flush=True)
                         results = {
                             "error": True,
-                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 30 Sekunden).",
+                            "error_message": "Seite konnte nicht analysiert werden (Timeout nach 90 Sekunden).",
                             "score": 0,
                             "issues": [],
                             "warnings": [],
@@ -520,7 +520,8 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             state["pages_audited"] = state.get("pages_audited", 0) + 1
             state["package_pages_audited"] = state.get("package_pages_audited", 0) + 1
             recently = state.get("recently_audited", [])
-            recently.insert(0, {"url": url, "score": round(avg_score, 1)})
+            if avg_score is not None:
+                recently.insert(0, {"url": url, "score": round(avg_score, 1)})
             state["recently_audited"] = recently[:5]
             _project_state[slug] = state
 
