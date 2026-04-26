@@ -48,7 +48,7 @@ main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;}
 thead th{background:#1a1a1a;color:#fff;text-align:left;padding:10px 14px;font-size:12px;font-weight:normal;white-space:nowrap;}
-tbody tr{border-bottom:1px solid #e0e0e0;}
+tbody tr{border-bottom:1px solid #e0e0e0;cursor:pointer;}
 tbody tr:hover{background:#f0fafd;}
 td{padding:10px 14px;vertical-align:middle;font-size:13px;}
 td.url-cell{color:#1a1a1a;font-size:12px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -282,22 +282,21 @@ function renderTable() {
     const scoreHtml = scoreBadge(a.score);
     const auditLink = `${INDEX_BASE_URL}/index.html?audit=${a.id}`;
     const urlShort = a.url.length > 55 ? a.url.slice(0, 55) + '…' : a.url;
-    return `<tr>
-      <td class="url-cell" data-label="URL" title="${a.url}"><a href="${a.url}" target="_blank" style="color:#1a1a1a;text-decoration:underline;">${urlShort}</a></td>
+    return `<tr onclick="if(!event.target.closest('.btn-delete'))window.open('${auditLink}','_blank')">
+      <td class="url-cell" data-label="URL" title="${a.url}"><a href="${a.url}" target="_blank" onclick="event.stopPropagation()" style="color:#1a1a1a;text-decoration:underline;">${urlShort}</a></td>
       <td data-label="Score">${scoreHtml}</td>
       <td data-label="Sprache">${a.language || '—'}</td>
       <td class="ts" data-label="Datum">${fmtDate(a.created_at)}</td>
       <td class="ts" data-label="Ablaufdatum">${fmtDate(a.expires_at)}</td>
       <td data-label="Verbleibend"><span class="${daysCls}">${daysText}</span></td>
-      <td class="btn-cell" data-label="Link"><a class="btn-link" href="${auditLink}" target="_blank">→ Audit öffnen</a></td>
-      <td class="btn-cell" data-label="Löschen"><button class="btn-delete" onclick="openDeleteModal('${a.id}')">Löschen</button></td>
+      <td class="btn-cell"><button class="btn-delete" onclick="event.stopPropagation();openDeleteModal('${a.id}')">Löschen</button></td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `<table>
     <thead>
       <tr>
-        <th>URL</th><th>Score</th><th>Sprache</th><th>Datum</th><th>Ablaufdatum</th><th>Verbleibend</th><th>Link</th><th>Löschen</th>
+        <th>URL</th><th>Score</th><th>Sprache</th><th>Datum</th><th>Ablaufdatum</th><th>Verbleibend</th><th>Löschen</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
