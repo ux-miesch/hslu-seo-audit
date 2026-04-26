@@ -268,8 +268,6 @@
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <a class="flyout-item" href="single-audits.html">SEO-Einzel-Audits</a>
   <div class="flyout-sep"></div>
-  <a class="flyout-item" href="https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs" target="_blank" onclick="closeAllFlyouts()">Anleitung →</a>
-  <div class="flyout-sep"></div>
   <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
@@ -284,7 +282,7 @@
 </div>
 
 <script>
-const VERSION='260426-1943';
+const VERSION='260426-1950';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -745,6 +743,7 @@ function render(data) {
         <button class="copy-link-text" onclick="copyLink()">Link kopieren</button>
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </span>
+      <a href="${ANLEITUNG_BASE}" target="_blank" class="copy-link-text" style="margin-left:auto;text-decoration:none;">Zur Anleitung →</a>
     </div>`;
 
   const tableHtml = `
