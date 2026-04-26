@@ -216,7 +216,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260426-2000';
+const VERSION='260426-2012';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -658,7 +658,8 @@ document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
   function closeFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.classList.remove('fm-open');
-    setTimeout(() => { m.style.display = 'none'; }, 360);
+    const delay = window.matchMedia('(max-width: 640px)').matches ? 360 : 0;
+    setTimeout(() => { m.style.display = 'none'; }, delay);
   }
   async function submitFeedback() {
     const msg = document.getElementById('feedback-text').value.trim();
@@ -758,7 +759,7 @@ document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
   function closeAnleitungPanel(){
     var p=document.getElementById('anleitung-panel');
     p.classList.remove('ap-open');
-    setTimeout(function(){p.style.display='none';},360);
+    setTimeout(function(){p.style.display='none';}, window.matchMedia('(max-width: 640px)').matches ? 360 : 0);
   }
   document.getElementById('anleitung-panel').addEventListener('click',function(e){if(e.target===this)closeAnleitungPanel();});
   window.openAnleitungPanel=openAnleitungPanel;

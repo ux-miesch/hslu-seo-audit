@@ -271,7 +271,8 @@ document.getElementById('footer-info').textContent = 'Admin v' + VERSION;
   function closeFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.classList.remove('fm-open');
-    setTimeout(() => { m.style.display = 'none'; }, 360);
+    const delay = window.matchMedia('(max-width: 640px)').matches ? 360 : 0;
+    setTimeout(() => { m.style.display = 'none'; }, delay);
   }
   async function submitFeedback() {
     const msg = document.getElementById('feedback-text').value.trim();
@@ -371,7 +372,7 @@ document.getElementById('footer-info').textContent = 'Admin v' + VERSION;
   function closeAnleitungPanel(){
     var p=document.getElementById('anleitung-panel');
     p.classList.remove('ap-open');
-    setTimeout(function(){p.style.display='none';},360);
+    setTimeout(function(){p.style.display='none';}, window.matchMedia('(max-width: 640px)').matches ? 360 : 0);
   }
   document.getElementById('anleitung-panel').addEventListener('click',function(e){if(e.target===this)closeAnleitungPanel();});
   window.openAnleitungPanel=openAnleitungPanel;

@@ -235,7 +235,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 
 function logout(){localStorage.removeItem('seo_token');location.reload();}
 if (localStorage.getItem('seo_token')) document.getElementById('logout-item').style.display = '';
-const VERSION='260426-2000';
+const VERSION='260426-2012';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
@@ -740,7 +740,8 @@ document.addEventListener("click", e => {
   function closeFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.classList.remove('fm-open');
-    setTimeout(() => { m.style.display = 'none'; }, 360);
+    const delay = window.matchMedia('(max-width: 640px)').matches ? 360 : 0;
+    setTimeout(() => { m.style.display = 'none'; }, delay);
   }
   async function submitFeedback() {
     const msg = document.getElementById('feedback-text').value.trim();
@@ -840,7 +841,7 @@ document.addEventListener("click", e => {
   function closeAnleitungPanel(){
     var p=document.getElementById('anleitung-panel');
     p.classList.remove('ap-open');
-    setTimeout(function(){p.style.display='none';},360);
+    setTimeout(function(){p.style.display='none';}, window.matchMedia('(max-width: 640px)').matches ? 360 : 0);
   }
   document.getElementById('anleitung-panel').addEventListener('click',function(e){if(e.target===this)closeAnleitungPanel();});
   window.openAnleitungPanel=openAnleitungPanel;
