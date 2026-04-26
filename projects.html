@@ -343,7 +343,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260426-0438';
+const VERSION='260426-1943';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -574,9 +574,9 @@ async function createProject() {
 
     // 6. Redirect to report
     crawlRunning = false;
-    setProgress("Fertig – Weiterleitung zum Rapport…");
+    setProgress("Fertig – Rapport wird geöffnet…");
     const tokenParam = projectToken ? `&token=${encodeURIComponent(projectToken)}` : '';
-    window.location.href = `report.html?project=${slug}${tokenParam}`;
+    window.open(`report.html?project=${slug}${tokenParam}`, '_blank');
 
   } catch (err) {
     crawlRunning = false;
@@ -657,7 +657,7 @@ function updateProgressUI(s) {
 }
 
 function openReport(slug, token) {
-  window.location.href = 'report.html?project=' + slug + (token ? '&token=' + encodeURIComponent(token) : '');
+  window.open('report.html?project=' + slug + (token ? '&token=' + encodeURIComponent(token) : ''), '_blank');
 }
 
 async function pollCrawl(slug) {
