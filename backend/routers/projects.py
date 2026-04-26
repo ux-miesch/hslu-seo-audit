@@ -307,6 +307,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
     total_packages = max(len(packages), 1)
     total_pages = len(pages)
 
+    print(f"[AUDIT] Start: {total_pages} Seiten, {total_packages} Paket(e), resume_from={resume_from_package}", flush=True)
     if total_packages > 1:
         print(f"[AUDIT] {total_pages} Seiten → {total_packages} Pakete à {PACKAGE_SIZE}. Starte ab Paket {resume_from_package + 1}.", flush=True)
 
@@ -328,6 +329,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
     async def _audit_one(page_id: int, url: str) -> None:
         async with sem:
             _project_state[slug]["current_url"] = url
+            print(f"[AUDIT_ONE] Start: {url}", flush=True)
             try:
                 # Step 1: Fetch page to enable incremental hashing
                 page = await fetch_page(url)
@@ -379,6 +381,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                         recently.insert(0, {"url": url, "score": round(avg_score, 1)})
                     state["recently_audited"] = recently[:5]
                     _project_state[slug] = state
+                    print(f"[AUDIT_ONE] Fertig (fallback): {url} | score={avg_score} | gesamt={state['pages_audited']}", flush=True)
                     return
 
                 soup = page["soup"]
@@ -524,6 +527,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                 recently.insert(0, {"url": url, "score": round(avg_score, 1)})
             state["recently_audited"] = recently[:5]
             _project_state[slug] = state
+            print(f"[AUDIT_ONE] Fertig: {url} | score={avg_score} | gesamt={state['pages_audited']}", flush=True)
 
     for pkg_idx in range(resume_from_package, len(packages)):
         package = packages[pkg_idx]
@@ -552,7 +556,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
         for i in range(0, len(package), BATCH_SIZE):
             batch = package[i:i + BATCH_SIZE]
             await _wait_for_memory(slug)  # Proaktiv RAM prüfen vor jedem Batch
-            await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch])
+            await asyncio.gather(*[_audit_one(p["id"], p["url"]) for p in batch], return_exceptions=True)
             gc.collect()  # Spelling/LanguageTool-Objekte sofort freigeben
             await asyncio.sleep(5)  # Pause zwischen Batches
             ram = _get_ram_mb()
@@ -640,6 +644,19 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
             )
     finally:
         db2.close()
+
+
+async def _audit_safe(project_id: int, language, mode_weights: dict, slug: str, resume_from_package: int = 0) -> None:
+    """Wrapper für _audit – fängt alle Ausnahmen (inkl. BaseException) ab und setzt Status 'error'."""
+    import traceback
+    try:
+        await _audit(project_id, language, mode_weights, slug, resume_from_package)
+    except BaseException as exc:
+        tb = traceback.format_exc()
+        print(f"[AUDIT] KRITISCHER FEHLER für {slug}: {exc}\n{tb}", flush=True)
+        if slug in _project_state:
+            _project_state[slug]["status"] = "error"
+            _project_state[slug]["error"] = str(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -910,7 +927,7 @@ async def audit_project(slug: str):
         db.close()
 
     mode_weights = _mode_weights_for(project_type)
-    asyncio.create_task(_audit(project_id, language, mode_weights, slug))
+    asyncio.create_task(_audit_safe(project_id, language, mode_weights, slug))
     return {"slug": slug, "audit_status": "started", "pages": page_count}
 
 

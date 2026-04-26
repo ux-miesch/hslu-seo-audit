@@ -217,7 +217,7 @@ td.rule-cell{color:#777;font-size:11px;}
 
 <script>
 const VERSION='260425-2039';
-const API = "https://hslu-seo-audit.onrender.com";
+const API = "http://localhost:8000";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
 const _urlToken    = new URLSearchParams(window.location.search).get("token")   || null;
@@ -646,7 +646,7 @@ document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
 </div>
 <script>
 (function() {
-  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'https://hslu-seo-audit.onrender.com'));
+  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8000'));
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';

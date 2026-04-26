@@ -344,7 +344,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 
 <script>
 const VERSION='260425-2039';
-const API = "https://hslu-seo-audit.onrender.com";
+const API = "http://localhost:8000";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
 /* ── Auth ── */
@@ -1010,7 +1010,7 @@ if (window._authReady) { initPage(); }
 </div>
 <script>
 (function() {
-  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'https://hslu-seo-audit.onrender.com'));
+  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8000'));
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';
