@@ -51,7 +51,11 @@
     .view-btn.active { background: #1a1a1a; color: #fff; }
     .view-btn:hover:not(.active) { opacity: 0.7; }
     .copy-link-text { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; cursor: pointer; background: none; border: none; padding: 0; }
-    .depth-select { padding: 4px 6px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; }
+    .depth-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px; position: relative; }
+    .depth-btn:hover:not(.active) { opacity: 0.7; }
+    #depth-flyout { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #ddd; z-index:300; box-shadow:0 4px 14px rgba(0,0,0,.18); min-width:100px; padding:4px 0; }
+    #depth-flyout.open { display:block; }
+    #depth-flyout .flyout-item { padding: 8px 14px; font-size: 11px; font-weight: 700; }
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
     @media (max-width: 640px) { .filter-label { display: none; } }
@@ -282,7 +286,7 @@
 </div>
 
 <script>
-const VERSION='260426-1954';
+const VERSION='260426-2000';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -340,6 +344,17 @@ function setDepth(val) {
   applyDepthFilter();
 }
 
+function toggleDepthFlyout(e) {
+  e.stopPropagation();
+  const fly = document.getElementById("depth-flyout");
+  if (fly) fly.classList.toggle("open");
+}
+
+function closeDepthFlyout() {
+  const fly = document.getElementById("depth-flyout");
+  if (fly) fly.classList.remove("open");
+}
+
 function setSort(col) {
   if (currentSort === col) {
     currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
@@ -387,9 +402,13 @@ function applyDepthFilter() {
     const th = document.getElementById("th-" + col);
     if (th) th.textContent = colLabels[col] + (currentSort === col ? (currentSortDir === "asc" ? " ↑" : " ↓") : "");
   });
-  // Depth-Select sync
-  const sel = document.getElementById("depth-select");
-  if (sel) sel.value = currentDepth ? String(currentDepth) : "";
+  // Depth-Button sync
+  const dbtn = document.getElementById("depth-btn");
+  if (dbtn) dbtn.innerHTML = (currentDepth ? '≤ ' + currentDepth : 'Alle') + ' ▾';
+  document.querySelectorAll("#depth-flyout .flyout-item").forEach(el => {
+    const val = el.textContent.trim();
+    el.classList.toggle("active", currentDepth ? val === "≤ " + currentDepth : val === "Alle");
+  });
 }
 
 function setView(view) {
@@ -729,13 +748,16 @@ function render(data) {
   const filterBar = `
     <div class="filter-bar">
       <span class="filter-label">Tiefe:</span>
-      <select class="depth-select" id="depth-select" onchange="setDepth(this.value)">
-        <option value="">Alle</option>
-        <option value="2">≤ 2</option>
-        <option value="3">≤ 3</option>
-        <option value="4">≤ 4</option>
-        <option value="5">≤ 5</option>
-      </select>
+      <div style="position:relative;">
+        <button class="depth-btn" id="depth-btn" onclick="toggleDepthFlyout(event)">${currentDepth ? '≤ ' + currentDepth : 'Alle'} ▾</button>
+        <div id="depth-flyout">
+          <button class="flyout-item${!currentDepth ? ' active' : ''}" onclick="setDepth('');closeDepthFlyout()">Alle</button>
+          <button class="flyout-item${currentDepth===2?' active':''}" onclick="setDepth('2');closeDepthFlyout()">≤ 2</button>
+          <button class="flyout-item${currentDepth===3?' active':''}" onclick="setDepth('3');closeDepthFlyout()">≤ 3</button>
+          <button class="flyout-item${currentDepth===4?' active':''}" onclick="setDepth('4');closeDepthFlyout()">≤ 4</button>
+          <button class="flyout-item${currentDepth===5?' active':''}" onclick="setDepth('5');closeDepthFlyout()">≤ 5</button>
+        </div>
+      </div>
       <span style="border-left:1px solid #ddd;margin-left:8px;padding-left:16px;display:flex;align-items:center;gap:8px;">
         <span class="filter-label">Ansicht:</span>
         <button class="view-btn view-toggle-expert${currentView === 'expert' ? ' active' : ''}" onclick="setView('expert')">Expert</button>
@@ -838,6 +860,8 @@ function toggleNavFlyout(btn) {
 document.addEventListener("click", e => {
   if (!e.target.closest(".header-right") && !e.target.closest("#flyout-nav"))
     document.getElementById("flyout-nav").classList.remove("open");
+  if (!e.target.closest("#depth-btn") && !e.target.closest("#depth-flyout"))
+    closeDepthFlyout();
 });
 
 /* ── Boot ── */
