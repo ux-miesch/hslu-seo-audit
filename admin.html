@@ -120,7 +120,7 @@
 
 <script>
 const VERSION = '1.0.0';
-const API = "http://localhost:8000";
+const API = "https://hslu-seo-audit.onrender.com";
 const BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
 let _adminPw = '';
@@ -259,7 +259,7 @@ document.getElementById('footer-info').textContent = 'Admin v' + VERSION;
 </div>
 <script>
 (function() {
-  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8000'));
+  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'https://hslu-seo-audit.onrender.com'));
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';
