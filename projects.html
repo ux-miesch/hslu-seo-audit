@@ -40,6 +40,13 @@ main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
 .type-btn{padding:10px 22px;font-family:'Verdana',sans-serif;font-size:13px;font-weight:700;background:#e8e8e8;color:#555;border:none;cursor:pointer;transition:none;}
 .type-btn:hover{background:#d4d4d4;color:#000;}
 .type-btn.selected{background:#77C5D8;color:#000;}
+/* ── Tooltip auf Projekttyp-Buttons ── */
+.type-btn-wrap{position:relative;display:inline-block;}
+.type-btn-tooltip{display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:100;background:#1a1a1a;color:#fff;font-family:'Verdana',sans-serif;font-size:11px;line-height:1.6;padding:10px 14px;min-width:220px;white-space:normal;pointer-events:none;}
+.type-btn-tooltip ul{margin:4px 0 0 14px;padding:0;}
+.type-btn-tooltip li{margin-bottom:2px;}
+.type-btn-tooltip strong{display:block;margin-bottom:4px;font-size:12px;}
+.type-btn-wrap:hover .type-btn-tooltip{display:block;}
 
 /* ── Loader ── */
 @keyframes bounce{0%,80%,100%{transform:translateY(0);}40%{transform:translateY(-10px);}}
@@ -298,8 +305,36 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
   <div class="form-card">
     <label>Seitentyp</label>
     <div class="type-toggle">
-      <button type="button" class="type-btn selected" id="type-website" onclick="selectType('website')">HSLU-Website</button>
-      <button type="button" class="type-btn" id="type-blog" onclick="selectType('blog')">HSLU-Content-Blog</button>
+      <div class="type-btn-wrap">
+        <button type="button" class="type-btn selected" id="type-website" onclick="selectType('website')">HSLU-Website</button>
+        <div class="type-btn-tooltip">
+          <strong>Enthaltene Tests:</strong>
+          <ul>
+            <li>Meta-Texte (Titel &amp; Beschreibung)</li>
+            <li>Überschriften (H1–H6)</li>
+            <li>Defekte Links</li>
+            <li>Alt-Attribute (Bilder, Videos, iFrames, PDFs)</li>
+            <li>Rechtschreibung</li>
+            <li>URL-Slug</li>
+            <li>Seitenanalyse: Fact-Liste, CTA, Kontakt, Transaktionale Keywords, Dauer, Nächste Durchführung, Abschluss/Zertifikat, Infoveranstaltung, Navigation, Kontaktperson</li>
+          </ul>
+        </div>
+      </div>
+      <div class="type-btn-wrap">
+        <button type="button" class="type-btn" id="type-blog" onclick="selectType('blog')">HSLU-Content-Blog</button>
+        <div class="type-btn-tooltip">
+          <strong>Enthaltene Tests:</strong>
+          <ul>
+            <li>Meta-Texte (Titel &amp; Beschreibung)</li>
+            <li>Überschriften (H1–H6)</li>
+            <li>Defekte Links</li>
+            <li>Alt-Attribute (Bilder, Videos, iFrames, PDFs)</li>
+            <li>Rechtschreibung</li>
+            <li>URL-Slug</li>
+            <li>Seitenanalyse: Autorenschaft, Publikationsdatum, Interne Verlinkung, Externe Verlinkung, Trust-Signale</li>
+          </ul>
+        </div>
+      </div>
     </div>
     <div class="field-error" id="err-type"></div>
     <input type="hidden" id="proj-type" value="website">
@@ -343,7 +378,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260427-1024';
+const VERSION='260427-1521';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -1099,6 +1134,38 @@ if (window._authReady) { initPage(); }
       <li><strong>Rechtschreibfehler anzeigen</strong> &#x2013; Rechtschreibkandidaten zur Überarbeitung</li>
     </ul>
     <p><strong>Wichtig:</strong> Der Link ist projektspezifisch. Wer den Link nicht kennt, hat keinen Zugang.</p>
+    <h3>Welche Tests werden gemacht?</h3>
+    <p>Alle Projekte beinhalten folgende Basis-Tests:</p>
+    <ul>
+      <li>Meta-Texte (Titel &amp; Beschreibung)</li>
+      <li>&#xDC;berschriften (H1&#x2013;H6)</li>
+      <li>Defekte Links</li>
+      <li>Alt-Attribute (Bilder, Videos, iFrames, PDFs)</li>
+      <li>Rechtschreibung</li>
+      <li>URL-Slug</li>
+    </ul>
+    <p>Zus&#xe4;tzlich je nach Projekttyp:</p>
+    <p><strong>HSLU-Website</strong> &#x2013; Seitenanalsye Ausbildungs-Seite:</p>
+    <ul>
+      <li>Fact-Liste vorhanden</li>
+      <li>Site-Navigation erkennbar</li>
+      <li>Kontaktperson inkl. Kontaktdaten</li>
+      <li>Infoveranstaltung erw&#xe4;hnt</li>
+      <li>CTA klar sichtbar</li>
+      <li>Kontaktdaten vorhanden</li>
+      <li>Transaktionale Keywords im Inhalt</li>
+      <li>Dauer und Umfang angegeben</li>
+      <li>N&#xe4;chste Durchf&#xfc;hrung sichtbar</li>
+      <li>Abschluss / Zertifikat erw&#xe4;hnt</li>
+    </ul>
+    <p><strong>HSLU-Content-Blog</strong> &#x2013; Seitenanalyse Content-Seite:</p>
+    <ul>
+      <li>Autorenschaft sichtbar</li>
+      <li>Publikationsdatum sichtbar</li>
+      <li>Interne Verlinkung vorhanden (mind. 3)</li>
+      <li>Externe Verlinkung vorhanden</li>
+      <li>Trust-Signale vorhanden</li>
+    </ul>
     <h3>Rapport-Ansichten</h3>
     <ul>
       <li><strong>Expert</strong> &#x2013; alle technischen Checks</li>
