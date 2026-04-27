@@ -127,9 +127,10 @@ async def check_single_url(
         try:
             # Option 1: HEAD zuerst (kein Body-Download → schneller, weniger Bot-Detection)
             # Fallback auf GET bei 405/501 (Server unterstützt HEAD nicht)
+            # sowie bei 404 (manche Server wie hslu.ch antworten auf HEAD mit 404, liefern aber bei GET 200)
             try:
                 response = await client.head(url, timeout=TIMEOUT)
-                if response.status_code in (405, 501):
+                if response.status_code in (405, 501, 404):
                     response = await client.get(url, timeout=TIMEOUT)
             except httpx.TimeoutException:
                 raise
