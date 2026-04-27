@@ -216,7 +216,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260427-0805';
+const VERSION='260427-0808';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -366,7 +366,7 @@ async function load() {
       const row = document.querySelector(`tr[data-word="${CSS.escape(_deepWord)}"]`);
       if (row) {
         row.scrollIntoView({ behavior: "smooth", block: "center" });
-        row.style.background = "#BAE0EA";
+        row.style.background = "#FFF0BE";
       }
     }
   } catch (err) {
