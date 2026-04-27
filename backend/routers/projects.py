@@ -179,10 +179,25 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
     token_param  = f"&token={project_token}" if project_token else ""
     report_url   = f"{REPORT_BASE_URL}/report.html?project={slug}{token_param}"
     spelling_url = f"{REPORT_BASE_URL}/spelling.html?project={slug}{token_param}"
+    import email.utils
     msg = MIMEMultipart("alternative")
     msg["From"] = SMTP_USER
     msg["To"] = to
     msg["Subject"] = f"SEO-Audit {project_name} ist bereit 🎉"
+    msg["Reply-To"] = SMTP_USER
+    msg["Message-ID"] = email.utils.make_msgid(domain=SMTP_USER.split("@")[-1] if "@" in SMTP_USER else "hslu.ch")
+    msg["Date"] = email.utils.formatdate(localtime=True)
+
+    plain_body = (
+        f"Crawl abgeschlossen: {project_name}\n\n"
+        f"{page_count} Seiten geprueft | Durchschnittlicher Score: {avg_score}\n"
+        f"{spelling_count} Rechtschreibfehler gefunden\n\n"
+        f"Rapport anzeigen:\n{report_url}\n\n"
+        f"Rechtschreibfehler anzeigen:\n{spelling_url}\n\n"
+        f"Hinweis: Die obigen Links sind persoenliche Zugangslinks. "
+        f"Jede Person mit diesen Links hat vollen Zugriff auf den SEO-Audit. "
+        f"Bitte Links nicht oeffentlich teilen."
+    )
 
     html_body = f"""
     <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;max-width:600px;">
@@ -202,6 +217,7 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
     </p>
     </body></html>
     """
+    msg.attach(MIMEText(plain_body, "plain"))
     msg.attach(MIMEText(html_body, "html"))
 
     try:
