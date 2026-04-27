@@ -286,7 +286,7 @@
 </div>
 
 <script>
-const VERSION='260427-0641';
+const VERSION='260427-0659';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -462,6 +462,40 @@ function msgText(m) { return typeof m === "object" ? m.message : m; }
 function fixMsg(msg) { return msg.replace(/Wird von Google abgeschnitten/gi, "Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten"); }
 function linkify(text) { return text.replace(/(https?:\/\/[^\s<"]+)/g, '<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>'); }
 
+// Alt-Attribute: natürlichen Text als Link rendern (kein Extra-Button)
+function renderAltMsg(m, col) {
+  if (typeof m !== "object" || !m) return fixMsg(msgText(m));
+  const src  = m.src  || m.href || "";
+  const alt  = (m.alt  || "").trim();
+  const code = m.code || "";
+  const lnk  = (text, url) => `<a href="${url}" target="_blank" style="color:${col};text-decoration:underline;">${text}</a>`;
+
+  if (code === "IMG_MISSING_ALT") {
+    // Kein Alt-Text → URL selbst ist der Link
+    const short = src.split("/").pop().split("?")[0] || src;
+    return `Bild ohne alt-Attribut: ${src ? lnk(short, src) : "[kein src]"}`;
+  }
+  if (code === "IMG_ALT_TOO_SHORT" || code === "IMG_ALT_GENERIC") {
+    // Alt-Text vorhanden → Alt-Text wird zum Link
+    const label = alt || src.split("/").pop().split("?")[0] || src;
+    return `Alt-Text ${code === "IMG_ALT_TOO_SHORT" ? "zu kurz" : "nichtssagend"}: ${src ? lnk(`"${alt}"`, src) : `"${alt}"`}`;
+  }
+  if (code === "VIDEO_MISSING_LABEL") {
+    const short = src.split("/").pop().split("?")[0] || src;
+    return `Video ohne aria-label oder title: ${src ? lnk(short, src) : "[kein src]"}`;
+  }
+  if (code === "IFRAME_MISSING_TITLE") {
+    const short = src.replace(/^https?:\/\//, "").split("/")[0] || src;
+    return `iframe ohne title-Attribut: ${src ? lnk(short, src) : "[kein src]"}`;
+  }
+  if (code === "PDF_MISSING_TEXT" || code === "PDF_GENERIC_TEXT") {
+    const href     = m.href || src;
+    const filename = href.split("/").pop().split("?")[0] || href;
+    return `PDF-Link ${code === "PDF_MISSING_TEXT" ? "ohne Ankertext" : "mit nichtssagendem Ankertext"}: ${href ? lnk(filename, href) : "[kein href]"}`;
+  }
+  return fixMsg(m.message || "");
+}
+
 function badge(score, isError) {
   if (isError) return `<span class="badge" style="background:#aaa;color:#fff;">Fehler</span>`;
   const cls = scoreClass(score);
@@ -555,9 +589,10 @@ function renderCheckCard(key, data) {
   const txKey   = AUFGABE_TEXTE[key];
   const anlUrl  = ANLEITUNG_URLS[key] || ANLEITUNG_BASE;
 
-  const issues   = (data.issues   || []).map(m => fixMsg(msgText(m)));
-  const warnings = (data.warnings || []).map(m => fixMsg(msgText(m)));
-  const infos    = (data.infos    || []).map(m => fixMsg(msgText(m)));
+  const isAlt    = key === "alt_attributes";
+  const issues   = (data.issues   || []).map(m => isAlt ? m : fixMsg(msgText(m)));
+  const warnings = (data.warnings || []).map(m => isAlt ? m : fixMsg(msgText(m)));
+  const infos    = (data.infos    || []).map(m => isAlt ? m : fixMsg(msgText(m)));
   const passed   = (data.passed   || []).map(m => fixMsg(msgText(m)));
 
   const w = document.createElement("div");
@@ -591,24 +626,33 @@ function renderCheckCard(key, data) {
       const txEntry = txKey ? txKey[type] : null;
       const sec = document.createElement("div");
       sec.className = "aufgabe-section";
-      const hasLinks = msgs.some(m => m.includes("http"));
-      if (hasLinks) {
+      if (isAlt) {
         msgs.forEach(m => {
           const d = document.createElement("div");
-          d.innerHTML = icon + " " + linkify(m);
+          d.innerHTML = icon + " " + renderAltMsg(m, col);
           d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
           sec.appendChild(d);
         });
       } else {
-        const ul = document.createElement("ul");
-        ul.className = "issue-list";
-        msgs.forEach(m => {
-          const li = document.createElement("li");
-          li.style.color = col;
-          li.innerHTML = icon + " " + m;
-          ul.appendChild(li);
-        });
-        sec.appendChild(ul);
+        const hasLinks = msgs.some(m => m.includes("http"));
+        if (hasLinks) {
+          msgs.forEach(m => {
+            const d = document.createElement("div");
+            d.innerHTML = icon + " " + linkify(m);
+            d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
+            sec.appendChild(d);
+          });
+        } else {
+          const ul = document.createElement("ul");
+          ul.className = "issue-list";
+          msgs.forEach(m => {
+            const li = document.createElement("li");
+            li.style.color = col;
+            li.innerHTML = icon + " " + m;
+            ul.appendChild(li);
+          });
+          sec.appendChild(ul);
+        }
       }
       if (txEntry) {
         const action = document.createElement("div");
