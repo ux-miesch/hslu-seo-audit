@@ -42,6 +42,13 @@ CONSENT_INDICATORS = [
 
 SKIP_SCHEMAS = {"mailto:", "tel:", "javascript:", "#"}
 
+SKIP_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg",
+    ".mp4", ".mp3", ".wav", ".ogg",
+    ".zip", ".docx", ".xlsx", ".pptx",
+    ".pdf",
+}
+
 SKIP_URL_PATTERNS = [
     "/personensuche/profile/",
     "/profile/?pid=",
@@ -173,6 +180,9 @@ def extract_links(soup: BeautifulSoup, base_url: str) -> list:
         if any(href.startswith(schema) for schema in SKIP_SCHEMAS):
             continue
         absolute_url = urljoin(base_url, href)
+        clean_path = urlparse(absolute_url).path.lower().split("?")[0]
+        if any(clean_path.endswith(ext) for ext in SKIP_EXTENSIONS):
+            continue
         if not absolute_url.startswith(("http://", "https://")):
             continue
         if absolute_url in seen:
