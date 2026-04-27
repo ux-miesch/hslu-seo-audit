@@ -286,7 +286,7 @@
 </div>
 
 <script>
-const VERSION='260427-0730';
+const VERSION='260427-0739';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -464,14 +464,17 @@ function linkify(text) { return text.replace(/(https?:\/\/[^\s<"]+)/g, '<a href=
 
 // Rechtschreibung: Wort als Deep-Link zur Spelling-Liste rendern
 function renderSpellingMsg(m, col) {
-  if (typeof m !== "object" || !m || !m.text) return fixMsg(msgText(m));
-  const slug   = new URLSearchParams(window.location.search).get("project") || "";
-  const token  = new URLSearchParams(window.location.search).get("token")  || "";
-  const word   = m.text;
-  let   href   = `spelling.html?project=${encodeURIComponent(slug)}&word=${encodeURIComponent(word)}&filter=all`;
+  if (typeof m !== "object" || !m) return fixMsg(msgText(m));
+  const msg  = m.message || "";
+  // Wort aus m.text oder aus Nachrichtenformat "Wort" – ... extrahieren
+  const word = m.text || (msg.match(/^"([^"]+)"/) || [])[1] || "";
+  if (!word) return fixMsg(msg);
+  const slug  = new URLSearchParams(window.location.search).get("project") || "";
+  const token = new URLSearchParams(window.location.search).get("token")  || "";
+  let   href  = `spelling.html?project=${encodeURIComponent(slug)}&word=${encodeURIComponent(word)}&filter=all`;
   if (token) href += `&token=${encodeURIComponent(token)}`;
   const linked = `<a href="${href}" target="_blank" style="color:${col};text-decoration:underline;">"${word}"</a>`;
-  const rest   = fixMsg(m.message || "").replace(/^"[^"]*"\s*–?\s*/, "");
+  const rest   = fixMsg(msg).replace(/^"[^"]*"\s*–?\s*/, "");
   return `${linked}${rest ? " – " + rest : ""}`;
 }
 
