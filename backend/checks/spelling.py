@@ -310,6 +310,7 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
             "suggestions": error["suggestions"],
             "context": error["context"],
             "rule_id": error["rule_id"],
+            "text": error["text"],
         }
         if error["severity"] == "critical":
             issues.append(entry)

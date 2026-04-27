@@ -286,7 +286,7 @@
 </div>
 
 <script>
-const VERSION='260427-0659';
+const VERSION='260427-0730';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -462,6 +462,19 @@ function msgText(m) { return typeof m === "object" ? m.message : m; }
 function fixMsg(msg) { return msg.replace(/Wird von Google abgeschnitten/gi, "Wird bei der Ausgabe auf klassischen Suchmaschinen abgeschnitten"); }
 function linkify(text) { return text.replace(/(https?:\/\/[^\s<"]+)/g, '<a href="$1" target="_blank" style="color:inherit;text-decoration:underline;">$1</a>'); }
 
+// Rechtschreibung: Wort als Deep-Link zur Spelling-Liste rendern
+function renderSpellingMsg(m, col) {
+  if (typeof m !== "object" || !m || !m.text) return fixMsg(msgText(m));
+  const slug   = new URLSearchParams(window.location.search).get("project") || "";
+  const token  = new URLSearchParams(window.location.search).get("token")  || "";
+  const word   = m.text;
+  let   href   = `spelling.html?project=${encodeURIComponent(slug)}&word=${encodeURIComponent(word)}&filter=all`;
+  if (token) href += `&token=${encodeURIComponent(token)}`;
+  const linked = `<a href="${href}" target="_blank" style="color:${col};text-decoration:underline;">"${word}"</a>`;
+  const rest   = fixMsg(m.message || "").replace(/^"[^"]*"\s*–?\s*/, "");
+  return `${linked}${rest ? " – " + rest : ""}`;
+}
+
 // Alt-Attribute: natürlichen Text als Link rendern (kein Extra-Button)
 function renderAltMsg(m, col) {
   if (typeof m !== "object" || !m) return fixMsg(msgText(m));
@@ -589,11 +602,13 @@ function renderCheckCard(key, data) {
   const txKey   = AUFGABE_TEXTE[key];
   const anlUrl  = ANLEITUNG_URLS[key] || ANLEITUNG_BASE;
 
-  const isAlt    = key === "alt_attributes";
-  const issues   = (data.issues   || []).map(m => isAlt ? m : fixMsg(msgText(m)));
-  const warnings = (data.warnings || []).map(m => isAlt ? m : fixMsg(msgText(m)));
-  const infos    = (data.infos    || []).map(m => isAlt ? m : fixMsg(msgText(m)));
-  const passed   = (data.passed   || []).map(m => fixMsg(msgText(m)));
+  const isAlt     = key === "alt_attributes";
+  const isSpell   = key === "spelling";
+  const keepRaw   = isAlt || isSpell;
+  const issues    = (data.issues   || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
+  const warnings  = (data.warnings || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
+  const infos     = (data.infos    || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
+  const passed    = (data.passed   || []).map(m => fixMsg(msgText(m)));
 
   const w = document.createElement("div");
   w.className = "kachel-wrap";
@@ -630,6 +645,13 @@ function renderCheckCard(key, data) {
         msgs.forEach(m => {
           const d = document.createElement("div");
           d.innerHTML = icon + " " + renderAltMsg(m, col);
+          d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
+          sec.appendChild(d);
+        });
+      } else if (isSpell) {
+        msgs.forEach(m => {
+          const d = document.createElement("div");
+          d.innerHTML = icon + " " + renderSpellingMsg(m, col);
           d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
           sec.appendChild(d);
         });
