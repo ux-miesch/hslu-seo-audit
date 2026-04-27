@@ -243,6 +243,15 @@ GLOBAL_DB_PATH = os.path.join(DB_BASE, "spelling.db")
 def get_global_db() -> sqlite3.Connection:
     conn = sqlite3.connect(GLOBAL_DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    # Auto-migration: spelling_whitelist-Tabelle anlegen falls fehlend
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS spelling_whitelist (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            word       TEXT NOT NULL UNIQUE,
+            added_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    conn.commit()
     return conn
 
 
@@ -273,6 +282,12 @@ def init_global_db() -> None:
         CREATE TABLE IF NOT EXISTS config (
             key   TEXT PRIMARY KEY,
             value TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS spelling_whitelist (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            word       TEXT NOT NULL UNIQUE,
+            added_at   TEXT NOT NULL DEFAULT (datetime('now'))
         );
     """)
     conn.commit()

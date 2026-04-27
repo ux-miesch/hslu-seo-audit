@@ -54,7 +54,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "alt": alt,
             })
         else:
-            passed.append({"code": "IMG_ALT_OK", "message": f"Alt-Text vorhanden: \"{alt[:60]}\""})
+            passed.append({"code": "IMG_ALT_OK", "message": f"Alt-Text vorhanden: \"{alt[:60]}\"", "src": absolute_src, "alt": alt})
 
     if not images:
         passed.append({"code": "NO_IMAGES", "message": "Keine Bilder auf der Seite gefunden."})
@@ -75,7 +75,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": absolute_src,
             })
         else:
-            passed.append({"code": "VIDEO_LABEL_OK", "message": f"Video mit Label: \"{(aria_label or title)[:60]}\""})
+            passed.append({"code": "VIDEO_LABEL_OK", "message": f"Video mit Label: \"{(aria_label or title)[:60]}\"", "src": absolute_src, "label": aria_label or title})
 
     # ── IFRAMES ───────────────────────────────────────────────────────────
     IGNORE_IFRAME_DOMAINS = {"googletagmanager.com", "google.com/recaptcha", "doubleclick.net"}
@@ -95,7 +95,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "src": src,
             })
         else:
-            passed.append({"code": "IFRAME_TITLE_OK", "message": f"iframe mit title: \"{(title or aria_label)[:60]}\""})
+            passed.append({"code": "IFRAME_TITLE_OK", "message": f"iframe mit title: \"{(title or aria_label)[:60]}\"", "src": src, "label": title or aria_label})
 
     # ── PDF-LINKS ─────────────────────────────────────────────────────────
     pdf_links = [
@@ -123,7 +123,7 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "href": absolute_href,
             })
         else:
-            passed.append({"code": "PDF_TEXT_OK", "message": f"PDF-Link mit beschreibendem Text: \"{anchor_text[:60]}\""})
+            passed.append({"code": "PDF_TEXT_OK", "message": f"PDF-Link mit beschreibendem Text: \"{anchor_text[:60]}\"", "href": absolute_href, "anchor_text": anchor_text})
 
     data["summary"] = {
         "total_images": len(images),

@@ -45,6 +45,39 @@ SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 
+_URL_LANG_MAP = {
+    "de-ch": "de-CH", "de": "de-CH",
+    "fr-ch": "fr-CH", "fr": "fr-CH",
+    "it-ch": "it-CH", "it": "it-CH",
+    "en-us": "en-US", "en": "en-US",
+}
+
+def _detect_language_from_url(url: str) -> Optional[str]:
+    segments = urlparse(url).path.lower().split("/")
+    for seg in segments:
+        if seg in _URL_LANG_MAP:
+            return _URL_LANG_MAP[seg]
+    return None
+
+def _detect_language_from_content(soup: BeautifulSoup) -> Optional[str]:
+    try:
+        from langdetect import detect, LangDetectException
+        texts = [t.get_text(strip=True) for t in soup.find_all(["p", "h1", "h2", "h3", "li"]) if len(t.get_text(strip=True)) > 20]
+        full_text = " ".join(texts[:50])
+        if len(full_text) < 100:
+            return None
+        lang = detect(full_text)
+        return _URL_LANG_MAP.get(lang)
+    except Exception:
+        return None
+
+def _resolve_language(url: str, soup: Optional[BeautifulSoup] = None) -> Optional[str]:
+    """Inhalt schlägt URL – beide Quellen kombinieren."""
+    url_lang     = _detect_language_from_url(url)
+    content_lang = _detect_language_from_content(soup) if soup else None
+    return content_lang or url_lang
+
+
 class ProjectCreate(BaseModel):
     name: str
     root_url: str
@@ -162,7 +195,7 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
       <a href="{report_url}" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
       <a href="{spelling_url}" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>
     </p>
-    <p style="margin-top:32px;padding:12px 16px;background:#f4f4f4;border-left:3px solid #ccc;font-size:11px;color:#777;line-height:1.5;">
+    <p style="margin-top:32px;padding:12px 16px;background:#f4f4f4;border-left:3px solid #ccc;font-size:11px;color:#1a1a1a;line-height:1.5;">
       <strong>Hinweis:</strong> Die obigen Links sind persönliche Zugangslinks.
       Jede Person mit diesen Links hat vollen Zugriff auf den SEO-Audit.
       Bitte Links nicht öffentlich teilen.
@@ -216,6 +249,7 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
     visited: set[str] = set()
     queue: list[str] = [canonical_root]
     found: list[str] = []
+    _lang_detected = False  # Sprache wird nur einmal aus Inhalt ermittelt
 
     async with httpx.AsyncClient(
         timeout=10,
@@ -251,6 +285,20 @@ async def _crawl_inner(project_id: int, root_url: str, slug: str, max_pages: Opt
                 save_url = final_url
             else:
                 save_url = url
+
+            # Sprache einmalig aus erster Seite ermitteln (Inhalt schlägt URL)
+            if not _lang_detected:
+                detected = _resolve_language(root_url, soup)
+                if detected:
+                    try:
+                        db = get_db(slug)
+                        db.execute("UPDATE projects SET language = ? WHERE id = ?", (detected, project_id))
+                        db.commit()
+                        db.close()
+                        print(f"[CRAWL] Sprache erkannt: {detected} für {slug}", flush=True)
+                    except Exception as lang_exc:
+                        print(f"[CRAWL] Sprache-Update fehlgeschlagen: {lang_exc}", flush=True)
+                _lang_detected = True
 
             _path = urlparse(save_url).path
             if "/category/" not in _path and "/tag/" not in _path and "download" not in _path:
@@ -682,11 +730,13 @@ async def create_project(body: ProjectCreate):
 
     init_db(slug)
     project_token = _secrets.token_urlsafe(12)
+    # Sprache aus URL ableiten (wird beim ersten Crawl durch Inhaltsanalyse überschrieben)
+    language = body.language or _detect_language_from_url(body.root_url)
     db = get_db(slug)
     try:
         db.execute(
             "INSERT INTO projects (name, slug, root_url, page_type, language, notification_email, max_pages, project_type, project_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (body.name, slug, body.root_url, body.page_type, body.language, body.notification_email, body.max_pages or 0, body.project_type, project_token),
+            (body.name, slug, body.root_url, body.page_type, language, body.notification_email, body.max_pages or 0, body.project_type, project_token),
         )
         db.commit()
         row = db.execute("SELECT * FROM projects WHERE slug = ?", (slug,)).fetchone()

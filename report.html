@@ -286,7 +286,7 @@
 </div>
 
 <script>
-const VERSION='260427-0808';
+const VERSION='260427-0942';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -509,6 +509,26 @@ function renderAltMsg(m, col) {
     const filename = href.split("/").pop().split("?")[0] || href;
     return `PDF-Link ${code === "PDF_MISSING_TEXT" ? "ohne Ankertext" : "mit nichtssagendem Ankertext"}: ${href ? lnk(filename, href) : "[kein href]"}`;
   }
+  // ── Passed-Einträge ──
+  if (code === "IMG_ALT_OK") {
+    const label = (m.alt || "").trim();
+    return `Alt-Text vorhanden: ${src ? lnk(`"${label}"`, src) : `"${label}"`}`;
+  }
+  if (code === "VIDEO_LABEL_OK") {
+    const label = (m.label || "").trim();
+    const short = src.split("/").pop().split("?")[0] || src;
+    return `Video mit Label: ${src ? lnk(`"${label}"`, src) : `"${label}"`}`;
+  }
+  if (code === "IFRAME_TITLE_OK") {
+    const label = (m.label || "").trim();
+    const domain = src.replace(/^https?:\/\//, "").split("/")[0] || src;
+    return `iframe mit title: ${src ? lnk(`"${label}"`, src) : `"${label}"`}`;
+  }
+  if (code === "PDF_TEXT_OK") {
+    const href  = m.href || src;
+    const label = (m.anchor_text || "").trim();
+    return `PDF-Link mit beschreibendem Text: ${href ? lnk(`"${label}"`, href) : `"${label}"`}`;
+  }
   return fixMsg(m.message || "");
 }
 
@@ -611,7 +631,7 @@ function renderCheckCard(key, data) {
   const issues    = (data.issues   || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
   const warnings  = (data.warnings || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
   const infos     = (data.infos    || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
-  const passed    = (data.passed   || []).map(m => fixMsg(msgText(m)));
+  const passed    = (data.passed   || []).map(m => isAlt ? m : fixMsg(msgText(m)));
 
   const w = document.createElement("div");
   w.className = "kachel-wrap";
@@ -635,7 +655,8 @@ function renderCheckCard(key, data) {
     passed.forEach(p => {
       const sec2 = document.createElement("div");
       sec2.className = "aufgabe-section";
-      sec2.innerHTML = `<span style="color:#1b5e20;">🟢 ${p}</span>`;
+      const txt = isAlt ? renderAltMsg(p, "#1b5e20") : p;
+      sec2.innerHTML = `<span style="color:#1b5e20;">🟢 ${txt}</span>`;
       body.appendChild(sec2);
     });
   } else {

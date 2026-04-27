@@ -149,48 +149,36 @@ def apply_whitelist(
     token: Optional[str] = Query(default=None),
     x_admin_password: Optional[str] = Header(default=None),
 ):
-    """Schreibt alle Einträge mit status='whitelist' in whitelist.py."""
+    """Schreibt alle Einträge mit status='whitelist' in die spelling_whitelist-Tabelle der DB."""
     if project:
         _verify_project_token(project, token)
     else:
         _require_admin(x_admin_password)
+
     conn = get_global_db()
     try:
         rows = conn.execute(
-            "SELECT id, word FROM spelling_candidates WHERE status = 'whitelist'"
+            "SELECT word FROM spelling_candidates WHERE status = 'whitelist'"
         ).fetchall()
-        words = [r["word"].lower().strip() for r in rows if r["word"]]
-        ids   = [r["id"] for r in rows]
+        # Deduplizieren (gleiche Wörter mit verschiedenen rule_ids)
+        words = list(dict.fromkeys(r["word"].lower().strip() for r in rows if r["word"]))
+
+        if not words:
+            return {"added": 0, "words": []}
+
+        # Bereits in DB-Whitelist vorhandene Wörter ermitteln
+        existing = {
+            r["word"] for r in conn.execute("SELECT word FROM spelling_whitelist").fetchall()
+        }
+        new_words = [w for w in words if w not in existing]
+
+        # Neue Wörter einfügen
+        for w in new_words:
+            conn.execute(
+                "INSERT OR IGNORE INTO spelling_whitelist (word) VALUES (?)", (w,)
+            )
+        conn.commit()
     finally:
         conn.close()
-
-    if not words:
-        return {"added": 0, "words": []}
-
-    # whitelist.py einlesen
-    with open(WHITELIST_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    # Bestehende Einträge aus der Menge extrahieren um Duplikate zu vermeiden
-    match = re.search(r"SPELLING_WHITELIST\s*=\s*\{([^}]*)\}", content, re.DOTALL)
-    if not match:
-        raise HTTPException(status_code=500, detail="SPELLING_WHITELIST nicht in whitelist.py gefunden")
-
-    existing_raw = match.group(1)
-    existing = set(re.findall(r'"([^"]+)"', existing_raw))
-    new_words = [w for w in words if w not in existing]
-
-    if new_words:
-        new_entries = "    " + ",\n    ".join(f'"{w}"' for w in new_words) + ","
-        updated_content = content[:match.start(1)] + match.group(1).rstrip() + "\n" + new_entries + "\n" + content[match.end(1):]
-        with open(WHITELIST_PATH, "w", encoding="utf-8") as f:
-            f.write(updated_content)
-
-    # SPELLING_WHITELIST im laufenden Prozess nachladen
-    import importlib
-    import whitelist as _wl
-    importlib.reload(_wl)
-    from checks import spelling as _sp
-    importlib.reload(_sp)
 
     return {"added": len(new_words), "words": new_words}

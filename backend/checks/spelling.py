@@ -43,6 +43,17 @@ def _get_ignored_pairs() -> set:
         return set()
 
 
+def _get_db_whitelist() -> set:
+    """Gibt alle Wörter aus der DB-Whitelist zurück (via 'Whitelist anwenden' hinzugefügt)."""
+    try:
+        conn = sqlite3.connect(_GLOBAL_DB, check_same_thread=False)
+        rows = conn.execute("SELECT word FROM spelling_whitelist").fetchall()
+        conn.close()
+        return {r[0].lower().strip() for r in rows}
+    except Exception:
+        return set()
+
+
 def _save_candidates(errors: list, url: str) -> None:
     """Upsert Fehler in spelling_candidates: neu → anlegen, vorhanden → last_seen + url updaten."""
     try:
@@ -182,7 +193,9 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
     detected_lang = language or detect_language(soup, full_text)
     data["language_detected"] = detected_lang
 
-    ignored_pairs = _get_ignored_pairs()
+    ignored_pairs  = _get_ignored_pairs()
+    db_whitelist   = _get_db_whitelist()
+    combined_whitelist = SPELLING_WHITELIST | db_whitelist
     all_errors = []
     error_count = 0
 
@@ -222,7 +235,7 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
     unique_matches = []
     for match in result.get("matches", []):
         rid = match.get("rule", {}).get("id", "")
-        msg = match.get("message", "")
+        msg = match.get("message", "").replace("ß", "ss")
         o = match.get("offset", 0)
         l = match.get("length", 0)
         if rid in DEDUPE_BY_RULE_ONLY:
@@ -246,7 +259,7 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         if category in ("STYLE", "REDUNDANCY"):
             continue
 
-        msg = match.get("message", "")
+        msg = match.get("message", "").replace("ß", "ss")
         o = max(0, match.get("offset", 0))
         l = match.get("length", 0)
         is_whitespace_err = rule_id in DEDUPE_BY_RULE_ONLY or any(msg.startswith(p) for p in DEDUPE_BY_MESSAGE_PREFIX)
@@ -261,8 +274,8 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
         if re.match(r'^[^a-zA-ZäöüÄÖÜ]', error_text) or re.search(r'[^\w]$', error_text):
             continue
 
-        # Whitelist prüfen – Gross-/Kleinschreibung ignorieren
-        if error_text.lower() in SPELLING_WHITELIST:
+        # Whitelist prüfen – Gross-/Kleinschreibung ignorieren (hardcodiert + DB)
+        if error_text.lower() in combined_whitelist:
             continue
 
         # Ignorieren-Kandidaten überspringen
