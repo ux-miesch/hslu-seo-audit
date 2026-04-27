@@ -182,6 +182,16 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
 
 async def _crawl(project_id: int, root_url: str, slug: str, max_pages: Optional[int] = None) -> None:
     """BFS-Crawl ab root_url. max_pages=None/0 → kein Limit."""
+    # Sicherstellen dass _project_state initialisiert ist – unabhängig ob via Endpoint oder Scheduler aufgerufen
+    if slug not in _project_state:
+        _project_state[slug] = {
+            "status": "crawling",
+            "pages_crawled": 0,
+            "pages_total": 0,
+            "pages_audited": 0,
+            "recently_audited": [],
+            "current_url": None,
+        }
     try:
         await _crawl_inner(project_id, root_url, slug, max_pages)
     except Exception as exc:

@@ -15,6 +15,44 @@ def db_path(slug: str) -> str:
 def get_db(slug: str) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path(slug))
     conn.row_factory = sqlite3.Row
+    # Auto-repair: wenn projects-Tabelle fehlt (korrupte/leere DB), Schema neu anlegen
+    tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    if "projects" not in tables:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+                name               TEXT    NOT NULL,
+                slug               TEXT    NOT NULL UNIQUE,
+                root_url           TEXT    NOT NULL,
+                page_type          TEXT,
+                language           TEXT,
+                created_at         TEXT    NOT NULL DEFAULT (datetime('now')),
+                last_crawled_at    TEXT,
+                schedule           TEXT,
+                notification_email TEXT,
+                max_pages          INTEGER NOT NULL DEFAULT 20,
+                project_type       TEXT    NOT NULL DEFAULT 'website',
+                project_token      TEXT    DEFAULT NULL,
+                current_package    INTEGER NOT NULL DEFAULT 0,
+                total_packages     INTEGER NOT NULL DEFAULT 0,
+                audit_status       TEXT    DEFAULT NULL
+            );
+            CREATE TABLE IF NOT EXISTS pages (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id     INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+                url            TEXT    NOT NULL,
+                content_hash   TEXT    DEFAULT NULL,
+                audit_skipped  INTEGER DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS audit_results (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                page_id      INTEGER NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+                crawled_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+                score        REAL,
+                results_json TEXT
+            );
+        """)
+        conn.commit()
     return conn
 
 
