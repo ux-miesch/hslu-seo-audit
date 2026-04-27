@@ -56,6 +56,9 @@
     #depth-flyout { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #ddd; z-index:300; box-shadow:0 4px 14px rgba(0,0,0,.18); min-width:100px; padding:4px 0; }
     #depth-flyout.open { display:block; }
     #depth-flyout .flyout-item { padding: 8px 14px; font-size: 11px; font-weight: 700; }
+    .skala-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;border:1px solid #e0e0e0;background:#fafafa;align-items:center;}
+    .skala-item{display:flex;align-items:center;gap:5px;font-family:'Verdana',sans-serif;font-size:10px;font-weight:700;color:#000;}
+    .skala-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
     @media (max-width: 640px) { .filter-label { display: none; } }
@@ -286,7 +289,7 @@
 </div>
 
 <script>
-const VERSION='260427-1521';
+const VERSION='260427-1525';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -874,7 +877,15 @@ function render(data) {
       </table>
     </div>`;
 
-  document.getElementById("app").innerHTML = summaryHtml + filterBar + tableHtml;
+  const skalaHtml = `
+    <div class="skala-box">
+      <span class="skala-item"><span class="skala-dot" style="background:#EE6A87;"></span>Kritisch &#x2013; sofort handeln</span>
+      <span class="skala-item"><span class="skala-dot" style="background:#FCC300;"></span>Optimieren nötig</span>
+      <span class="skala-item"><span class="skala-dot" style="background:#77C5D8;"></span>Optimieren &#x2013; bei Gelegenheit</span>
+      <span class="skala-item"><span class="skala-dot" style="background:#ADCA2A;"></span>Alles in Ordnung</span>
+    </div>`;
+
+  document.getElementById("app").innerHTML = summaryHtml + skalaHtml + filterBar + tableHtml;
 
   /* ── Row click → detail ── */
   _openIdx = null;
