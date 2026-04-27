@@ -118,10 +118,21 @@ async def check_single_url(
                 "final_url": url, "redirected": False, "error": "path_whitelisted",
             }
         try:
-            response = await client.get(url, timeout=TIMEOUT)
+            # Option 1: HEAD zuerst (kein Body-Download → schneller, weniger Bot-Detection)
+            # Fallback auf GET bei 405/501 (Server unterstützt HEAD nicht)
+            try:
+                response = await client.head(url, timeout=TIMEOUT)
+                if response.status_code in (405, 501):
+                    response = await client.get(url, timeout=TIMEOUT)
+            except httpx.TimeoutException:
+                raise
+            except Exception:
+                response = await client.get(url, timeout=TIMEOUT)
+
             status_code = response.status_code
             ok = status_code in OK_CODES
             blocked = is_bot_blocked(url, status_code)
+            # consent_blocked: URL-Check funktioniert auch bei HEAD; Body-Check nur bei GET-Fallback
             consent = is_consent_blocked(url, response) if ok else False
             return {
                 "url": url,
@@ -135,8 +146,17 @@ async def check_single_url(
             }
         except httpx.TimeoutException:
             return {"url": url, "status_code": None, "ok": True, "bot_blocked": True, "consent_blocked": False, "final_url": url, "redirected": False, "error": "timeout"}
-        except httpx.ConnectError:
-            return {"url": url, "status_code": None, "ok": False, "bot_blocked": False, "consent_blocked": False, "error": "nicht erreichbar"}
+        except httpx.ConnectError as e:
+            # Option 3: DNS-Fehler = echter defekter Link; SSL/Reset = wahrscheinlich Bot-Blocking
+            err_msg = str(e).lower()
+            is_dns_error = any(kw in err_msg for kw in (
+                "getaddrinfo", "name or service not known",
+                "nodename nor servname", "name resolution",
+            ))
+            if is_dns_error:
+                return {"url": url, "status_code": None, "ok": False, "bot_blocked": False, "consent_blocked": False, "error": "nicht erreichbar (DNS)"}
+            # SSL-Fehler, Connection Reset → als Bot-Blocking werten
+            return {"url": url, "status_code": None, "ok": True, "bot_blocked": True, "consent_blocked": False, "final_url": url, "redirected": False, "error": "connection_blocked"}
         except Exception as e:
             return {"url": url, "status_code": None, "ok": False, "bot_blocked": False, "consent_blocked": False, "error": str(e)}
 
@@ -220,9 +240,9 @@ async def check_broken_links(soup: BeautifulSoup, base_url: str) -> dict:
         elif status == 403:
             severity = "info"
             message = f"Zugriff verweigert – manuell im Browser prüfen (403): {url}"
-        elif status == 500:
+        elif status in (500, 502, 503):
             severity = "warning"
-            message = f"Server-Fehler auf Zielseite – später nochmals prüfen (500): {url}"
+            message = f"Server vorübergehend nicht erreichbar – später nochmals prüfen ({status}): {url}"
         else:
             link_type = "intern" if is_internal else "extern"
             status_info = f"Status {status}" if status else f"Fehler: {link.get('error', 'unbekannt')}"
