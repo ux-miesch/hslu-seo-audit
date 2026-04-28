@@ -200,15 +200,23 @@ def _send_notification_email(to: str, project_name: str, slug: str, page_count: 
     )
 
     html_body = f"""
-    <html><body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;max-width:600px;">
+    <html>
+    <head>
+    <style>
+      @media (prefers-color-scheme: dark) {{
+        .btn {{ color: #1a1a1a !important; -webkit-text-fill-color: #1a1a1a !important; }}
+      }}
+    </style>
+    </head>
+    <body style="font-family:Verdana,sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;max-width:600px;">
     <p style="font-size:15px;font-weight:700;margin-bottom:12px;">Crawl abgeschlossen: {project_name}</p>
     <p style="color:#555;margin:0;">
       <strong>{page_count}</strong> Seiten geprüft &nbsp;·&nbsp; Ø Score: <strong>{avg_score}</strong><br>
       <strong>{spelling_count}</strong> Rechtschreibfehler gefunden
     </p>
     <p style="margin-top:24px;">
-      <a href="{report_url}" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
-      <a href="{spelling_url}" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>
+      <a href="{report_url}" class="btn" style="display:block;width:fit-content;background:#77C5D8;color:#1a1a1a;-webkit-text-fill-color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;margin-bottom:10px;">Rapport anzeigen →</a>
+      <a href="{spelling_url}" class="btn" style="display:block;width:fit-content;background:#FCC300;color:#1a1a1a;-webkit-text-fill-color:#1a1a1a;padding:10px 20px;text-decoration:none;font-weight:700;">Rechtschreibfehler anzeigen →</a>
     </p>
     <p style="margin-top:32px;padding:12px 16px;background:#f4f4f4;border-left:3px solid #ccc;font-size:11px;color:#1a1a1a;line-height:1.5;">
       <strong>Hinweis:</strong> Die obigen Links sind persönliche Zugangslinks.
