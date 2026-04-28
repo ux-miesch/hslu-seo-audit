@@ -61,7 +61,10 @@
     .skala-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
-    @media (max-width: 640px) { .filter-label { display: none; } }
+    @media (max-width: 640px) {
+      .filter-label { display: none; }
+      .view-toggle-expert, .view-toggle-editor { display: none; }
+    }
     thead th.th-sort { cursor: pointer; user-select: none; }
     thead th.th-sort:hover { opacity: 0.75; }
     .flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
@@ -289,7 +292,7 @@
 </div>
 
 <script>
-const VERSION='260428-0834';
+const VERSION='260428-1020';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -1265,9 +1268,9 @@ document.addEventListener("click", e => {
     <p style="font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">8 geprüfte Bereiche</p>
     <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;">
       <thead>
-        <tr style="background:#f0f0f0;">
-          <th style="text-align:left;padding:6px 8px 6px 0;font-weight:700;color:#1a1a1a;padding-left:8px;">Bereich</th>
-          <th style="text-align:left;padding:6px 0;font-weight:700;color:#1a1a1a;">Was wird geprüft</th>
+        <tr>
+          <th style="background:#f0f0f0;color:#1a1a1a;text-align:left;padding:6px 8px;font-weight:700;white-space:nowrap;">Bereich</th>
+          <th style="background:#f0f0f0;color:#1a1a1a;text-align:left;padding:6px 8px 6px 0;font-weight:700;">Was wird geprüft</th>
         </tr>
       </thead>
       <tbody>
