@@ -387,7 +387,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260501-1235';
+const VERSION='260501-1242';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -482,8 +482,9 @@ let _projColOrder = (function(){
 let _projSortCol = localStorage.getItem('proj_sort_col') || 'name';
 let _projSortDir = localStorage.getItem('proj_sort_dir') || 'asc';
 let _projectsData = [];
-let _projDragCol  = null;
-let _projDragMoved = false;
+let _projDragCol      = null;
+let _projDragMoved    = false;
+let _projPendingOrder = null;
 
 function _projCellVal(p, col) {
   switch(col) {
@@ -587,16 +588,22 @@ document.addEventListener('drop', e => {
   const fromIdx = _projColOrder.indexOf(_projDragCol);
   const toIdx   = _projColOrder.indexOf(th.dataset.col);
   if (fromIdx !== -1 && toIdx !== -1) {
-    _projColOrder.splice(fromIdx, 1);
-    _projColOrder.splice(toIdx, 0, _projDragCol);
-    localStorage.setItem('proj_col_order', JSON.stringify(_projColOrder));
-    _renderProjectTable(_projectsData);
+    const newOrder = [..._projColOrder];
+    newOrder.splice(fromIdx, 1);
+    newOrder.splice(toIdx, 0, _projDragCol);
+    _projPendingOrder = newOrder; // defer render to dragend
   }
 });
 
 document.addEventListener('dragend', () => {
   document.querySelectorAll('#proj-thead-row th').forEach(t => t.classList.remove('th-dragging','th-drag-over'));
   _projDragCol = null;
+  if (_projPendingOrder) {
+    _projColOrder = _projPendingOrder;
+    _projPendingOrder = null;
+    localStorage.setItem('proj_col_order', JSON.stringify(_projColOrder));
+    _renderProjectTable(_projectsData);
+  }
   setTimeout(() => { _projDragMoved = false; }, 0);
 });
 
