@@ -115,6 +115,8 @@ def check_alt_attributes(soup: BeautifulSoup, base_url: str) -> dict:
                 "severity": "warning",
                 "href": absolute_href,
             })
+        elif not anchor_text and aria_label:
+            passed.append({"code": "PDF_ARIA_OK", "message": f"PDF-Link mit aria-label: \"{aria_label[:60]}\"", "href": absolute_href, "anchor_text": aria_label})
         elif anchor_text.lower() in ("pdf", "download", "hier", "here", "klicken", "click"):
             warnings.append({
                 "code": "PDF_GENERIC_TEXT",
