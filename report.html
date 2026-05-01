@@ -68,11 +68,9 @@
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
     @media (max-width: 640px) {
-      .filter-label { display: none; }
       .filter-label-ansicht { display: none; }
       .view-toggle-expert, .view-toggle-editor { display: none; }
       .btn-anleitung { display: none; }
-      .btn-getestet { margin-left:8px !important; }
     }
     thead th.th-sort { cursor: pointer; user-select: none; }
     thead th.th-sort:hover { opacity: 0.75; }
@@ -302,7 +300,7 @@
 </div>
 
 <script>
-const VERSION='260501-1031';
+const VERSION='260501-1042';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -1235,6 +1233,7 @@ document.addEventListener("click", e => {
 <!-- Score-Skala Modal -->
 <style>
 #score-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+#score-modal-inner table tr[onclick]:hover{background:#f0fafd;}
 #score-modal.sm-open{display:flex;}
 #score-modal-inner{background:#fff;padding:32px;max-width:480px;width:90%;border-left:4px solid #77C5D8;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;}
 @media(max-width:640px){
@@ -1284,17 +1283,17 @@ document.addEventListener("click", e => {
         </tr>
       </thead>
       <tbody>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Meta-Angaben</td><td style="padding:6px 0;color:#444;">Titel, Description, Canonical, Open Graph</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Überschriften</td><td style="padding:6px 0;color:#444;">Struktur H1 / H2 / H3, Duplikate, Länge</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Links</td><td style="padding:6px 0;color:#444;">Defekte interne und externe Verlinkungen</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Bilder &amp; Medien</td><td style="padding:6px 0;color:#444;">Alt-Texte, Videos, iFrames, PDF-Links</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Rechtschreibung</td><td style="padding:6px 0;color:#444;">Tipp- und Grammatikfehler via LanguageTool</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Keywords</td><td style="padding:6px 0;color:#444;">Vorkommen und Dichte relevanter Begriffe</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">URL-Struktur</td><td style="padding:6px 0;color:#444;">HTTPS, Länge, Sonderzeichen, Tiefe</td></tr>
-        <tr><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Seitentyp</td><td style="padding:6px 0;color:#444;">Website: CTA, Kontakt, Kursinfos — Blog: Autor, Datum, Verlinkung</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#meta-texte','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Meta-Angaben</td><td style="padding:6px 0;color:#444;">Titel, Description, Canonical, Open Graph</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#%C3%BCberschriften','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Überschriften</td><td style="padding:6px 0;color:#444;">Struktur H1 / H2 / H3, Duplikate, Länge</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#defekte-links','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Links</td><td style="padding:6px 0;color:#444;">Defekte interne und externe Verlinkungen</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#alt-attribute','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Bilder &amp; Medien</td><td style="padding:6px 0;color:#444;">Alt-Texte, Videos, iFrames, PDF-Links</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#rechtschreibung','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Rechtschreibung</td><td style="padding:6px 0;color:#444;">Tipp- und Grammatikfehler via LanguageTool</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#keywords-semantik','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Keywords</td><td style="padding:6px 0;color:#444;">Vorkommen und Dichte relevanter Begriffe</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#url-slug','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">URL-Struktur</td><td style="padding:6px 0;color:#444;">HTTPS, Länge, Sonderzeichen, Tiefe</td></tr>
+        <tr style="cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Seitentyp</td><td style="padding:6px 0;color:#444;">Website: CTA, Kontakt, Kursinfos — Blog: Autor, Datum, Verlinkung</td></tr>
       </tbody>
     </table>
-    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;">
+    <div style="margin-top:24px;padding-top:16px;display:flex;justify-content:flex-end;">
       <button onclick="closeScoreModal()" style="padding:8px 20px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#1a1a1a;color:#fff;border:none;cursor:pointer;">Schliessen</button>
     </div>
   </div>
