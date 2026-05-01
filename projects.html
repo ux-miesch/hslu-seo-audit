@@ -83,6 +83,12 @@ tbody tr:hover{background:#f0fafd;}
 td{padding:10px 14px;vertical-align:middle;font-size:13px;}
 td.url-cell{color:#1a1a1a;font-size:12px;}
 td.ts{font-size:11px;color:#777;white-space:nowrap;}
+/* ── Sort & Drag ── */
+th[data-col]{cursor:pointer;user-select:none;}
+th[data-col]:hover{background:#333;}
+.sort-arrow{font-size:10px;margin-left:4px;opacity:0.9;}
+th.th-dragging{opacity:0.4;}
+th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 
 /* ── Score badge ── */
 .score-badge{display:inline-block;padding:2px 9px;font-weight:700;font-size:12px;color:#fff;}
@@ -381,7 +387,7 @@ td.ts{font-size:11px;color:#777;white-space:nowrap;}
 </div>
 
 <script>
-const VERSION='260501-1153';
+const VERSION='260501-1235';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -454,6 +460,146 @@ function scheduleLabel(s) {
   return "Deaktiviert";
 }
 
+/* ── Column order + sort (localStorage) ── */
+const _PROJ_COL_KEYS = ['name','root_url','page_count','avg_score','last_crawled_at','schedule'];
+const _PROJ_COL_DEF = {
+  name:            { label: 'Projektname',   sortable: true  },
+  root_url:        { label: 'Root-URL',      sortable: true  },
+  page_count:      { label: 'Seiten',        sortable: true  },
+  avg_score:       { label: 'Ø Score',       sortable: true  },
+  last_crawled_at: { label: 'Letzter Audit', sortable: true  },
+  schedule:        { label: 'Audit geplant', sortable: false },
+};
+
+let _projColOrder = (function(){
+  try {
+    const s = localStorage.getItem('proj_col_order');
+    if (s) { const p = JSON.parse(s); if (Array.isArray(p) && p.length === _PROJ_COL_KEYS.length) return p; }
+  } catch {}
+  return [..._PROJ_COL_KEYS];
+})();
+
+let _projSortCol = localStorage.getItem('proj_sort_col') || 'name';
+let _projSortDir = localStorage.getItem('proj_sort_dir') || 'asc';
+let _projectsData = [];
+let _projDragCol  = null;
+let _projDragMoved = false;
+
+function _projCellVal(p, col) {
+  switch(col) {
+    case 'name':            return (p.name || '').toLowerCase();
+    case 'root_url':        return (p.root_url || '').toLowerCase();
+    case 'page_count':      return p.page_count || 0;
+    case 'avg_score':       return p.avg_score != null ? p.avg_score : -1;
+    case 'last_crawled_at': return p.last_crawled_at || '';
+    case 'schedule':        return p.schedule || '';
+    default: return '';
+  }
+}
+
+function _projCellHtml(p, col) {
+  switch(col) {
+    case 'name':            return `<td data-label="Projektname"><strong>${p.name}</strong></td>`;
+    case 'root_url':        return `<td class="url-cell" data-label="Root-URL">${p.root_url}</td>`;
+    case 'page_count':      return `<td data-label="Seiten">${p.page_count || '—'}</td>`;
+    case 'avg_score':       return `<td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>`;
+    case 'last_crawled_at': return `<td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>`;
+    case 'schedule':        return `<td data-label="Audit geplant" id="schedule-${p.slug}">${scheduleLabel(p.schedule)}</td>`;
+    default: return '<td></td>';
+  }
+}
+
+function _renderProjectTable(projects) {
+  _projectsData = projects;
+  const wrap = document.getElementById('projects-wrap');
+  const sorted = [...projects].sort((a, b) => {
+    const av = _projCellVal(a, _projSortCol), bv = _projCellVal(b, _projSortCol);
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+    return _projSortDir === 'desc' ? -cmp : cmp;
+  });
+
+  const thCells = _projColOrder.map(col => {
+    const def = _PROJ_COL_DEF[col];
+    const arrow = col === _projSortCol ? ` <span class="sort-arrow">${_projSortDir === 'asc' ? '▲' : '▼'}</span>` : '';
+    return `<th data-col="${col}" draggable="true" onclick="onProjThClick(event,'${col}')">${def.label}${arrow}</th>`;
+  }).join('');
+
+  const rows = sorted.map(p => {
+    const cells = _projColOrder.map(col => _projCellHtml(p, col)).join('');
+    return `<tr data-slug="${p.slug}" onclick="openReport('${p.slug}','${p.project_token||''}')">
+      ${cells}
+      <td onclick="event.stopPropagation()">
+        <button class="btn-gear" id="gear-btn-${p.slug}" onclick="openSettingsFlyout('${p.slug}','${p.schedule||''}',this)">Einstellungen</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="proj-thead-row">${thCells}<th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function onProjThClick(e, col) {
+  if (_projDragMoved) return;
+  if (_projSortCol === col) {
+    _projSortDir = _projSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _projSortCol = col;
+    _projSortDir = 'asc';
+  }
+  localStorage.setItem('proj_sort_col', _projSortCol);
+  localStorage.setItem('proj_sort_dir', _projSortDir);
+  _renderProjectTable(_projectsData);
+}
+
+document.addEventListener('dragstart', e => {
+  const th = e.target.closest('th[data-col]');
+  if (!th || !document.getElementById('proj-thead-row')?.contains(th)) return;
+  _projDragCol = th.dataset.col;
+  _projDragMoved = false;
+  th.classList.add('th-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+});
+
+document.addEventListener('dragover', e => {
+  const th = e.target.closest('th[data-col]');
+  if (!th || !document.getElementById('proj-thead-row')?.contains(th) || th.dataset.col === _projDragCol) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('#proj-thead-row th').forEach(t => t.classList.remove('th-drag-over'));
+  th.classList.add('th-drag-over');
+});
+
+document.addEventListener('dragleave', e => {
+  const th = e.target.closest('th[data-col]');
+  if (th) th.classList.remove('th-drag-over');
+});
+
+document.addEventListener('drop', e => {
+  const th = e.target.closest('th[data-col]');
+  if (!th || !document.getElementById('proj-thead-row')?.contains(th) || th.dataset.col === _projDragCol) return;
+  e.preventDefault();
+  _projDragMoved = true;
+  const fromIdx = _projColOrder.indexOf(_projDragCol);
+  const toIdx   = _projColOrder.indexOf(th.dataset.col);
+  if (fromIdx !== -1 && toIdx !== -1) {
+    _projColOrder.splice(fromIdx, 1);
+    _projColOrder.splice(toIdx, 0, _projDragCol);
+    localStorage.setItem('proj_col_order', JSON.stringify(_projColOrder));
+    _renderProjectTable(_projectsData);
+  }
+});
+
+document.addEventListener('dragend', () => {
+  document.querySelectorAll('#proj-thead-row th').forEach(t => t.classList.remove('th-dragging','th-drag-over'));
+  _projDragCol = null;
+  setTimeout(() => { _projDragMoved = false; }, 0);
+});
+
 /* ── Load & render project list ── */
 async function loadProjects() {
   const wrap = document.getElementById("projects-wrap");
@@ -461,42 +607,11 @@ async function loadProjects() {
     const res = await fetch(`${API}/projects/summary`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const projects = await res.json();
-
     if (!projects.length) {
       wrap.innerHTML = '<div class="state-msg">Noch keine Projekte vorhanden. Erstelle dein erstes Projekt oben.</div>';
       return;
     }
-
-    const rows = projects.map(p => `
-      <tr data-slug="${p.slug}" onclick="openReport('${p.slug}','${p.project_token||''}')">
-        <td data-label="Projektname"><strong>${p.name}</strong></td>
-        <td class="url-cell" data-label="Root-URL">${p.root_url}</td>
-        <td data-label="Seiten">${p.page_count || "—"}</td>
-        <td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>
-        <td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>
-        <td data-label="Audit geplant" id="schedule-${p.slug}">${scheduleLabel(p.schedule)}</td>
-        <td onclick="event.stopPropagation()">
-          <button class="btn-gear" id="gear-btn-${p.slug}" onclick="openSettingsFlyout('${p.slug}','${p.schedule||''}',this)">Einstellungen</button>
-        </td>
-      </tr>`).join("");
-
-    wrap.innerHTML = `
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Projektname</th>
-              <th>Root-URL</th>
-              <th>Seiten</th>
-              <th>Ø Score</th>
-              <th>Letzter Audit</th>
-              <th>Audit geplant</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
+    _renderProjectTable(projects);
   } catch (err) {
     wrap.innerHTML = `<div class="error-box">Fehler beim Laden der Projekte: ${err.message}</div>`;
   }
