@@ -70,6 +70,8 @@
     @media (max-width: 640px) {
       .filter-label { display: none; }
       .filter-label-ansicht { display: none; }
+      .view-toggle-expert, .view-toggle-editor { display: none; }
+      .btn-anleitung { display: none; }
       .btn-getestet { margin-left:8px !important; }
     }
     thead th.th-sort { cursor: pointer; user-select: none; }
@@ -300,7 +302,7 @@
 </div>
 
 <script>
-const VERSION='260501-1025';
+const VERSION='260501-1031';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -870,7 +872,7 @@ function render(data) {
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </span>
       <button class="view-btn btn-getestet" onclick="openScoreModal()" style="margin-left:auto;">Wie wird getestet?</button>
-      <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn" style="text-decoration:none;line-height:1;">Zur Anleitung →</a>
+      <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn btn-anleitung" style="text-decoration:none;line-height:1;">Zur Anleitung →</a>
     </div>`;
 
   const tableHtml = `
