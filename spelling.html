@@ -10,7 +10,10 @@
 body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;padding-bottom:48px;}
 
 .header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
-.header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;cursor:pointer;user-select:none;}
+.header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;}
+.burger-icon{display:none;flex-direction:column;gap:5px;}
+.burger-icon span{display:block;width:22px;height:2px;background:#fff;border-radius:1px;}
+@media(max-width:767px){.nav-label{display:none;}.burger-icon{display:flex;}}
 .flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
 .flyout.open{display:block;}
 .flyout-section-title{padding:8px 14px 4px;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.04em;pointer-events:none;}
@@ -173,7 +176,7 @@ td.rule-cell{color:#777;font-size:11px;}
       <span style="font-family:'Verdana',sans-serif;font-size:11px;color:#fff;line-height:1.3;">Hochschule<br>Luzern</span>
     </div>
   </a>
-  <div class="header-right" onclick="toggleNavFlyout(this)">SEO-Audit Rechtschreibkandidaten ▾</div>
+  <div class="header-right" onclick="toggleNavFlyout(this)"><span class="nav-label">SEO-Audit Rechtschreibkandidaten ▾</span><span class="burger-icon" aria-hidden="true"><span></span><span></span><span></span></span></div>
 </div>
 
 <!-- ── Flyout: Navigation ── -->
@@ -216,7 +219,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260428-1020';
+const VERSION='260501-0939';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -344,7 +347,7 @@ async function load() {
         const proj = await pr.json();
         const title = `Rechtschreibfehler – ${proj.name || _projectSlug}`;
         document.querySelector(".section-title").textContent = title;
-        document.querySelector(".header-right").textContent  = title;
+        document.querySelector(".header-right .nav-label").textContent = title + ' ▾';
         document.title = title;
       }
     } catch { /* ignore */ }

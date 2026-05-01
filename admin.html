@@ -11,7 +11,10 @@
     body { font-family: Verdana, Geneva, sans-serif; font-size: 13px; color: var(--black); background: #fff; line-height: 1.5; }
 
     .header { background: #000; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 64px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
-    .header-right { font-family: 'Verdana', sans-serif; font-size: 13px; color: #ccc; }
+    .header-right { font-family: 'Verdana', sans-serif; font-size: 13px; color: #ccc; display: flex; align-items: center; }
+    .burger-icon { display: none; flex-direction: column; gap: 5px; }
+    .burger-icon span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+    @media(max-width: 767px) { .nav-label { display: none; } .burger-icon { display: flex; } }
     .footer-bar { background: #F0F0F0; border-top: 1px solid #ddd; font-family: 'Verdana', sans-serif; font-size: 11px; color: #777; height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; }
 
     main { max-width: 900px; margin: 0 auto; padding: 88px 20px 52px; }
@@ -69,7 +72,7 @@
   <a href="index.html" style="display:flex;align-items:center;gap:14px;">
     <img src="frontend/assets/HSLU_Logo_DE_Weiss_rgb.svg" alt="HSLU" style="height:32px;" onerror="this.style.display='none'">
   </a>
-  <div class="header-right" onclick="toggleNavFlyout(this)" style="cursor:pointer;user-select:none;">SEO-Audit Admin ▾</div>
+  <div class="header-right" onclick="toggleNavFlyout(this)" style="cursor:pointer;user-select:none;"><span class="nav-label">SEO-Audit Admin ▾</span><span class="burger-icon" aria-hidden="true"><span></span><span></span><span></span></span></div>
 </div>
 
 <div class="flyout" id="flyout-nav">

@@ -25,6 +25,7 @@
       background: #fff;
       line-height: 1.5;
     }
+    @media(min-width:768px){body{padding-bottom:100px;}}
 
     /* ── Header (identisch index.html) ── */
     .header {
@@ -44,13 +45,19 @@
       color: #ccc;
       cursor: pointer;
       user-select: none;
+      display: flex;
+      align-items: center;
     }
+    .burger-icon { display: none; flex-direction: column; gap: 5px; }
+    .burger-icon span { display: block; width: 22px; height: 2px; background: #fff; border-radius: 1px; }
+    @media(max-width: 767px) { .nav-label { display: none; } .burger-icon { display: flex; } }
     .view-bar { background: transparent; padding: 0 0 12px 0; margin-top: 0; display: flex; align-items: center; gap: 8px; }
     .view-bar-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #1a1a1a; white-space: nowrap; }
     .view-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; border-radius: 0; }
     .view-btn.active { background: #1a1a1a; color: #fff; }
     .view-btn:hover:not(.active) { opacity: 0.7; }
     .copy-link-text { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; cursor: pointer; background: none; border: none; padding: 0; }
+    @media(max-width:767px){.copy-link-text{display:none;}}
     .depth-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px; position: relative; }
     .depth-btn:hover:not(.active) { opacity: 0.7; }
     #depth-flyout { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #ddd; z-index:300; box-shadow:0 4px 14px rgba(0,0,0,.18); min-width:100px; padding:4px 0; }
@@ -265,7 +272,7 @@
     </div>
   </a>
   <div style="display:flex;align-items:center;gap:12px;">
-    <div class="header-right" onclick="toggleNavFlyout(this)">SEO-Audit Rapport ▾</div>
+    <div class="header-right" onclick="toggleNavFlyout(this)"><span class="nav-label">SEO-Audit Rapport ▾</span><span class="burger-icon" aria-hidden="true"><span></span><span></span><span></span></span></div>
   </div>
 </div>
 
@@ -292,7 +299,7 @@
 </div>
 
 <script>
-const VERSION='260428-1020';
+const VERSION='260501-0939';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
