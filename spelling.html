@@ -70,6 +70,9 @@ thead th .sort-icon{margin-left:4px;opacity:.5;font-size:10px;}
 thead th.sort-active .sort-icon{opacity:1;}
 thead th.col-info{cursor:default;}
 thead th.col-info:hover{background:#1a1a1a;}
+thead th[draggable]{cursor:grab;}
+thead th[draggable]:active{cursor:grabbing;}
+thead th.drag-over{border-left:3px solid #77C5D8;}
 
 tbody tr{border-bottom:1px solid #e8e8e8;}
 tbody tr:hover{background:#f5fbfd;}
@@ -227,7 +230,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260501-1114';
+const VERSION='260501-1125';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -345,6 +348,17 @@ const COLS = [
   { key: "status",    label: "Status",        cls: "col-status"  },
   { key: null,        label: "Aktionen",      cls: "col-actions" },
 ];
+(function() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('spelling_col_order'));
+    if (Array.isArray(saved) && saved.length) {
+      const map = Object.fromEntries(COLS.map(c => [c.cls, c]));
+      const reordered = saved.map(cls => map[cls]).filter(Boolean);
+      COLS.forEach(c => { if (!reordered.includes(c)) reordered.push(c); });
+      COLS.splice(0, COLS.length, ...reordered);
+    }
+  } catch {}
+})();
 
 /* ── Load ── */
 async function load() {
@@ -438,14 +452,14 @@ function render() {
     return;
   }
 
-  const thCells = COLS.map(col => {
-    if (col.info) return `<th class="col-info-th"></th>`;
+  const thCells = COLS.map((col, i) => {
+    if (col.info) return `<th class="col-info-th" data-col-idx="${i}"></th>`;
     const active = col.key === _sortCol ? " sort-active" : "";
     const icon   = col.key
       ? `<span class="sort-icon">${col.key === _sortCol ? (_sortDir === "asc" ? "↑" : "↓") : "⇅"}</span>`
       : "";
     const click  = col.key ? `onclick="sortBy('${col.key}')"` : "";
-    return `<th class="${col.cls}${active}" ${click}>${col.label}${icon}</th>`;
+    return `<th class="${col.cls}${active}" ${click} draggable="true" data-col-idx="${i}">${col.label}${icon}</th>`;
   }).join("");
 
   const rows = list.map(c => {
@@ -470,26 +484,25 @@ function render() {
           : `<button class="btn-action btn-reactivate" onclick="setStatus(${c.id},'neu')">Reaktivieren</button>`)
       : `<span style="font-size:11px;color:#aaa;">—</span>`;
 
-    return `<tr id="row-${c.id}" data-word="${esc(c.word)}">
-      <td class="word-cell col-word"  data-label="Wort">${esc(c.word)}</td>
-      <td class="msg-cell  col-msg"   data-label="Fehlermeldung">${esc(c.message || "—")}</td>
-      <td class="url-cell  col-url"   data-label="URL">${urlLink}</td>
-      <td class="date-cell col-date"  data-label="Datum">${date}</td>
-      <td class="rule-cell col-rule"  data-label="Regel">${esc(c.rule_id || "—")}</td>
-      <td class="col-info">${infoBtn}</td>
-      <td class="col-status"          data-label="Status">${statusLabel}</td>
-      <td class="col-actions"         data-label="Aktionen"><div class="btn-actions-cell">${actions}</div></td>
-    </tr>`;
+    const cellMap = {
+      'col-word':    `<td class="word-cell col-word" data-label="Wort">${esc(c.word)}</td>`,
+      'col-msg':     `<td class="msg-cell col-msg" data-label="Fehlermeldung">${esc(c.message || "—")}</td>`,
+      'col-url':     `<td class="url-cell col-url" data-label="URL">${urlLink}</td>`,
+      'col-date':    `<td class="date-cell col-date" data-label="Datum">${date}</td>`,
+      'col-rule':    `<td class="rule-cell col-rule" data-label="Regel">${esc(c.rule_id || "—")}</td>`,
+      'col-info':    `<td class="col-info">${infoBtn}</td>`,
+      'col-status':  `<td class="col-status" data-label="Status">${statusLabel}</td>`,
+      'col-actions': `<td class="col-actions" data-label="Aktionen"><div class="btn-actions-cell">${actions}</div></td>`,
+    };
+    const tds = COLS.map(col => cellMap[col.cls] || '').join('');
+    return `<tr id="row-${c.id}" data-word="${esc(c.word)}">${tds}</tr>`;
   }).join("");
 
+  const colgroup = COLS.map(col => `<col class="${col.cls}">`).join('');
   document.getElementById("table-wrap").innerHTML = `
     <div class="table-wrap">
       <table>
-        <colgroup>
-          <col class="col-word"><col class="col-msg"><col class="col-url">
-          <col class="col-date"><col class="col-rule"><col class="col-info">
-          <col class="col-status"><col class="col-actions">
-        </colgroup>
+        <colgroup>${colgroup}</colgroup>
         <thead><tr>${thCells}</tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -617,6 +630,43 @@ function esc(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/ß/g,"ss");
 }
 function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+
+/* ── Drag-and-drop column reordering (Desktop only) ── */
+let _dragColIdx = null;
+document.addEventListener('dragstart', function(e) {
+  const th = e.target.closest('th[draggable="true"]');
+  if (!th) return;
+  _dragColIdx = +th.dataset.colIdx;
+  e.dataTransfer.effectAllowed = 'move';
+});
+document.addEventListener('dragover', function(e) {
+  const th = e.target.closest('th[draggable="true"]');
+  if (!th || _dragColIdx === null) return;
+  e.preventDefault();
+  document.querySelectorAll('th.drag-over').forEach(el => el.classList.remove('drag-over'));
+  th.classList.add('drag-over');
+});
+document.addEventListener('dragleave', function(e) {
+  const th = e.target.closest('th[draggable="true"]');
+  if (th) th.classList.remove('drag-over');
+});
+document.addEventListener('drop', function(e) {
+  const th = e.target.closest('th[draggable="true"]');
+  if (!th || _dragColIdx === null) return;
+  e.preventDefault();
+  th.classList.remove('drag-over');
+  const dropIdx = +th.dataset.colIdx;
+  if (dropIdx === _dragColIdx) { _dragColIdx = null; return; }
+  const moved = COLS.splice(_dragColIdx, 1)[0];
+  COLS.splice(dropIdx, 0, moved);
+  try { localStorage.setItem('spelling_col_order', JSON.stringify(COLS.map(c => c.cls))); } catch {}
+  _dragColIdx = null;
+  render();
+});
+document.addEventListener('dragend', function() {
+  _dragColIdx = null;
+  document.querySelectorAll('th.drag-over').forEach(el => el.classList.remove('drag-over'));
+});
 
 function toggleNavFlyout(btn) {
   const flyout = document.getElementById("flyout-nav");
