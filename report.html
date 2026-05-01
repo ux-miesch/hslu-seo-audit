@@ -311,7 +311,7 @@
 </div>
 
 <script>
-const VERSION='260501-1242';
+const VERSION='260501-1310';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -731,23 +731,27 @@ function renderCheckCard(key, data) {
         action.innerHTML = `<strong>Was tun:</strong> ${txEntry.action}`;
         sec.appendChild(action);
       }
-      const cta = document.createElement("a");
-      cta.className = "aufgabe-cta";
-      cta.href = anlUrl;
-      cta.target = "_blank";
-      cta.textContent = "→ Zur Anleitung";
-      sec.appendChild(cta);
-      if (key === "spelling") {
-        const slug = new URLSearchParams(window.location.search).get("project") || "";
-        const ctaSpell = document.createElement("a");
-        ctaSpell.className = "aufgabe-cta";
-        ctaSpell.href = `spelling.html?project=${encodeURIComponent(slug)}`;
-        ctaSpell.style.marginLeft = "8px";
-        ctaSpell.textContent = "→ Liste überarbeiten";
-        sec.appendChild(ctaSpell);
-      }
       body.appendChild(sec);
     });
+    // CTAs einmalig nach allen Sektionen
+    const ctaSec = document.createElement("div");
+    ctaSec.className = "aufgabe-section";
+    const cta = document.createElement("a");
+    cta.className = "aufgabe-cta";
+    cta.href = anlUrl;
+    cta.target = "_blank";
+    cta.textContent = "→ Zur Anleitung";
+    ctaSec.appendChild(cta);
+    if (key === "spelling") {
+      const slug = new URLSearchParams(window.location.search).get("project") || "";
+      const ctaSpell = document.createElement("a");
+      ctaSpell.className = "aufgabe-cta";
+      ctaSpell.href = `spelling.html?project=${encodeURIComponent(slug)}`;
+      ctaSpell.style.marginLeft = "8px";
+      ctaSpell.textContent = "→ Liste überarbeiten";
+      ctaSec.appendChild(ctaSpell);
+    }
+    body.appendChild(ctaSec);
   }
 
   // Immer "→ Zur Anleitung" am Ende wenn keine Sections (alles OK)
