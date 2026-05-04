@@ -63,7 +63,7 @@
     #depth-flyout.open { display:block; }
     #depth-flyout .flyout-item { padding: 8px 14px; font-size: 11px; font-weight: 700; }
     .skala-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;border:1px solid #e0e0e0;background:#fafafa;align-items:center;}
-    .skala-item{display:flex;align-items:center;gap:5px;font-family:'Verdana',sans-serif;font-size:10px;font-weight:700;color:#000;}
+    .skala-item{display:flex;align-items:center;gap:5px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;}
     .skala-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
@@ -266,7 +266,7 @@
       .table-wrap td:nth-child(3){grid-column:2;grid-row:1;text-align:right;}
       .table-wrap td:nth-child(4){grid-column:1;grid-row:2;font-size:11px;color:#777;}
       .table-wrap td:nth-child(5){grid-column:2;grid-row:3;text-align:right;}
-      .detail-inner { display: none; }
+      .detail-inner { display: block; padding: 12px 8px; }
       .summary { grid-template-columns: 1fr; }
       .avg-score { text-align: left; }
       .avg-score .big { display: block; text-align: left; }
@@ -311,7 +311,7 @@
 </div>
 
 <script>
-const VERSION='260501-1310';
+const VERSION='260504-0800';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -1018,12 +1018,13 @@ document.addEventListener("click", e => {
           <td data-label="Seiten">${p.page_count || "—"}</td>
           <td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>
           <td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>
+          <td class="ts" data-label="E-Mail">${p.notification_email || "—"}</td>
         </tr>`).join("");
       app.innerHTML = `
         <div class="proj-list-title">Projekte</div>
         <div class="table-wrap"><table>
           <thead><tr>
-            <th>Projektname</th><th>Root-URL</th><th>Seiten</th><th>Ø Score</th><th>Letzter Audit</th>
+            <th>Projektname</th><th>Root-URL</th><th>Seiten</th><th>Ø Score</th><th>Letzter Audit</th><th>E-Mail</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table></div>`;

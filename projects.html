@@ -387,7 +387,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260501-1310';
+const VERSION='260504-0800';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -461,14 +461,15 @@ function scheduleLabel(s) {
 }
 
 /* ── Column order + sort (localStorage) ── */
-const _PROJ_COL_KEYS = ['name','root_url','page_count','avg_score','last_crawled_at','schedule'];
+const _PROJ_COL_KEYS = ['name','root_url','page_count','avg_score','last_crawled_at','schedule','notification_email'];
 const _PROJ_COL_DEF = {
-  name:            { label: 'Projektname',   sortable: true  },
-  root_url:        { label: 'Root-URL',      sortable: true  },
-  page_count:      { label: 'Seiten',        sortable: true  },
-  avg_score:       { label: 'Ø Score',       sortable: true  },
-  last_crawled_at: { label: 'Letzter Audit', sortable: true  },
-  schedule:        { label: 'Audit geplant', sortable: false },
+  name:               { label: 'Projektname',   sortable: true  },
+  root_url:           { label: 'Root-URL',      sortable: true  },
+  page_count:         { label: 'Seiten',        sortable: true  },
+  avg_score:          { label: 'Ø Score',       sortable: true  },
+  last_crawled_at:    { label: 'Letzter Audit', sortable: true  },
+  schedule:           { label: 'Audit geplant', sortable: false },
+  notification_email: { label: 'E-Mail',        sortable: true  },
 };
 
 let _projColOrder = (function(){
@@ -493,19 +494,21 @@ function _projCellVal(p, col) {
     case 'page_count':      return p.page_count || 0;
     case 'avg_score':       return p.avg_score != null ? p.avg_score : -1;
     case 'last_crawled_at': return p.last_crawled_at || '';
-    case 'schedule':        return p.schedule || '';
+    case 'schedule':           return p.schedule || '';
+    case 'notification_email': return (p.notification_email || '').toLowerCase();
     default: return '';
   }
 }
 
 function _projCellHtml(p, col) {
   switch(col) {
-    case 'name':            return `<td data-label="Projektname"><strong>${p.name}</strong></td>`;
-    case 'root_url':        return `<td class="url-cell" data-label="Root-URL">${p.root_url}</td>`;
-    case 'page_count':      return `<td data-label="Seiten">${p.page_count || '—'}</td>`;
-    case 'avg_score':       return `<td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>`;
-    case 'last_crawled_at': return `<td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>`;
-    case 'schedule':        return `<td data-label="Audit geplant" id="schedule-${p.slug}">${scheduleLabel(p.schedule)}</td>`;
+    case 'name':               return `<td data-label="Projektname"><strong>${p.name}</strong></td>`;
+    case 'root_url':           return `<td class="url-cell" data-label="Root-URL">${p.root_url}</td>`;
+    case 'page_count':         return `<td data-label="Seiten">${p.page_count || '—'}</td>`;
+    case 'avg_score':          return `<td data-label="Ø Score">${scoreBadge(p.avg_score)}</td>`;
+    case 'last_crawled_at':    return `<td class="ts" data-label="Letzter Audit">${fmtDate(p.last_crawled_at)}</td>`;
+    case 'schedule':           return `<td data-label="Audit geplant" id="schedule-${p.slug}">${scheduleLabel(p.schedule)}</td>`;
+    case 'notification_email': return `<td class="ts" data-label="E-Mail">${p.notification_email || '—'}</td>`;
     default: return '<td></td>';
   }
 }

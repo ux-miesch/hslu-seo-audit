@@ -9,3 +9,4 @@ venv/
 backend/single-audits.db
 backend/spelling.db
 backend/projects/*.db
+GEO-AUDIT-*.md
