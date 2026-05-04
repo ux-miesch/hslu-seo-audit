@@ -12,7 +12,10 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a
 .header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;cursor:pointer;user-select:none;display:flex;align-items:center;}
 .burger-icon{display:none;flex-direction:column;gap:5px;}
-.burger-icon span{display:block;width:22px;height:2px;background:#fff;border-radius:1px;}
+.burger-icon span{display:block;width:22px;height:2px;background:#fff;border-radius:1px;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.32s cubic-bezier(.4,0,.2,1);transform-origin:center;}
+.burger-icon.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.burger-icon.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.burger-icon.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 @media(max-width:767px){.nav-label{display:none;}.burger-icon{display:flex;}}
 .flyout{display:none;position:fixed;background:#fff;border:1px solid #ddd;z-index:150;box-shadow:0 4px 14px rgba(0,0,0,.18);min-width:220px;padding:4px 0;}
 .flyout.open{display:block;}
@@ -166,7 +169,7 @@ td.rule-cell{color:#777;font-size:11px;}
   td.col-info    { visibility:hidden !important; padding:0 !important; grid-column:2; grid-row:3; }
   td.col-status  { grid-column:2; grid-row:1; text-align:right; }
   td.col-actions { grid-column:2; grid-row:2; text-align:right; }
-  .btn-actions-cell{flex-wrap:wrap;}
+  .btn-actions-cell{flex-direction:column;}
 }
 @media print{.header,.footer-bar{display:none!important;}}
 </style>
@@ -235,7 +238,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260504-1240';
+const VERSION='260504-1314';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -692,8 +695,10 @@ document.addEventListener('dragend', function() {
 
 function toggleNavFlyout(btn) {
   const flyout = document.getElementById("flyout-nav");
+  const burger = btn.querySelector(".burger-icon");
   const isOpen = flyout.classList.contains("open");
   flyout.classList.toggle("open", !isOpen);
+  if (burger) burger.classList.toggle("open", !isOpen);
   if (!isOpen) {
     const rect = btn.getBoundingClientRect();
     flyout.style.right = (window.innerWidth - rect.right) + "px";
@@ -702,8 +707,11 @@ function toggleNavFlyout(btn) {
   }
 }
 document.addEventListener("click", e => {
-  if (!e.target.closest(".header-right") && !e.target.closest("#flyout-nav"))
+  if (!e.target.closest(".header-right") && !e.target.closest("#flyout-nav")) {
     document.getElementById("flyout-nav").classList.remove("open");
+    const burger = document.querySelector(".burger-icon");
+    if (burger) burger.classList.remove("open");
+  }
 });
 
 document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;

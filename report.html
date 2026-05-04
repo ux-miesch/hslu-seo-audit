@@ -115,36 +115,37 @@
     .summary {
       background: var(--grey);
       border-left: 5px solid var(--cyan);
-      padding: 20px 24px;
-      margin-bottom: 28px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
     }
     .avg-score { margin-left: auto; }
-    .summary h1 { font-size: 18px; margin-bottom: 8px; }
-    .summary .meta { opacity: 0.65; margin-bottom: 4px; }
+    .summary h1 { font-size: 18px; margin-bottom: 6px; }
+    .summary .meta { opacity: 0.65; margin-bottom: 2px; }
     .summary .meta a { color: inherit; }
     .summary .stats {
       display: flex;
       flex-wrap: wrap;
-      align-items: stretch;
-      gap: 12px;
-      margin-top: 12px;
+      align-items: flex-end;
+      gap: 8px;
+      margin-top: 8px;
     }
     .stat {
       background: #fff;
       border: 1px solid var(--border);
-      padding: 8px 14px;
+      padding: 6px 10px;
       text-align: center;
-      min-width: 90px;
+      min-width: 80px;
     }
     .stat .val { font-size: 22px; font-weight: bold; }
-    .stat .lbl { font-size: 11px; opacity: 0.6; margin-top: 2px; }
+    .stat .lbl { font-size: 11px; opacity: 0.6; margin-top: 1px; }
 
     /* ── Avg-score ── */
     .avg-score {
       text-align: right;
       position: relative;
-      padding: 8px 14px;
+      padding: 0;
       background-color: #f4f4f4;
+      margin-bottom: 0;
     }
     .avg-score .big {
       font-size: 56px;
@@ -152,12 +153,13 @@
       line-height: 1;
       position: relative;
       display: inline-block;
-      padding: 16px 24px;
+      padding: 14px 20px;
     }
     .avg-score .lbl {
       font-size: 11px;
       opacity: 0.6;
-      margin-top: 4px;
+      margin-top: 2px;
+      margin-bottom: 4px;
       position: relative;
     }
 
@@ -340,7 +342,7 @@
 </div>
 
 <script>
-const VERSION='260504-1240';
+const VERSION='260504-1314';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
