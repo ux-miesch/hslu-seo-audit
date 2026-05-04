@@ -80,9 +80,9 @@ table{width:100%;border-collapse:collapse;}
 thead th{background:#1a1a1a;color:#fff;text-align:left;padding:10px 14px;font-size:12px;font-weight:normal;white-space:nowrap;}
 tbody tr{border-bottom:1px solid #e0e0e0;cursor:pointer;transition:background .1s;}
 tbody tr:hover{background:#f0fafd;}
-td{padding:10px 14px;vertical-align:middle;font-size:13px;}
+td{padding:10px 14px;vertical-align:middle;font-size:12px;font-weight:normal;}
 td.url-cell{color:#1a1a1a;font-size:12px;}
-td.ts{font-size:11px;color:#777;white-space:nowrap;}
+td.ts{font-size:12px;color:#777;white-space:nowrap;}
 /* ── Sort & Drag ── */
 th[data-col]{cursor:pointer;user-select:none;}
 th[data-col]:hover{background:#333;}
@@ -91,14 +91,14 @@ th.th-dragging{opacity:0.4;}
 th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 
 /* ── Score badge ── */
-.score-badge{display:inline-block;padding:2px 9px;font-weight:700;font-size:12px;color:#fff;}
+.score-badge{display:inline-block;padding:2px 9px;font-weight:normal;font-size:12px;color:#fff;}
 .score-green  {background:#ADCA2A;color:#1a1a1a;}
 .score-cyan   {background:#77C5D8;color:#1a1a1a;}
 .score-yellow {background:#FCC300;color:#1a1a1a;}
 .score-magenta{background:#EE6A87;}
 
 /* ── Gear button ── */
-.btn-gear{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;background:#444;color:#fff;border:none;cursor:pointer;font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;white-space:nowrap;}
+.btn-gear{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;background:#444;color:#fff;border:none;cursor:pointer;font-family:'Verdana',sans-serif;font-size:12px;font-weight:normal;white-space:nowrap;}
 .btn-gear:hover{background:#666;}
 
 /* ── Flyout menu ── */
@@ -387,7 +387,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260504-0838';
+const VERSION='260504-0859';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
