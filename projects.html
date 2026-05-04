@@ -188,15 +188,14 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 @media(min-width:768px) and (max-width:1099px){
   .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
   .table-wrap thead{display:block;background:#1a1a1a;}
-  .table-wrap thead tr{display:grid;grid-template-columns:1fr auto auto;padding:10px 14px;gap:0 12px;}
+  .table-wrap thead tr{display:grid;grid-template-columns:1fr auto;padding:10px 14px;gap:0 12px;}
   .table-wrap thead th{display:none;padding:0;background:transparent;color:#fff;}
   .table-wrap th[data-col="name"]{display:block;grid-column:1;font-size:0;}
   .table-wrap th[data-col="name"]::after{content:"Projekt";font-size:12px;font-weight:normal;color:#fff;}
   .table-wrap th[data-col="avg_score"]{display:block;grid-column:2;font-size:12px;font-weight:normal;color:#fff;}
-  .table-wrap thead tr th:last-child{display:block;grid-column:3;font-size:12px;color:#fff;}
   .table-wrap tbody tr{
     display:grid;
-    grid-template-columns:1fr auto auto;
+    grid-template-columns:1fr auto;
     grid-template-rows:auto auto auto auto auto auto;
     border-bottom:1px solid #e0e0e0;
     padding:10px 14px;gap:2px 12px;
@@ -211,10 +210,8 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
   .table-wrap td[data-label="Letzter Audit"]{grid-column:1;grid-row:4;font-size:11px;color:#1a1a1a;}
   .table-wrap td[data-label="Audit geplant"]{grid-column:1;grid-row:5;font-size:11px;color:#1a1a1a;}
   .table-wrap td[data-label="E-Mail"]{grid-column:1;grid-row:6;font-size:11px;color:#1a1a1a;}
-  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1/span 6;align-self:center;}
-  .table-wrap td:last-child{grid-column:3;grid-row:1/span 6;align-self:center;}
-  .btn-gear{font-size:0;padding:6px 8px;}
-  .btn-gear::after{content:"⚙";font-size:18.5px;}
+  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1;align-self:start;text-align:right;}
+  .table-wrap td:last-child{grid-column:2;grid-row:2;align-self:start;text-align:right;}
 }
 @media print{.header,.footer-bar{display:none!important;}}
 </style>
@@ -421,7 +418,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260504-1346';
+const VERSION='260504-1354';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
