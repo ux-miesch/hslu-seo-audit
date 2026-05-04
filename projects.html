@@ -12,7 +12,10 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a
 .header{background:#000;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:fixed;top:0;left:0;right:0;z-index:100;}
 .header-right{font-family:'Verdana',sans-serif;font-size:13px;color:#ccc;display:flex;align-items:center;}
 .burger-icon{display:none;flex-direction:column;gap:5px;}
-.burger-icon span{display:block;width:22px;height:2px;background:#fff;border-radius:1px;}
+.burger-icon span{display:block;width:22px;height:2px;background:#fff;border-radius:1px;transition:transform 0.32s cubic-bezier(.4,0,.2,1),opacity 0.32s cubic-bezier(.4,0,.2,1);transform-origin:center;}
+.burger-icon.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.burger-icon.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+.burger-icon.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
 @media(max-width:767px){.nav-label{display:none;}.burger-icon{display:flex;}}
 
 .footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;position:fixed;bottom:0;left:0;right:0;z-index:100;}
@@ -121,7 +124,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 /* ── Settings Flyout: Mobile Bottom Sheet ── */
 #sheet-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:149;}
 #sheet-backdrop.open{display:block;}
-@media(max-width:1100px){
+@media(max-width:767px){
   #flyout-settings{
     position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
     width:100%!important;max-height:85vh;overflow-y:auto;
@@ -155,32 +158,63 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 .state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#777;padding:28px 0;}
 .error-box{background:#fde8e8;border-left:3px solid #c00;padding:10px 14px;font-family:'Verdana',sans-serif;font-size:12px;color:#a00;margin-top:12px;}
 
-/* ── Mobile Cards ── */
-@media(max-width:1100px){
+/* ── Kachelansicht (< 768px) ── */
+@media(max-width:767px){
   .form-card input[type=text],.form-card input[type=email],.form-card input[type=number]{max-width:100%;}
   .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
   .table-wrap thead{display:none;}
   .table-wrap tbody tr{
     display:grid;
     grid-template-columns:1fr auto;
-    grid-template-rows:auto auto auto;
-    border:1px solid #ddd;
-    border-left:4px solid #77C5D8;
-    margin-bottom:12px;
-    padding:14px 16px;
-    background:#fff;
-    box-shadow:0 1px 3px rgba(0,0,0,.06);
-    cursor:pointer;
-    gap:2px 12px;
+    grid-template-rows:auto auto;
+    border:1px solid #ddd;border-left:4px solid #77C5D8;
+    margin-bottom:12px;padding:14px 16px;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06);
+    cursor:pointer;gap:4px 12px;
   }
-  .table-wrap td{padding:2px 0;border:none;font-size:12px;}
-  .table-wrap td[data-label]::before{content:attr(data-label)": ";font-size:11px;color:#777;display:block;margin-bottom:1px;}
-  .table-wrap td:nth-child(1){grid-column:1;grid-row:1;}
-  .table-wrap td:nth-child(2){grid-column:1;grid-row:2;font-size:12px;color:#555;word-break:break-all;}
-  .table-wrap td:nth-child(3){grid-column:1;grid-row:3;font-size:12px;color:#777;}
-  .table-wrap td:nth-child(4){grid-column:2;grid-row:1;text-align:right;}
-  .table-wrap td:nth-child(5){grid-column:2;grid-row:2;text-align:right;font-size:12px;color:#555;white-space:nowrap;}
-  .table-wrap td:nth-child(6){grid-column:2;grid-row:3;text-align:right;}
+  .table-wrap td{padding:0;border:none;font-size:12px;}
+  .table-wrap td[data-label]::before{display:none;}
+  .table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
+  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;color:#555;word-break:break-all;}
+  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1;text-align:right;}
+  .table-wrap td[data-label="Seiten"],
+  .table-wrap td[data-label="Letzter Audit"],
+  .table-wrap td[data-label="Audit geplant"],
+  .table-wrap td[data-label="E-Mail"]{display:none;}
+  .table-wrap td:last-child{grid-column:2;grid-row:2;text-align:right;align-self:end;}
+  .btn-gear{font-size:0;padding:6px 8px;}
+  .btn-gear::after{content:"⚙";font-size:16px;}
+}
+
+/* ── Zweizeilige Tabellenansicht (768px – 1099px) ── */
+@media(min-width:768px) and (max-width:1099px){
+  .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
+  .table-wrap thead{display:block;background:#1a1a1a;}
+  .table-wrap thead tr{display:grid;grid-template-columns:1fr auto auto;padding:10px 14px;gap:0 12px;}
+  .table-wrap thead th{display:none;padding:0;background:transparent;color:#fff;}
+  .table-wrap th[data-col="name"]{display:block;grid-column:1;font-size:0;}
+  .table-wrap th[data-col="name"]::after{content:"Projekt";font-size:12px;font-weight:normal;color:#fff;}
+  .table-wrap th[data-col="avg_score"]{display:block;grid-column:2;font-size:12px;font-weight:normal;color:#fff;}
+  .table-wrap thead tr th:last-child{display:block;grid-column:3;font-size:12px;color:#fff;}
+  .table-wrap tbody tr{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    grid-template-rows:auto auto;
+    border-bottom:1px solid #e0e0e0;
+    padding:10px 14px;gap:2px 12px;
+    cursor:pointer;align-items:center;
+  }
+  .table-wrap tbody tr:hover{background:#f0fafd;}
+  .table-wrap td{border:none;padding:0;}
+  .table-wrap td[data-label]::before{display:none;}
+  .table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
+  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
+  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1/span 2;align-self:center;}
+  .table-wrap td:last-child{grid-column:3;grid-row:1/span 2;align-self:center;}
+  .table-wrap td[data-label="Seiten"],
+  .table-wrap td[data-label="Letzter Audit"],
+  .table-wrap td[data-label="Audit geplant"],
+  .table-wrap td[data-label="E-Mail"]{display:none;}
 }
 @media print{.header,.footer-bar{display:none!important;}}
 </style>
@@ -387,7 +421,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260504-0911';
+const VERSION='260504-1121';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -895,14 +929,18 @@ function closeAllFlyouts() {
   document.getElementById("flyout-settings").classList.remove("open");
   document.getElementById("flyout-nav").classList.remove("open");
   document.getElementById("sheet-backdrop").classList.remove("open");
+  const burger = document.querySelector(".burger-icon");
+  if (burger) burger.classList.remove("open");
 }
 
 function toggleNavFlyout(btn) {
   const flyout = document.getElementById("flyout-nav");
+  const burger = btn.querySelector(".burger-icon");
   const isOpen = flyout.classList.contains("open");
   closeAllFlyouts();
   if (!isOpen) {
     flyout.classList.add("open");
+    if (burger) burger.classList.add("open");
     _positionFlyout(flyout, btn);
   }
 }
