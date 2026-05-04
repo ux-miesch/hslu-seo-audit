@@ -272,6 +272,19 @@
       .detail-inner{display:block;padding:12px 8px;}
       .avg-score{text-align:left;margin-left:0;}
       .avg-score .big{display:block;text-align:left;}
+
+      /* Projektliste */
+      .proj-table-wrap tbody tr{
+        grid-template-columns:1fr auto;
+        grid-template-rows:auto auto auto auto;
+        gap:3px 10px;
+      }
+      .proj-table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:13px;font-weight:700;color:#1a1a1a;}
+      .proj-table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1;text-align:right;align-self:start;}
+      .proj-table-wrap td[data-label="Root-URL"]{grid-column:1/span 2;grid-row:2;font-size:10px;color:#1a1a1a;word-break:break-all;}
+      .proj-table-wrap td[data-label="Seiten"]{grid-column:1;grid-row:3;font-size:11px;color:#1a1a1a;}
+      .proj-table-wrap td[data-label="Letzter Audit"]{grid-column:2;grid-row:3;font-size:11px;color:#1a1a1a;text-align:right;}
+      .proj-table-wrap td[data-label="E-Mail"]{grid-column:1/span 2;grid-row:4;font-size:11px;color:#1a1a1a;}
     }
 
     /* ── Zweizeilige Tabellenansicht (768px – 1099px) ── */
@@ -301,6 +314,20 @@
       .detail-inner{display:block;padding:12px 8px;}
       .avg-score{text-align:left;margin-left:0;}
       .avg-score .big{display:block;text-align:left;}
+
+      /* Projektliste */
+      .proj-table-wrap thead{display:none;}
+      .proj-table-wrap tbody tr{
+        grid-template-columns:1fr auto;
+        grid-template-rows:auto auto auto auto;
+        gap:3px 10px;
+      }
+      .proj-table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:13px;font-weight:700;color:#1a1a1a;}
+      .proj-table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1;text-align:right;align-self:start;}
+      .proj-table-wrap td[data-label="Root-URL"]{grid-column:1/span 2;grid-row:2;font-size:11px;color:#1a1a1a;}
+      .proj-table-wrap td[data-label="Seiten"]{grid-column:1;grid-row:3;font-size:11px;color:#1a1a1a;}
+      .proj-table-wrap td[data-label="Letzter Audit"]{grid-column:2;grid-row:3;font-size:11px;color:#1a1a1a;text-align:right;}
+      .proj-table-wrap td[data-label="E-Mail"]{grid-column:1/span 2;grid-row:4;font-size:11px;color:#1a1a1a;}
     }
   </style>
 </head>
@@ -342,7 +369,7 @@
 </div>
 
 <script>
-const VERSION='260504-1441';
+const VERSION='260504-1602';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -1058,7 +1085,7 @@ document.addEventListener("click", e => {
         </tr>`).join("");
       app.innerHTML = `
         <div class="proj-list-title">Projekte</div>
-        <div class="table-wrap"><table>
+        <div class="table-wrap proj-table-wrap"><table>
           <thead><tr>
             <th>Projektname</th><th>Root-URL</th><th>Seiten</th><th>Ø Score</th><th>Letzter Audit</th><th>E-Mail</th>
           </tr></thead>
