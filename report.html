@@ -100,7 +100,7 @@
     .footer-bar span {
       font-family: 'Verdana', sans-serif;
       font-size: 11px;
-      color: #555;
+      color: #1a1a1a;
     }
 
     @media print {
@@ -199,10 +199,10 @@
     tbody tr:hover  { background: #f0fafd; }
     tbody tr.active { background: #e8f7fb; }
     td { padding: 10px 14px; vertical-align: middle; font-size: 12px; font-weight: normal; }
-    td.url { word-break: break-all; font-size: 12px; font-weight: bold; }
+    td.url { word-break: break-all; font-size: 12px; font-weight: normal; }
     td.url a { color: inherit; text-decoration: none; }
     td.url a:hover { text-decoration: underline; }
-    td.ts { white-space: nowrap; font-size: 12px; opacity: 0.65; }
+    td.ts { white-space: nowrap; font-size: 12px; color: #1a1a1a; }
 
     /* ── Detail panel ── */
     .detail-row td {
@@ -240,15 +240,15 @@
 
     /* ── Projektliste (kein ?project=) ── */
     .proj-list-title { font-family:'Verdana',sans-serif; font-size:16px; font-weight:700; color:#000; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid #1a1a1a; }
-    .state-msg { font-family:'Verdana',sans-serif; font-size:13px; color:#777; padding:28px 0; }
+    .state-msg { font-family:'Verdana',sans-serif; font-size:13px; color:#1a1a1a; padding:28px 0; }
     td.url-cell { color:#1a1a1a; font-size:12px; word-break:break-all; }
     .score-badge { display:inline-block; padding:2px 9px; font-weight:700; font-size:12px; color:#fff; }
     .score-green   { background:#ADCA2A; color:#1a1a1a; }
     .score-cyan    { background:#77C5D8; color:#1a1a1a; }
     .score-yellow  { background:#FCC300; color:#1a1a1a; }
     .score-magenta { background:#EE6A87; }
-    .badge-unchanged { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#d4d4d4; color:#555; white-space:nowrap; }
-    .badge-new-audit { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#ADCA2A; color:#1a1a1a; white-space:nowrap; }
+    .badge-unchanged { display:inline-block; padding:2px 7px; font-size:12px; font-weight:700; background:#d4d4d4; color:#1a1a1a; white-space:nowrap; }
+    .badge-new-audit { display:inline-block; padding:2px 7px; font-size:12px; font-weight:700; background:#ADCA2A; color:#1a1a1a; white-space:nowrap; }
     /* ── Kachelansicht (< 768px) ── */
     @media(max-width:767px){
       .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
@@ -262,10 +262,10 @@
       }
       .table-wrap td{padding:0;border:none;font-size:12px;}
       .table-wrap td[data-label]::before{display:none;}
-      .table-wrap td[data-label="URL"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
+      .table-wrap td[data-label="URL"]{grid-column:1;grid-row:1;font-size:12px;font-weight:normal;color:#000;}
       .table-wrap td[data-label="Score"]{grid-column:2;grid-row:1;text-align:right;}
-      .table-wrap td[data-label="Tiefe"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;color:#777;}
-      .table-wrap td[data-label="Auditiert am"]{grid-column:2;grid-row:2;text-align:right;font-size:12px;font-weight:normal;color:#555;}
+      .table-wrap td[data-label="Tiefe"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;color:#1a1a1a;}
+      .table-wrap td[data-label="Auditiert am"]{grid-column:2;grid-row:2;text-align:right;font-size:12px;font-weight:normal;color:#1a1a1a;}
       .table-wrap td[data-label="Status"]{display:none;}
       .detail-inner{display:block;padding:12px 8px;}
       .avg-score{text-align:left;margin-left:0;}
@@ -291,7 +291,7 @@
       .table-wrap tbody tr:hover{background:#f0fafd;}
       .table-wrap td{border:none;padding:0;font-size:12px;}
       .table-wrap td[data-label]::before{display:none;}
-      .table-wrap td[data-label="URL"]{grid-column:1/span 2;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
+      .table-wrap td[data-label="URL"]{grid-column:1/span 2;grid-row:1;font-size:12px;font-weight:normal;color:#000;}
       .table-wrap td[data-label="Score"]{grid-column:3;grid-row:1/span 2;align-self:center;}
       .table-wrap td[data-label="Tiefe"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
       .table-wrap td[data-label="Auditiert am"]{grid-column:2;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
@@ -340,7 +340,7 @@
 </div>
 
 <script>
-const VERSION='260504-1121';
+const VERSION='260504-1240';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';

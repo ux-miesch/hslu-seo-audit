@@ -19,7 +19,7 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a
 @media(max-width:767px){.nav-label{display:none;}.burger-icon{display:flex;}}
 
 .footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;position:fixed;bottom:0;left:0;right:0;z-index:100;}
-.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#1a1a1a;}
 
 main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
 
@@ -85,7 +85,7 @@ tbody tr{border-bottom:1px solid #e0e0e0;cursor:pointer;transition:background .1
 tbody tr:hover{background:#f0fafd;}
 td{padding:10px 14px;vertical-align:middle;font-size:12px;font-weight:normal;}
 td.url-cell{color:#1a1a1a;font-size:12px;}
-td.ts{font-size:12px;color:#777;white-space:nowrap;}
+td.ts{font-size:12px;color:#1a1a1a;white-space:nowrap;}
 /* ── Sort & Drag ── */
 th[data-col]{cursor:pointer;user-select:none;}
 th[data-col]:hover{background:#333;}
@@ -94,7 +94,7 @@ th.th-dragging{opacity:0.4;}
 th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 
 /* ── Score badge ── */
-.score-badge{display:inline-block;padding:2px 9px;font-weight:normal;font-size:12px;color:#fff;}
+.score-badge{display:inline-block;padding:2px 9px;font-weight:700;font-size:12px;color:#fff;}
 .score-green  {background:#ADCA2A;color:#1a1a1a;}
 .score-cyan   {background:#77C5D8;color:#1a1a1a;}
 .score-yellow {background:#FCC300;color:#1a1a1a;}
@@ -155,7 +155,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 .modal-token-val{font-family:monospace;font-size:13px;background:#f4f4f4;padding:10px 14px;margin-bottom:20px;color:#555;word-break:break-all;}
 
 /* ── Empty / error state ── */
-.state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#777;padding:28px 0;}
+.state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;padding:28px 0;}
 .error-box{background:#fde8e8;border-left:3px solid #c00;padding:10px 14px;font-family:'Verdana',sans-serif;font-size:12px;color:#a00;margin-top:12px;}
 
 /* ── Kachelansicht (< 768px) ── */
@@ -175,15 +175,13 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
   .table-wrap td{padding:0;border:none;font-size:12px;}
   .table-wrap td[data-label]::before{display:none;}
   .table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
-  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;color:#555;word-break:break-all;}
+  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;color:#1a1a1a;word-break:break-all;}
   .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1;text-align:right;}
   .table-wrap td[data-label="Seiten"],
   .table-wrap td[data-label="Letzter Audit"],
   .table-wrap td[data-label="Audit geplant"],
   .table-wrap td[data-label="E-Mail"]{display:none;}
   .table-wrap td:last-child{grid-column:2;grid-row:2;text-align:right;align-self:end;}
-  .btn-gear{font-size:0;padding:6px 8px;}
-  .btn-gear::after{content:"⚙";font-size:16px;}
 }
 
 /* ── Zweizeilige Tabellenansicht (768px – 1099px) ── */
@@ -199,22 +197,24 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
   .table-wrap tbody tr{
     display:grid;
     grid-template-columns:1fr auto auto;
-    grid-template-rows:auto auto;
+    grid-template-rows:auto auto auto auto auto auto;
     border-bottom:1px solid #e0e0e0;
     padding:10px 14px;gap:2px 12px;
-    cursor:pointer;align-items:center;
+    cursor:pointer;align-items:start;
   }
   .table-wrap tbody tr:hover{background:#f0fafd;}
   .table-wrap td{border:none;padding:0;}
   .table-wrap td[data-label]::before{display:none;}
   .table-wrap td[data-label="Projektname"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;}
-  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
-  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1/span 2;align-self:center;}
-  .table-wrap td:last-child{grid-column:3;grid-row:1/span 2;align-self:center;}
-  .table-wrap td[data-label="Seiten"],
-  .table-wrap td[data-label="Letzter Audit"],
-  .table-wrap td[data-label="Audit geplant"],
-  .table-wrap td[data-label="E-Mail"]{display:none;}
+  .table-wrap td[data-label="Root-URL"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#1a1a1a;}
+  .table-wrap td[data-label="Seiten"]{grid-column:1;grid-row:3;font-size:11px;color:#1a1a1a;}
+  .table-wrap td[data-label="Letzter Audit"]{grid-column:1;grid-row:4;font-size:11px;color:#1a1a1a;}
+  .table-wrap td[data-label="Audit geplant"]{grid-column:1;grid-row:5;font-size:11px;color:#1a1a1a;}
+  .table-wrap td[data-label="E-Mail"]{grid-column:1;grid-row:6;font-size:11px;color:#1a1a1a;}
+  .table-wrap td[data-label="Ø Score"]{grid-column:2;grid-row:1/span 6;align-self:center;}
+  .table-wrap td:last-child{grid-column:3;grid-row:1/span 6;align-self:center;}
+  .btn-gear{font-size:0;padding:6px 8px;}
+  .btn-gear::after{content:"⚙";font-size:16px;}
 }
 @media print{.header,.footer-bar{display:none!important;}}
 </style>
@@ -421,7 +421,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260504-1121';
+const VERSION='260504-1240';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 

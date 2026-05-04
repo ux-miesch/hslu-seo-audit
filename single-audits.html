@@ -16,7 +16,7 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a
 @media(max-width:767px){.nav-label{display:none;}.burger-icon{display:flex;}}
 
 .footer-bar{background:#F0F0F0;padding:8px 24px;display:flex;justify-content:space-between;align-items:center;position:fixed;bottom:0;left:0;right:0;z-index:100;}
-.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#555;}
+.footer-bar span{font-family:'Verdana',sans-serif;font-size:11px;color:#1a1a1a;}
 
 main{max-width:1100px;margin:0 auto;padding:88px 24px 52px;}
 
@@ -54,8 +54,8 @@ thead th{background:#1a1a1a;color:#fff;text-align:left;padding:10px 14px;font-si
 tbody tr{border-bottom:1px solid #e0e0e0;cursor:pointer;}
 tbody tr:hover{background:#f0fafd;}
 td{padding:10px 14px;vertical-align:middle;font-size:12px;font-weight:normal;}
-td.url-cell{color:#1a1a1a;font-size:12px;font-weight:bold;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-td.ts{font-size:12px;color:#777;white-space:nowrap;}
+td.url-cell{color:#1a1a1a;font-size:12px;font-weight:normal;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+td.ts{font-size:12px;color:#1a1a1a;white-space:nowrap;}
 
 /* Score badge */
 .score-badge{display:inline-block;padding:2px 9px;font-weight:700;font-size:12px;}
@@ -76,7 +76,7 @@ td.ts{font-size:12px;color:#777;white-space:nowrap;}
 .btn-delete:hover{background:#fde8e8;}
 
 /* State */
-.state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#777;padding:28px 0;}
+.state-msg{font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;padding:28px 0;}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;}
@@ -105,7 +105,7 @@ td.ts{font-size:12px;color:#777;white-space:nowrap;}
   }
   .table-wrap td{padding:0;border:none;font-size:12px;max-width:100%;white-space:normal;}
   .table-wrap td[data-label]::before{display:none;}
-  .table-wrap td[data-label="URL"]{grid-column:1/span 2;grid-row:1;font-size:12px;font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .table-wrap td[data-label="URL"]{grid-column:1/span 2;grid-row:1;font-size:12px;font-weight:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .table-wrap td[data-label="Score"]{grid-column:2;grid-row:2;text-align:right;}
   .table-wrap td[data-label="Sprache"]{grid-column:1;grid-row:2;font-size:12px;font-weight:normal;}
   .table-wrap td[data-label="Verbleibend"]{grid-column:1;grid-row:3;font-size:12px;font-weight:normal;}
@@ -134,7 +134,7 @@ td.ts{font-size:12px;color:#777;white-space:nowrap;}
   .table-wrap tbody tr:hover{background:#f0fafd;}
   .table-wrap td{border:none;padding:0;font-size:12px;}
   .table-wrap td[data-label]::before{display:none;}
-  .table-wrap td[data-label="URL"]{grid-column:1;grid-row:1;font-size:12px;font-weight:bold;color:#000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .table-wrap td[data-label="URL"]{grid-column:1;grid-row:1;font-size:12px;font-weight:normal;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .table-wrap td[data-label="Score"]{grid-column:2;grid-row:1/span 2;align-self:center;}
   .table-wrap td[data-label="Verbleibend"]{grid-column:3;grid-row:1/span 2;align-self:center;font-size:12px;font-weight:normal;}
   .table-wrap td[data-label="Sprache"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
