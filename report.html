@@ -246,7 +246,7 @@
     .score-magenta { background:#EE6A87; }
     .badge-unchanged { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#d4d4d4; color:#555; white-space:nowrap; }
     .badge-new-audit { display:inline-block; padding:2px 7px; font-size:10px; font-weight:700; background:#ADCA2A; color:#1a1a1a; white-space:nowrap; }
-    @media (max-width:768px) {
+    @media (max-width:1100px) {
       .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block;}
       .table-wrap thead{display:none;}
       .table-wrap tbody tr{
@@ -257,12 +257,12 @@
         margin-bottom:10px;padding:12px 14px;cursor:pointer;
         gap:2px 12px;
       }
-      .table-wrap td{padding:2px 0;border:none;font-size:13px;}
+      .table-wrap td{padding:2px 0;border:none;font-size:12px;}
       .table-wrap td[data-label]::before{content:attr(data-label)": ";font-size:11px;color:#777;display:block;margin-bottom:1px;}
       .table-wrap td:nth-child(1){grid-column:1;grid-row:1;}
-      .table-wrap td:nth-child(2){grid-column:2;grid-row:2;text-align:right;font-size:11px;color:#555;}
+      .table-wrap td:nth-child(2){grid-column:2;grid-row:2;text-align:right;font-size:12px;color:#555;}
       .table-wrap td:nth-child(3){grid-column:2;grid-row:1;text-align:right;}
-      .table-wrap td:nth-child(4){grid-column:1;grid-row:2;font-size:11px;color:#777;}
+      .table-wrap td:nth-child(4){grid-column:1;grid-row:2;font-size:12px;color:#777;}
       .table-wrap td:nth-child(5){grid-column:2;grid-row:3;text-align:right;}
       .detail-inner { display: block; padding: 12px 8px; }
       .avg-score { text-align: left; margin-left: 0; }
@@ -308,7 +308,7 @@
 </div>
 
 <script>
-const VERSION='260504-0859';
+const VERSION='260504-0911';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
