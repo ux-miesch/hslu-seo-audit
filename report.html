@@ -114,11 +114,8 @@
       border-left: 5px solid var(--cyan);
       padding: 20px 24px;
       margin-bottom: 28px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 16px;
-      align-items: start;
     }
+    .avg-score { margin-left: auto; }
     .summary h1 { font-size: 18px; margin-bottom: 8px; }
     .summary .meta { opacity: 0.65; margin-bottom: 4px; }
     .summary .meta a { color: inherit; }
@@ -267,7 +264,6 @@
       .table-wrap td:nth-child(4){grid-column:1;grid-row:2;font-size:11px;color:#777;}
       .table-wrap td:nth-child(5){grid-column:2;grid-row:3;text-align:right;}
       .detail-inner { display: block; padding: 12px 8px; }
-      .summary { grid-template-columns: 1fr; }
       .avg-score { text-align: left; }
       .avg-score .big { display: block; text-align: left; }
     }
@@ -311,7 +307,7 @@
 </div>
 
 <script>
-const VERSION='260504-0821';
+const VERSION='260504-0838';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -856,11 +852,11 @@ function render(data) {
           <div class="stat"><div class="val">${projectTypeLabel}</div><div class="lbl">Seitentyp</div></div>
           <div class="stat"><div class="val">${detectedLangLabel}</div><div class="lbl">Sprache</div></div>
           <div class="stat"><div class="val">${scheduleLabel(project.schedule)}</div><div class="lbl">Audit geplant</div></div>
+          <div class="avg-score">
+            <div class="lbl">Durchschnittlicher Score</div>
+            ${bigScore(avg)}
+          </div>
         </div>
-      </div>
-      <div class="avg-score">
-        <div class="lbl">Durchschnittlicher Score</div>
-        ${bigScore(avg)}
       </div>
     </div>`;
 

@@ -336,6 +336,7 @@ def list_all_projects_summary() -> list[dict]:
                     p.last_crawled_at,
                     p.created_at,
                     p.project_token,
+                    p.notification_email,
                     COUNT(DISTINCT pa.id)      AS page_count,
                     ROUND(AVG(ar.score), 1)    AS avg_score
                 FROM projects p
