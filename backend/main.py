@@ -119,7 +119,7 @@ app.include_router(feedback.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://ux-miesch.github.io"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 import json
-import random
-import string
+import secrets
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/single-audits", tags=["single-audits"])
 
 
 def _gen_id(n: int = 8) -> str:
-    return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
+    return secrets.token_urlsafe(n)[:n]
 
 
 class SingleAuditCreate(BaseModel):

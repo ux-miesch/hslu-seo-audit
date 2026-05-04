@@ -40,7 +40,10 @@ _project_state: dict = {}
 REPORT_BASE_URL = os.getenv("REPORT_BASE_URL", "https://ux-miesch.github.io/hslu-seo-audit")
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
+try:
+    SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
+except ValueError:
+    SMTP_PORT = 465
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
@@ -533,7 +536,7 @@ async def _audit(project_id: int, language: Optional[str], mode_weights: dict, s
                         for v in old_results.values()
                         if isinstance(v, dict) and "score" in v
                     ]
-                    avg_score = round(sum(scores) / len(scores), 2) if scores else 0.0
+                    avg_score = round(sum(scores) / len(scores), 2) if scores else None
 
                     db = get_db(slug)
                     try:
@@ -749,9 +752,6 @@ async def _audit_safe(project_id: int, language, mode_weights: dict, slug: str, 
 async def create_project(body: ProjectCreate):
     slug = _slugify(body.name)
 
-    if os.path.exists(db_path(slug)):
-        raise HTTPException(status_code=400, detail=f"Projekt '{slug}' existiert bereits.")
-
     init_db(slug)
     project_token = _secrets.token_urlsafe(12)
     # Sprache aus URL ableiten (wird beim ersten Crawl durch Inhaltsanalyse überschrieben)
@@ -766,6 +766,14 @@ async def create_project(body: ProjectCreate):
         row = db.execute("SELECT * FROM projects WHERE slug = ?", (slug,)).fetchone()
         project = dict(row)
     except Exception as exc:
+        db_file = db_path(slug)
+        if os.path.exists(db_file):
+            try:
+                os.remove(db_file)
+            except OSError:
+                pass
+        if "UNIQUE" in str(exc):
+            raise HTTPException(status_code=400, detail=f"Projekt '{slug}' existiert bereits.") from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     finally:
         db.close()
@@ -1084,6 +1092,7 @@ def delete_project(slug: str):
         print(f"[DELETE] Fehler beim Bereinigen der Spelling-Kandidaten für {slug}: {exc}", flush=True)
 
     os.remove(path)
+    _project_state.pop(slug, None)
 
 
 @router.post("/{slug}/token", status_code=201)

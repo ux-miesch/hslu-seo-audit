@@ -17,7 +17,7 @@ FIXED_ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 def _check_auth(x_admin_password: Optional[str]) -> None:
     if not ADMIN_PASSWORD:
         raise HTTPException(status_code=503, detail="ADMIN_PASSWORD nicht konfiguriert.")
-    if x_admin_password != ADMIN_PASSWORD:
+    if not secrets.compare_digest(x_admin_password or "", ADMIN_PASSWORD):
         raise HTTPException(status_code=401, detail="Ungültiges Passwort.")
 
 
@@ -149,9 +149,13 @@ def verify_admin_token(token: str = Query(...)):
     return {"valid": True}
 
 
-@router.get("/password/verify")
-def verify_admin_password(password: str = Query(...)):
+class PasswordVerifyRequest(BaseModel):
+    password: str
+
+
+@router.post("/password/verify")
+def verify_admin_password(body: PasswordVerifyRequest):
     """Öffentlicher Endpunkt – prüft ADMIN_PASSWORD."""
     if not ADMIN_PASSWORD:
         return {"valid": False}
-    return {"valid": password == ADMIN_PASSWORD}
+    return {"valid": secrets.compare_digest(body.password, ADMIN_PASSWORD)}

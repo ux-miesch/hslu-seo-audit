@@ -262,7 +262,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260504-1359';
+const VERSION='260504-1441';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -292,7 +292,7 @@ let _projectToken  = "";
 
 async function verifyPw(pw) {
   try {
-    const r = await fetch(`${API}/admin/password/verify?password=${encodeURIComponent(pw)}`);
+    const r = await fetch(`${API}/admin/password/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
     const d = await r.json();
     return d.valid === true;
   } catch { return false; }

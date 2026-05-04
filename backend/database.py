@@ -15,6 +15,7 @@ def db_path(slug: str) -> str:
 def get_db(slug: str) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path(slug))
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     # Auto-repair: wenn projects-Tabelle fehlt (korrupte/leere DB), Schema neu anlegen
     tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
     if "projects" not in tables:
@@ -243,6 +244,7 @@ GLOBAL_DB_PATH = os.path.join(DB_BASE, "spelling.db")
 def get_global_db() -> sqlite3.Connection:
     conn = sqlite3.connect(GLOBAL_DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     # Auto-migration: spelling_whitelist-Tabelle anlegen falls fehlend
     conn.execute("""
         CREATE TABLE IF NOT EXISTS spelling_whitelist (
