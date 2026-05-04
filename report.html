@@ -151,7 +151,7 @@
       line-height: 1;
       position: relative;
       display: inline-block;
-      padding: 16px 24px;
+      padding: 0;
     }
     .avg-score .lbl {
       font-size: 11px;
@@ -311,7 +311,7 @@
 </div>
 
 <script>
-const VERSION='260504-0800';
+const VERSION='260504-0815';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -565,7 +565,7 @@ function badge(score, isError) {
 
 function bigScore(score) {
   const cls = scoreClass(score);
-  return `<div class="big score-${cls}">${score.toFixed(1)}</div>`;
+  return `<div class="big score-${cls}" onclick="openScoreModal()" style="cursor:pointer;" title="Was bedeutet dieser Score?">${score.toFixed(1)}</div>`;
 }
 
 function fmtDate(iso) {
@@ -859,8 +859,8 @@ function render(data) {
         </div>
       </div>
       <div class="avg-score">
-        ${bigScore(avg)}
         <div class="lbl">Durchschnittlicher Score</div>
+        ${bigScore(avg)}
       </div>
     </div>`;
 
@@ -1265,51 +1265,46 @@ document.addEventListener("click", e => {
 </style>
 <div id="score-modal">
   <div id="score-modal-inner" style="max-height:90vh;overflow-y:auto;">
-    <p style="font-size:15px;font-weight:700;margin:0 0 6px;">Wie wird getestet?</p>
-    <p style="font-size:11px;color:#888;margin:0 0 20px;line-height:1.6;">Fehler ziehen Punkte, gemäss ihrer SEO-Gewichtung ab. Schwere Fehler kosten −20 Punkte, mittlere −10, kleinere −5. Der Seiten-Score ist der Durchschnitt aller 8 Bereiche. Die Gewichtung orientiert sich an marktüblichen Werten.</p>
+    <p style="font-size:15px;font-weight:700;margin:0 0 16px;">Was bedeutet dieser Score?</p>
 
-    <p style="font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">Score-Skala</p>
+    <p style="margin:0 0 14px;line-height:1.7;">Der Score zeigt auf einen Blick, wie gut eine Seite für Suchmaschinen optimiert ist. Je höher die Zahl, desto besser ist die Seite aufgestellt – und desto wahrscheinlicher wird sie in Suchresultaten gefunden.</p>
+
+    <p style="margin:0 0 6px;line-height:1.7;">Der Wert reicht von <strong>0 bis 100</strong>. Er wird berechnet aus dem Durchschnitt von acht Bereichen, die wir automatisch prüfen – zum Beispiel ob der Seitentitel gut formuliert ist, ob alle Links funktionieren oder ob Bilder eine Beschriftung haben.</p>
+
+    <p style="font-size:12px;font-weight:700;margin:20px 0 10px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">So liest du den Score</p>
+
     <div class="sm-row">
       <span class="sm-dot" style="background:#ADCA2A;"></span>
-      <span class="sm-label">≥ 90 – Grün</span>
-      <span class="sm-desc">Gut optimiert, nur kleinere Punkte offen.</span>
+      <div>
+        <span class="sm-label">90 – 100 &nbsp;Sehr gut</span>
+        <p class="sm-desc" style="margin-top:3px;">Die Seite ist gut für Suchmaschinen aufgestellt. Kleinere Verbesserungen sind möglich, aber nicht dringend.</p>
+      </div>
     </div>
     <div class="sm-row">
       <span class="sm-dot" style="background:#77C5D8;"></span>
-      <span class="sm-label">≥ 60 – Cyan</span>
-      <span class="sm-desc">Solide Basis, klarer Optimierungsbedarf.</span>
+      <div>
+        <span class="sm-label">60 – 89 &nbsp;Solide</span>
+        <p class="sm-desc" style="margin-top:3px;">Eine gute Grundlage ist vorhanden. Es gibt aber Bereiche, die du bei nächster Gelegenheit verbessern solltest.</p>
+      </div>
     </div>
     <div class="sm-row">
       <span class="sm-dot" style="background:#FCC300;"></span>
-      <span class="sm-label">≥ 30 – Gelb</span>
-      <span class="sm-desc">Erhebliche Probleme, priorisieren.</span>
+      <div>
+        <span class="sm-label">30 – 59 &nbsp;Verbesserungsbedarf</span>
+        <p class="sm-desc" style="margin-top:3px;">Mehrere Punkte fallen negativ auf. Die Seite sollte zeitnah überarbeitet werden, damit sie besser gefunden wird.</p>
+      </div>
     </div>
     <div class="sm-row" style="margin-bottom:20px;">
       <span class="sm-dot" style="background:#EE6A87;"></span>
-      <span class="sm-label">&lt; 30 – Magenta</span>
-      <span class="sm-desc">Kritisch – sofort handeln.</span>
+      <div>
+        <span class="sm-label">0 – 29 &nbsp;Dringend handeln</span>
+        <p class="sm-desc" style="margin-top:3px;">Die Seite hat grössere Mängel. Suchmaschinen haben Mühe, sie richtig einzuordnen. Bitte so bald wie möglich korrigieren.</p>
+      </div>
     </div>
 
-    <p style="font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">8 geprüfte Bereiche</p>
-    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;">
-      <thead>
-        <tr>
-          <th style="background:#f0f0f0;color:#1a1a1a;text-align:left;padding:6px 8px;font-weight:700;white-space:nowrap;">Bereich</th>
-          <th style="background:#f0f0f0;color:#1a1a1a;text-align:left;padding:6px 8px 6px 0;font-weight:700;">Was wird geprüft</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#meta-texte','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Meta-Angaben</td><td style="padding:6px 0;color:#444;">Titel, Description, Canonical, Open Graph</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#%C3%BCberschriften','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Überschriften</td><td style="padding:6px 0;color:#444;">Struktur H1 / H2 / H3, Duplikate, Länge</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#defekte-links','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Links</td><td style="padding:6px 0;color:#444;">Defekte interne und externe Verlinkungen</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#alt-attribute','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Bilder &amp; Medien</td><td style="padding:6px 0;color:#444;">Alt-Texte, Videos, iFrames, PDF-Links</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#rechtschreibung','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Rechtschreibung</td><td style="padding:6px 0;color:#444;">Tipp- und Grammatikfehler via LanguageTool</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#keywords-semantik','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Keywords</td><td style="padding:6px 0;color:#444;">Vorkommen und Dichte relevanter Begriffe</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs#url-slug','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">URL-Struktur</td><td style="padding:6px 0;color:#444;">HTTPS, Länge, Sonderzeichen, Tiefe</td></tr>
-        <tr style="cursor:pointer;" onclick="window.open('https://hsluzern.sharepoint.com/:u:/r/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx?csf=1&web=1&e=t1yOFs','_blank')"><td style="padding:6px 8px 6px 8px;font-weight:700;white-space:nowrap;">Seitentyp</td><td style="padding:6px 0;color:#444;">Website: CTA, Kontakt, Kursinfos — Blog: Autor, Datum, Verlinkung</td></tr>
-      </tbody>
-    </table>
-    <div style="margin-top:24px;padding-top:16px;display:flex;justify-content:flex-end;">
+    <p style="margin:0 0 14px;line-height:1.7;border-top:1px solid #f0f0f0;padding-top:16px;">Klicke auf eine Seite in der Liste, um zu sehen welche Bereiche verbessert werden können – und was konkret zu tun ist.</p>
+
+    <div style="margin-top:8px;display:flex;justify-content:flex-end;">
       <button onclick="closeScoreModal()" style="padding:8px 20px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#1a1a1a;color:#fff;border:none;cursor:pointer;">Schliessen</button>
     </div>
   </div>
