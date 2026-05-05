@@ -308,7 +308,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
     <h2>Token neu generieren?</h2>
     <p>Der bestehende Token wird ungültig. Alle bestehenden Links mit diesem Token funktionieren nicht mehr.</p>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="document.getElementById('token-warn-modal').classList.remove('open')">Abbrechen</button>
+      <button class="btn-cancel" onclick="document.getElementById('token-warn-modal').classList.remove('open');document.body.style.overflow='';">Abbrechen</button>
       <button class="btn-confirm-delete" onclick="confirmGenerateToken()">Ja, neu generieren</button>
     </div>
   </div>
@@ -320,7 +320,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
     <h2>Crawl abbrechen?</h2>
     <p>Der Crawl läuft noch. Wenn du jetzt abbrichst, wird der Vorgang unterbrochen und das Projekt möglicherweise nicht vollständig erstellt.</p>
     <div class="modal-actions">
-      <button class="btn-cancel" onclick="document.getElementById('abort-modal').classList.remove('open')">Nicht jetzt</button>
+      <button class="btn-cancel" onclick="document.getElementById('abort-modal').classList.remove('open');document.body.style.overflow='';">Nicht jetzt</button>
       <button class="btn-confirm-delete" onclick="abortCrawl()">Ja, abbrechen</button>
     </div>
   </div>
@@ -418,7 +418,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260504-1602';
+const VERSION='260505-0716';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -991,10 +991,12 @@ function generateProjectToken() {
   if (!_activeSlug) return;
   closeAllFlyouts();
   document.getElementById("token-warn-modal").classList.add("open");
+  document.body.style.overflow = 'hidden';
 }
 
 async function confirmGenerateToken() {
   document.getElementById("token-warn-modal").classList.remove("open");
+  document.body.style.overflow = '';
   const statusEl = document.getElementById("flyout-status");
   try {
     const r = await fetch(`${API}/projects/${_activeSlug}/token`, { method: "POST" });
@@ -1007,6 +1009,7 @@ async function confirmGenerateToken() {
     const masked = _projectToken.substring(0, 4) + "****" + _projectToken.substring(_projectToken.length - 4);
     document.getElementById("modal-token-display").textContent = masked;
     document.getElementById("token-modal").classList.add("open");
+    document.body.style.overflow = 'hidden';
   } catch {
     statusEl.textContent = "Fehler beim Generieren.";
   }
@@ -1018,6 +1021,7 @@ function copyRapportLink() {
   navigator.clipboard.writeText(`${REPORT_BASE_URL}/report.html?project=${_activeSlug}&token=${_projectToken}`);
   closeAllFlyouts();
   document.getElementById("link-copied-modal").classList.add("open");
+  document.body.style.overflow = 'hidden';
 }
 
 function copySpellingLink() {
@@ -1026,10 +1030,12 @@ function copySpellingLink() {
   navigator.clipboard.writeText(`${REPORT_BASE_URL}/spelling.html?project=${_activeSlug}&token=${_projectToken}`);
   closeAllFlyouts();
   document.getElementById("link-copied-modal").classList.add("open");
+  document.body.style.overflow = 'hidden';
 }
 
 function closeTokenModal() {
   document.getElementById("token-modal").classList.remove("open");
+  document.body.style.overflow = '';
 }
 
 function copyTokenLinkFromModal() {
@@ -1041,6 +1047,7 @@ function copyTokenLinkFromModal() {
 
 function closeLinkCopiedModal() {
   document.getElementById("link-copied-modal").classList.remove("open");
+  document.body.style.overflow = '';
 }
 
 function sendTokenByMail() {
@@ -1118,10 +1125,12 @@ function openDeleteModal(slug) {
   closeAllFlyouts();
   _deleteSlug = slug;
   document.getElementById("delete-modal").classList.add("open");
+  document.body.style.overflow = 'hidden';
 }
 
 function closeDeleteModal() {
   document.getElementById("delete-modal").classList.remove("open");
+  document.body.style.overflow = '';
   _deleteSlug = null;
 }
 
@@ -1166,6 +1175,7 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "Escape" && crawlRunning) {
     e.preventDefault();
     document.getElementById("abort-modal").classList.add("open");
+    document.body.style.overflow = 'hidden';
     return;
   }
   if (e.key === "Enter" && !crawlRunning) {
@@ -1199,6 +1209,7 @@ if (window._authReady) { initPage(); }
 </button>
 <div id="feedback-modal">
   <div id="feedback-modal-inner">
+    <button class="anl-close" onclick="closeFeedbackModal()" aria-label="Schliessen">✕</button>
     <p style="font-size:15px;font-weight:700;margin-bottom:6px;">Feedback geben</p>
     <p style="font-size:11px;color:#888;margin-bottom:16px;line-height:1.6;">Bug entdeckt? Idee gehabt?<br><br>Wir lesen fast alles. Meistens sogar am gleichen Tag.<br><span style="font-style:italic;color:#bbb;font-size:10px;">Durch das Absenden erklärst du dich damit einverstanden, dass wir uns über dein Feedback freuen und es in der Liste der möglichen Anpassungen landet.</span></p>
     <textarea id="feedback-text" placeholder="Ich vermisse das Einhorn…" style="width:100%;height:100px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;padding:10px;resize:vertical;box-sizing:border-box;"></textarea>
@@ -1216,6 +1227,7 @@ if (window._authReady) { initPage(); }
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('fm-open')));
     document.getElementById('feedback-text').value = '';
     document.getElementById('feedback-error').style.display = 'none';
@@ -1224,6 +1236,7 @@ if (window._authReady) { initPage(); }
   function closeFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.classList.remove('fm-open');
+    document.body.style.overflow = '';
     const delay = window.matchMedia('(max-width: 640px)').matches ? 360 : 0;
     setTimeout(() => { m.style.display = 'none'; }, delay);
   }
@@ -1352,11 +1365,13 @@ if (window._authReady) { initPage(); }
   function openAnleitungPanel(){
     var p=document.getElementById('anleitung-panel');
     p.style.display='flex';
+    document.body.style.overflow='hidden';
     requestAnimationFrame(function(){requestAnimationFrame(function(){p.classList.add('ap-open');});});
   }
   function closeAnleitungPanel(){
     var p=document.getElementById('anleitung-panel');
     p.classList.remove('ap-open');
+    document.body.style.overflow='';
     setTimeout(function(){p.style.display='none';}, window.matchMedia('(max-width: 640px)').matches ? 360 : 0);
   }
   document.getElementById('anleitung-panel').addEventListener('click',function(e){if(e.target===this)closeAnleitungPanel();});

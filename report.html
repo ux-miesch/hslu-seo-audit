@@ -65,7 +65,8 @@
     #depth-flyout { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #ddd; z-index:300; box-shadow:0 4px 14px rgba(0,0,0,.18); min-width:100px; padding:4px 0; }
     #depth-flyout.open { display:block; }
     #depth-flyout .flyout-item { padding: 8px 14px; font-size: 11px; font-weight: 700; }
-    .skala-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;border:1px solid #e0e0e0;background:#fafafa;align-items:center;}
+    .skala-box{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;border:1px solid #e0e0e0;background:#fafafa;align-items:center;transition:border-color 0.15s,background 0.15s;}
+    .skala-box:hover{border-color:#77C5D8;background:#f0fafd;}
     .skala-item{display:flex;align-items:center;gap:5px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;}
     .skala-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; }
@@ -355,7 +356,7 @@
   <a class="flyout-item active" href="report.html">SEO-Audit Rapport</a>
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <div class="flyout-sep"></div>
-  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="openLogoutModal()" style="display:none;cursor:pointer;">Abmelden</a>
 </div>
 
 <main>
@@ -369,7 +370,7 @@
 </div>
 
 <script>
-const VERSION='260504-1602';
+const VERSION='260505-0716';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -942,7 +943,7 @@ function render(data) {
         <button class="copy-link-text" onclick="copyLink()">Link kopieren</button>
         <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </span>
-      <button class="view-btn btn-getestet" onclick="openScoreModal()" style="margin-left:auto;">Wie wird getestet?</button>
+      <button class="view-btn btn-getestet" onclick="openGetestetModal()" style="margin-left:auto;">Wie wird getestet?</button>
       <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn btn-anleitung" style="text-decoration:none;line-height:1;">Zur Anleitung →</a>
     </div>`;
 
@@ -963,7 +964,7 @@ function render(data) {
     </div>`;
 
   const skalaHtml = `
-    <div class="skala-box">
+    <div class="skala-box" onclick="openScoreModal()" style="cursor:pointer;" title="Was bedeutet dieser Score?">
       <span class="skala-item"><span class="skala-dot" style="background:#EE6A87;"></span>Kritisch &#x2013; sofort handeln</span>
       <span class="skala-item"><span class="skala-dot" style="background:#FCC300;"></span>Optimieren nötig</span>
       <span class="skala-item"><span class="skala-dot" style="background:#77C5D8;"></span>Optimieren &#x2013; bei Gelegenheit</span>
@@ -1178,6 +1179,7 @@ document.addEventListener("click", e => {
 <button id="anleitung-fab" onclick="openAnleitungPanel()" title="Kurzanleitung" aria-label="Kurzanleitung öffnen">?</button>
 <div id="feedback-modal">
   <div id="feedback-modal-inner">
+    <button class="anl-close" onclick="closeFeedbackModal()" aria-label="Schliessen">✕</button>
     <p style="font-size:15px;font-weight:700;margin-bottom:6px;">Feedback geben</p>
     <p style="font-size:11px;color:#888;margin-bottom:16px;line-height:1.6;">Bug entdeckt? Idee gehabt?<br><br>Wir lesen fast alles. Meistens sogar am gleichen Tag.<br><span style="font-style:italic;color:#bbb;font-size:10px;">Durch das Absenden erklärst du dich damit einverstanden, dass wir uns über dein Feedback freuen und es in der Liste der möglichen Anpassungen landet.</span></p>
     <textarea id="feedback-text" placeholder="Ich vermisse das Einhorn…" style="width:100%;height:100px;font-family:Verdana,sans-serif;font-size:13px;border:1px solid #bbb;padding:10px;resize:vertical;box-sizing:border-box;"></textarea>
@@ -1195,6 +1197,7 @@ document.addEventListener("click", e => {
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('fm-open')));
     document.getElementById('feedback-text').value = '';
     document.getElementById('feedback-error').style.display = 'none';
@@ -1203,6 +1206,7 @@ document.addEventListener("click", e => {
   function closeFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.classList.remove('fm-open');
+    document.body.style.overflow = '';
     const delay = window.matchMedia('(max-width: 640px)').matches ? 360 : 0;
     setTimeout(() => { m.style.display = 'none'; }, delay);
   }
@@ -1294,11 +1298,13 @@ document.addEventListener("click", e => {
   function openAnleitungPanel() {
     const p = document.getElementById('anleitung-panel');
     p.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => p.classList.add('ap-open')));
   }
   function closeAnleitungPanel() {
     const p = document.getElementById('anleitung-panel');
     p.classList.remove('ap-open');
+    document.body.style.overflow = '';
     setTimeout(() => { p.style.display = 'none'; }, 360);
   }
   document.getElementById('anleitung-panel').addEventListener('click', function(e) {
@@ -1328,6 +1334,7 @@ document.addEventListener("click", e => {
 </style>
 <div id="score-modal">
   <div id="score-modal-inner" style="max-height:90vh;overflow-y:auto;">
+    <button class="anl-close" onclick="closeScoreModal()" aria-label="Schliessen">✕</button>
     <p style="font-size:15px;font-weight:700;margin:0 0 16px;">Was bedeutet dieser Score?</p>
 
     <p style="margin:0 0 14px;line-height:1.7;">Der Score zeigt auf einen Blick, wie gut eine Seite für Suchmaschinen optimiert ist. Je höher die Zahl, desto besser ist die Seite aufgestellt – und desto wahrscheinlicher wird sie in Suchresultaten gefunden.</p>
@@ -1377,11 +1384,13 @@ document.addEventListener("click", e => {
   function openScoreModal() {
     const m = document.getElementById('score-modal');
     m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('sm-open')));
   }
   function closeScoreModal() {
     const m = document.getElementById('score-modal');
     m.classList.remove('sm-open');
+    document.body.style.overflow = '';
     setTimeout(() => { m.style.display = 'none'; }, 360);
   }
   document.getElementById('score-modal').addEventListener('click', function(e) {
@@ -1389,6 +1398,132 @@ document.addEventListener("click", e => {
   });
   window.openScoreModal = openScoreModal;
   window.closeScoreModal = closeScoreModal;
+})();
+</script>
+
+<!-- Abmelden Bestätigung -->
+<style>
+#logout-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+#logout-modal.lm-open{display:flex;}
+#logout-modal-inner{background:#fff;padding:32px;max-width:400px;width:90%;border-left:4px solid #EE6A87;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;}
+@media(max-width:640px){
+  #logout-modal{align-items:flex-end;}
+  #logout-modal-inner{max-width:100%;width:100%;border-left:none;border-top:4px solid #EE6A87;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);}
+  #logout-modal.lm-open #logout-modal-inner{transform:translateY(0);}
+}
+</style>
+<div id="logout-modal">
+  <div id="logout-modal-inner">
+    <p style="font-size:15px;font-weight:700;margin:0 0 10px;">Abmelden?</p>
+    <p style="margin:0 0 24px;color:#555;">Der Zugangstoken wird aus diesem Browser entfernt. Du kannst dich jederzeit wieder mit dem Projektlink anmelden.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeLogoutModal()" style="padding:8px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;cursor:pointer;">Abbrechen</button>
+      <button onclick="logout()" style="padding:8px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#EE6A87;color:#fff;border:none;cursor:pointer;">Ja, abmelden</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  function openLogoutModal() {
+    const m = document.getElementById('logout-modal');
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('lm-open')));
+  }
+  function closeLogoutModal() {
+    const m = document.getElementById('logout-modal');
+    m.classList.remove('lm-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { m.style.display = 'none'; }, 360);
+  }
+  window.openLogoutModal = openLogoutModal;
+  window.closeLogoutModal = closeLogoutModal;
+})();
+</script>
+
+<!-- Wie wird getestet Modal -->
+<style>
+#getestet-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+#getestet-modal.gm-open{display:flex;}
+#getestet-modal-inner{background:#fff;padding:32px;max-width:540px;width:90%;border-left:4px solid #77C5D8;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;}
+@media(max-width:640px){
+  #getestet-modal{align-items:flex-end;}
+  #getestet-modal-inner{max-width:100%;width:100%;border-left:none;border-top:4px solid #77C5D8;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);}
+  #getestet-modal.gm-open #getestet-modal-inner{transform:translateY(0);}
+}
+</style>
+<div id="getestet-modal">
+  <div id="getestet-modal-inner" style="max-height:90vh;overflow-y:auto;">
+    <button class="anl-close" onclick="closeGetestetModal()" aria-label="Schliessen">✕</button>
+    <p style="font-size:15px;font-weight:700;margin:0 0 6px;">Wie wird getestet?</p>
+    <p style="font-size:11px;color:#888;margin:0 0 20px;line-height:1.6;">Fehler ziehen Punkte, gemäss ihrer SEO-Gewichtung ab. Schwere Fehler kosten −20 Punkte, mittlere −10, kleinere −5. Der Seiten-Score ist der Durchschnitt aller 8 Bereiche. Die Gewichtung orientiert sich an marktüblichen Werten.</p>
+
+    <p style="font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">8 geprüfte Bereiche</p>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px;">
+      <thead>
+        <tr style="border-bottom:2px solid #1a1a1a;">
+          <th style="text-align:left;padding:4px 8px 6px 0;font-weight:700;">Bereich</th>
+          <th style="text-align:left;padding:4px 0 6px;font-weight:700;color:#555;">Was wird geprüft</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Meta-Angaben</td><td style="padding:6px 0;color:#444;">Titel, Description, Canonical, Open Graph</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Überschriften</td><td style="padding:6px 0;color:#444;">Struktur H1 / H2 / H3, Duplikate, Länge</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Links</td><td style="padding:6px 0;color:#444;">Defekte interne und externe Verlinkungen</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Bilder &amp; Medien</td><td style="padding:6px 0;color:#444;">Alt-Texte, Videos, iFrames, PDF-Links</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Rechtschreibung</td><td style="padding:6px 0;color:#444;">Tipp- und Grammatikfehler via LanguageTool</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Keywords</td><td style="padding:6px 0;color:#444;">Vorkommen und Dichte relevanter Begriffe</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">URL-Struktur</td><td style="padding:6px 0;color:#444;">HTTPS, Länge, Sonderzeichen, Tiefe</td></tr>
+        <tr><td style="padding:6px 8px 6px 0;font-weight:700;white-space:nowrap;">Seitentyp</td><td style="padding:6px 0;color:#444;">Website: CTA, Kontakt, Kursinfos — Blog: Autor, Datum, Verlinkung</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;color:#555;">Score-Skala</p>
+    <div class="sm-row">
+      <span class="sm-dot" style="background:#ADCA2A;"></span>
+      <span class="sm-label">≥ 90 – Grün</span>
+      <span class="sm-desc">Gut optimiert, nur kleinere Punkte offen.</span>
+    </div>
+    <div class="sm-row">
+      <span class="sm-dot" style="background:#77C5D8;"></span>
+      <span class="sm-label">≥ 60 – Cyan</span>
+      <span class="sm-desc">Solide Basis, klarer Optimierungsbedarf.</span>
+    </div>
+    <div class="sm-row">
+      <span class="sm-dot" style="background:#FCC300;"></span>
+      <span class="sm-label">≥ 30 – Gelb</span>
+      <span class="sm-desc">Erhebliche Probleme, priorisieren.</span>
+    </div>
+    <div class="sm-row">
+      <span class="sm-dot" style="background:#EE6A87;"></span>
+      <span class="sm-label">&lt; 30 – Magenta</span>
+      <span class="sm-desc">Kritisch – sofort handeln.</span>
+    </div>
+
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e0e0e0;display:flex;justify-content:flex-end;">
+      <button onclick="closeGetestetModal()" style="padding:8px 20px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#1a1a1a;color:#fff;border:none;cursor:pointer;">Schliessen</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  function openGetestetModal() {
+    const m = document.getElementById('getestet-modal');
+    m.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => requestAnimationFrame(() => m.classList.add('gm-open')));
+  }
+  function closeGetestetModal() {
+    const m = document.getElementById('getestet-modal');
+    m.classList.remove('gm-open');
+    document.body.style.overflow = '';
+    setTimeout(() => { m.style.display = 'none'; }, 360);
+  }
+  document.getElementById('getestet-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeGetestetModal();
+  });
+  window.openGetestetModal = openGetestetModal;
+  window.closeGetestetModal = closeGetestetModal;
 })();
 </script>
 </body>
