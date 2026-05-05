@@ -193,10 +193,7 @@
       font-size: 12px;
       font-weight: normal;
       white-space: nowrap;
-      position: relative;
     }
-    .col-resize-handle{position:absolute;right:0;top:0;height:100%;width:4px;background:#ccc;cursor:col-resize;user-select:none;z-index:2;}
-    .col-resize-handle:hover,.col-resize-handle.col-resize-active{background:#1a1a1a;}
     tbody tr {
       border-bottom: 1px solid var(--border);
       cursor: pointer;
@@ -373,7 +370,7 @@
 </div>
 
 <script>
-const VERSION='260505-0736';
+const VERSION='260505-0758';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -975,7 +972,6 @@ function render(data) {
     </div>`;
 
   document.getElementById("app").innerHTML = summaryHtml + skalaHtml + filterBar + tableHtml;
-  initResizableColumns('#report-main-table', 'col_widths_report');
 
   /* ── Row click → detail ── */
   _openIdx = null;
@@ -1529,57 +1525,6 @@ document.addEventListener("click", e => {
   window.openGetestetModal = openGetestetModal;
   window.closeGetestetModal = closeGetestetModal;
 })();
-</script>
-<script>
-function initResizableColumns(tableSelector, storageKey) {
-  if (window.innerWidth < 1100) return;
-  const table = document.querySelector(tableSelector);
-  if (!table) return;
-  table.style.tableLayout = 'fixed';
-  const ths = Array.from(table.querySelectorAll('thead tr:first-child th'));
-  if (!ths.length) return;
-  const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
-  const cols = Array.from(table.querySelectorAll('colgroup col'));
-  ths.forEach(function(th, i) {
-    var existing = th.querySelector('.col-resize-handle');
-    if (existing) existing.remove();
-    th.style.position = 'relative';
-    if (saved && saved[i] !== undefined) {
-      th.style.width = saved[i] + 'px';
-      if (cols[i]) cols[i].style.width = saved[i] + 'px';
-    }
-    if (!th.textContent.trim() || th.classList.contains('col-info')) return;
-    var handle = document.createElement('div');
-    handle.className = 'col-resize-handle';
-    handle.addEventListener('mousedown', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var startX = e.pageX;
-      var startW = th.offsetWidth;
-      handle.classList.add('col-resize-active');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-      function onMove(e) {
-        var newW = Math.max(40, startW + e.pageX - startX);
-        th.style.width = newW + 'px';
-        if (cols[i]) cols[i].style.width = newW + 'px';
-      }
-      function onUp() {
-        handle.classList.remove('col-resize-active');
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
-        var widths = {};
-        ths.forEach(function(t, idx) { widths[idx] = t.offsetWidth; });
-        localStorage.setItem(storageKey, JSON.stringify(widths));
-      }
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-    });
-    th.appendChild(handle);
-  });
-}
 </script>
 </body>
 </html>
