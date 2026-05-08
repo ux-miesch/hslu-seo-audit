@@ -88,7 +88,7 @@ class ProjectCreate(BaseModel):
     language: Optional[str] = None
     max_pages: Optional[int] = None  # None = alle Seiten (bis MAX_CRAWL_PAGES)
     notification_email: Optional[str] = None
-    project_type: str = "website"  # "website" oder "blog"
+    project_type: str = "website"  # "website", "blog", "event" oder "generic"
 
 
 class ScheduleUpdate(BaseModel):
@@ -99,12 +99,13 @@ class EmailUpdate(BaseModel):
 
 
 def _mode_weights_for(project_type: Optional[str]) -> dict:
-    """Leitet mode_weights aus project_type ab.
-    website → conversion-Checks (Fact-Liste, CTA, Kontakt, …)
-    blog    → content-Checks (Autor, Datum, Verlinkung, Trust-Signale)
-    """
+    """Leitet mode_weights aus project_type ab."""
     if project_type == "blog":
         return {"content": 100, "conversion": 0, "course": 0, "event": 0}
+    elif project_type == "event":
+        return {"content": 0, "conversion": 0, "course": 0, "event": 100}
+    elif project_type == "generic":
+        return {"content": 25, "conversion": 25, "course": 25, "event": 25}
     return {"content": 0, "conversion": 100, "course": 0, "event": 0}  # default: website
 
 
