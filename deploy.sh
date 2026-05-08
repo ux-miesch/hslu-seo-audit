@@ -3,7 +3,7 @@
 # Setzt Version, committed und pusht auf GitHub.
 # GitHub Pages (Frontend) und Render.com (Backend) deployen automatisch.
 
-PROJECT_DIR=~/Desktop/hslu-seo-audit
+PROJECT_DIR=~/Documents/Claude-Code/hslu-seo-audit
 
 echo "──────────────────────────────────"
 echo "  SEO Audit Tool – Deploy"
