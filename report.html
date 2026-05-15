@@ -370,7 +370,7 @@
 
 <script>
 const VERSION='260511-1131';
-const API_URL = "http://localhost:8000";
+const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
   const params = new URLSearchParams(window.location.search);
@@ -1192,7 +1192,7 @@ document.addEventListener("click", e => {
 </div>
 <script>
 (function() {
-  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'http://localhost:8000'));
+  const API_FEEDBACK = (typeof API !== 'undefined' ? API : (typeof API_URL !== 'undefined' ? API_URL : 'https://hslu-seo-audit.onrender.com'));
   function openFeedbackModal() {
     const m = document.getElementById('feedback-modal');
     m.style.display = 'flex';
