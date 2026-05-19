@@ -195,7 +195,7 @@ def check_author(soup, base_url, text):
 
 def check_date(soup, base_url, text):
     if soup.find("time"):
-        return True, "Datum vorhanden (<time>-Tag)"
+        return True, "Datum vorhanden (&lt;time&gt;-Tag)"
     raw = soup.get_text(" ", strip=True)
     for pat in DATE_PATTERNS:
         m = re.search(pat, raw)
@@ -275,7 +275,7 @@ def check_certificate(soup, base_url, text):
 
 def check_event_date(soup, base_url, text):
     if soup.find("time"):
-        return True, "Datum vorhanden (<time>-Tag)"
+        return True, "Datum vorhanden (&lt;time&gt;-Tag)"
     raw = soup.get_text(" ", strip=True)
     for pat in DATE_PATTERNS:
         m = re.search(pat, raw)
@@ -343,7 +343,7 @@ def check_fact_list(soup, base_url, text):
 
 def check_site_navigation(soup, base_url, text):
     if soup.find("nav"):
-        return True, "Site-Navigation vorhanden (<nav>)"
+        return True, "Site-Navigation vorhanden (&lt;nav&gt;)"
     breadcrumb = soup.find(class_=re.compile(r"breadcrumb|breadcrumbs|bread-crumb", re.I))
     if breadcrumb:
         return True, "Breadcrumb-Navigation erkannt"

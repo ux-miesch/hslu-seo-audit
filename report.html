@@ -370,7 +370,7 @@
 </div>
 
 <script>
-const VERSION='260519-1315';
+const VERSION='260519-1346';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -771,7 +771,7 @@ function renderCheckCard(key, data) {
           const msg = typeof m === "object" ? m : {message: m};
           let html = icon + " " + fixMsg(msg.message || m);
           if (msg.value) {
-            html += `<div style="font-size:11px;color:#555;background:#f4f4f4;padding:4px 8px;margin-top:3px;border-left:2px solid #ccc;font-style:italic;">${msg.value}</div>`;
+            html += `<div style="font-size:12px;font-family:Verdana,sans-serif;color:#1a1a1a;background:#fff;padding:6px 10px;margin-top:4px;border-left:3px solid #EE6A87;">${msg.value}</div>`;
           }
           d.innerHTML = html;
           sec.appendChild(d);
