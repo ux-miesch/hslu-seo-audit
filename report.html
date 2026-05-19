@@ -369,7 +369,7 @@
 </div>
 
 <script>
-const VERSION='260519-0925';
+const VERSION='260519-1049';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -710,7 +710,8 @@ function renderCheckCard(key, data) {
 
   const isAlt     = key === "alt_attributes";
   const isSpell   = key === "spelling";
-  const keepRaw   = isAlt || isSpell;
+  const isMeta    = key === "meta";
+  const keepRaw   = isAlt || isSpell || isMeta;
   const issues    = (data.issues   || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
   const warnings  = (data.warnings || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
   const infos     = (data.infos    || []).map(m => keepRaw ? m : fixMsg(msgText(m)));
@@ -760,6 +761,18 @@ function renderCheckCard(key, data) {
           const d = document.createElement("div");
           d.innerHTML = icon + " " + renderSpellingMsg(m, col);
           d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
+          sec.appendChild(d);
+        });
+      } else if (isMeta) {
+        msgs.forEach(m => {
+          const d = document.createElement("div");
+          d.style.cssText = `font-size:12px;color:${col};padding:2px 0;line-height:1.7;`;
+          const msg = typeof m === "object" ? m : {message: m};
+          let html = icon + " " + fixMsg(msg.message || m);
+          if (msg.value) {
+            html += `<div style="font-size:11px;color:#555;background:#f4f4f4;padding:4px 8px;margin-top:3px;border-left:2px solid #ccc;font-style:italic;">${msg.value}</div>`;
+          }
+          d.innerHTML = html;
           sec.appendChild(d);
         });
       } else {
@@ -1230,7 +1243,7 @@ document.addEventListener("click", e => {
   window.closeFeedbackModal = closeFeedbackModal;
   window.submitFeedback = submitFeedback;
   setTimeout(function() {
-    if (!sessionStorage.getItem('feedback_shown')) {
+    if (!sessionStorage.getItem('feedback_shown') && !localStorage.getItem('seo_admin_pw')) {
       openFeedbackModal();
       sessionStorage.setItem('feedback_shown', 'true');
     }

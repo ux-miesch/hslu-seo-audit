@@ -281,7 +281,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260519-0925';
+const VERSION='260519-1049';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -525,8 +525,8 @@ function rowHtml(c) {
 
     let actions = (_adminPw || _projectSlug)
       ? (c.status === "neu"
-          ? `<button class="btn-action btn-whitelist" onclick="setStatus(${c.id},'whitelist')">Whitelist</button>
-             <button class="btn-action btn-ignore"    onclick="setStatus(${c.id},'ignorieren')">Ignorieren</button>`
+          ? `<button class="btn-action btn-whitelist" title="Wort als korrekt markieren – wird künftig nicht mehr als Kandidat gemeldet." onclick="setStatus(${c.id},'whitelist')">Whitelist</button>
+             <button class="btn-action btn-ignore"    title="Kandidat ausblenden – wird bei der nächsten Prüfung wieder angezeigt." onclick="setStatus(${c.id},'ignorieren')">Ignorieren</button>`
           : `<button class="btn-action btn-reactivate" onclick="setStatus(${c.id},'neu')">Reaktivieren</button>`)
       : `<span style="font-size:11px;color:#aaa;">—</span>`;
 
@@ -840,7 +840,7 @@ document.getElementById("footer-ts").textContent = "Beta · v" + VERSION;
   window.closeFeedbackModal = closeFeedbackModal;
   window.submitFeedback = submitFeedback;
   setTimeout(function() {
-    if (!sessionStorage.getItem('feedback_shown')) {
+    if (!sessionStorage.getItem('feedback_shown') && !localStorage.getItem('seo_admin_pw')) {
       openFeedbackModal();
       sessionStorage.setItem('feedback_shown', 'true');
     }
