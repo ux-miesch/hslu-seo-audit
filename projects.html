@@ -233,6 +233,14 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 .test-check-item.disabled.checked .test-check-box::after{content:'✓';position:absolute;inset:0;font-size:10px;color:#fff;display:block;text-align:center;line-height:14px;}
 .test-check-item:not(.disabled):hover .test-check-box{border-color:#77C5D8;}
 @media(max-width:767px){.test-checks{grid-template-columns:1fr 1fr;}.test-check-item{font-size:11px;}}
+#logout-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center;}
+#logout-modal.lm-open{display:flex;}
+#logout-modal-inner{background:#fff;padding:32px;max-width:400px;width:90%;border-left:4px solid #CC0000;font-family:'Verdana',sans-serif;font-size:13px;color:#1a1a1a;line-height:1.6;}
+@media(max-width:640px){
+  #logout-modal{align-items:flex-end;}
+  #logout-modal-inner{max-width:100%;width:100%;border-left:none;border-top:4px solid #CC0000;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);}
+  #logout-modal.lm-open #logout-modal-inner{transform:translateY(0);}
+}
 </style>
 </head>
 <body>
@@ -257,7 +265,18 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
   <a class="flyout-item" href="spelling.html">SEO-Audit Rechtschreibkandidaten</a>
   <div class="flyout-sep"></div>
   <a class="flyout-item" href="admin.html">Zugang verwalten →</a>
-  <a class="flyout-item" id="logout-item" onclick="logout()" style="display:none;cursor:pointer;">Abmelden</a>
+  <a class="flyout-item" id="logout-item" onclick="openLogoutModal()" style="display:none;cursor:pointer;">Abmelden</a>
+</div>
+
+<div id="logout-modal">
+  <div id="logout-modal-inner">
+    <p style="font-size:15px;font-weight:700;margin:0 0 10px;">Abmelden?</p>
+    <p style="margin:0 0 24px;color:#555;">Du wirst abgemeldet. Beim nächsten Besuch wird das Passwort erneut abgefragt.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeLogoutModal()" style="padding:8px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:transparent;color:#1a1a1a;border:1.5px solid #1a1a1a;cursor:pointer;">Abbrechen</button>
+      <button onclick="logout()" style="padding:8px 18px;font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;background:#CC0000;color:#fff;border:none;cursor:pointer;">Ja, abmelden</button>
+    </div>
+  </div>
 </div>
 
 <!-- Password overlay -->
@@ -479,7 +498,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260519-0904';
+const VERSION='260519-0925';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -1326,6 +1345,15 @@ document.addEventListener("keydown", function(e) {
     }
   }
 });
+
+function openLogoutModal() {
+  document.getElementById('logout-modal').classList.add('lm-open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLogoutModal() {
+  document.getElementById('logout-modal').classList.remove('lm-open');
+  document.body.style.overflow = '';
+}
 
 // Trigger initPage if saved password was found during auth check
 if (window._authReady) { initPage(); }
