@@ -39,6 +39,8 @@ AUTHOR_PATTERNS = [
 ]
 
 DATE_PATTERNS = [
+    r"\b\d{1,2}\.\s*(?:Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s*[-–]\s*\d{1,2}\.\s*(?:Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+\d{4}\b",
+    r"\b\d{1,2}\.\d{1,2}\.\s*[-–]\s*\d{1,2}\.\d{1,2}\.\d{2,4}\b",
     r"\b\d{1,2}\.\s*(?:Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\s+\d{4}\b",
     r"\b\d{1,2}\.\d{1,2}\.\d{4}\b",
     r"\b\d{4}-\d{2}-\d{2}\b",
@@ -56,6 +58,8 @@ DURATION_PATTERNS = [
     r"\d+\s*(?:Stunden?|Tage?|Wochen?|Monate?|Jahre?|Semester)",
     r"\d+\s*(?:hours?|days?|weeks?|months?|years?)",
     r"\d+\s*ECTS", r"\d+\s*Lektionen?",
+    r"\d+\s*Minuten?",
+    r"\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}\s*(?:Uhr)?",
     r"(?:Teilzeit|Vollzeit|berufsbegleitend|part-time|full-time)",
 ]
 
@@ -247,6 +251,10 @@ def check_next_date(soup, base_url, text):
             for pat in DATE_PATTERNS:
                 if re.search(pat, snippet, re.IGNORECASE):
                     return True, "Nächste Durchführung erkannt"
+    for pat in DATE_PATTERNS:
+        m = re.search(pat, raw, re.IGNORECASE)
+        if m:
+            return True, f"Datum erkannt: {m.group()}"
     return False, "Kein Startdatum / nächste Durchführung gefunden"
 
 
