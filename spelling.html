@@ -261,7 +261,7 @@ td.rule-cell{color:#777;font-size:11px;}
 </div>
 
 <script>
-const VERSION='260519-0846';
+const VERSION='260519-0904';
 const API = "https://hslu-seo-audit.onrender.com";
 
 const _projectSlug = new URLSearchParams(window.location.search).get("project") || null;
@@ -294,7 +294,7 @@ async function verifyPw(pw) {
     const r = await fetch(`${API}/admin/password/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
     const d = await r.json();
     return d.valid === true;
-  } catch { return false; }
+  } catch { return 'sleeping'; }
 }
 
 async function verifyProjectToken(slug, tok) {
@@ -308,15 +308,17 @@ async function verifyProjectToken(slug, tok) {
 async function doLogin() {
   const pw = document.getElementById('pw-input').value;
   if (!pw) return;
-  document.getElementById('pw-error').style.display = 'none';
+  const errEl = document.getElementById('pw-error');
+  errEl.style.display = 'none';
   const ok = await verifyPw(pw);
-  if (ok) {
+  if (ok === true) {
     _adminPw = pw;
     localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
     init();
   } else {
-    document.getElementById('pw-error').style.display = 'block';
+    errEl.textContent = ok === 'sleeping' ? 'Server startet – bitte erst Mate trinken.' : 'Falsches Passwort.';
+    errEl.style.display = 'block';
   }
 }
 

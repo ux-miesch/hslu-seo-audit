@@ -219,22 +219,24 @@ async function verifyPw(pw) {
     const r = await fetch(`${API}/admin/password/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
     const d = await r.json();
     return d.valid === true;
-  } catch { return false; }
+  } catch { return 'sleeping'; }
 }
 
 async function doLogin() {
   const pw = document.getElementById('pw-input').value;
   if (!pw) return;
-  document.getElementById('pw-error').style.display = 'none';
+  const errEl = document.getElementById('pw-error');
+  errEl.style.display = 'none';
   const ok = await verifyPw(pw);
-  if (ok) {
+  if (ok === true) {
     _adminPw = pw;
     localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
     document.getElementById('logout-item').style.display = '';
     init();
   } else {
-    document.getElementById('pw-error').style.display = 'block';
+    errEl.textContent = ok === 'sleeping' ? 'Server startet – bitte erst Mate trinken.' : 'Falsches Passwort.';
+    errEl.style.display = 'block';
   }
 }
 

@@ -148,14 +148,16 @@ async function verifyPw(pw) {
     const r = await fetch(`${API}/admin/password/verify`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
     const d = await r.json();
     return d.valid === true;
-  } catch { return false; }
+  } catch { return 'sleeping'; }
 }
 
 async function doLogin() {
   const pw = document.getElementById('pw-input').value;
   if (!pw) return;
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
   const ok = await verifyPw(pw);
-  if (ok) {
+  if (ok === true) {
     _adminPw = pw;
     localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('login-view').style.display = 'none';
@@ -163,7 +165,8 @@ async function doLogin() {
     document.getElementById('logout-item').style.display = '';
     loadAdminToken();
   } else {
-    document.getElementById('login-error').style.display = 'block';
+    errEl.textContent = ok === 'sleeping' ? 'Server startet – bitte erst Mate trinken.' : 'Falsches Passwort.';
+    errEl.style.display = 'block';
   }
 }
 
