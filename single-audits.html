@@ -136,10 +136,10 @@ td.ts{font-size:12px;color:#1a1a1a;white-space:nowrap;}
   .table-wrap td[data-label]::before{display:none;}
   .table-wrap td[data-label="URL"]{grid-column:1;grid-row:1;font-size:12px;font-weight:normal;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .table-wrap td[data-label="Score"]{grid-column:2;grid-row:1/span 2;align-self:center;}
-  .table-wrap td[data-label="Verbleibend"]{grid-column:3;grid-row:1/span 2;align-self:center;font-size:12px;font-weight:normal;}
+  .table-wrap td[data-label="Verbleibend"]{grid-column:3;grid-row:1;align-self:center;font-size:12px;font-weight:normal;}
   .table-wrap td[data-label="Sprache"]{grid-column:1;grid-row:2;font-size:10px;font-weight:normal;color:#000;}
   .table-wrap td[data-label="Datum"],.table-wrap td[data-label="Ablaufdatum"]{display:none;}
-  .table-wrap td.btn-cell{display:none;}
+  .table-wrap td.btn-cell{display:flex;justify-content:flex-end;align-items:center;grid-column:3;grid-row:2;}
 }
 
 @media print{.header,.footer-bar{display:none!important;}}
@@ -215,12 +215,14 @@ const INDEX_BASE_URL = 'https://ux-miesch.github.io/hslu-seo-audit';
 let _audits = [];
 let _filter = 'all';
 let _deleteId = null;
+let _adminPw = '';
 
 /* ── Auth ── */
 (function() {
   const savedPw = localStorage.getItem('seo_admin_pw');
   document.body.style.display = 'block';
   if (savedPw) {
+    _adminPw = savedPw;
     const overlay = document.getElementById('pw-overlay');
     if (overlay) overlay.style.display = 'none';
     document.getElementById('logout-item').style.display = '';
@@ -243,6 +245,7 @@ async function doLogin() {
   document.getElementById('pw-error').style.display = 'none';
   const ok = await verifyPw(pw);
   if (ok) {
+    _adminPw = pw;
     localStorage.setItem('seo_admin_pw', pw);
     document.getElementById('pw-overlay').style.display = 'none';
     document.getElementById('logout-item').style.display = '';
@@ -257,6 +260,13 @@ function logout() {
   location.reload();
 }
 
+function adminFetch(url, opts = {}) {
+  return fetch(url, {
+    ...opts,
+    headers: { 'X-Admin-Password': _adminPw, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
+}
+
 /* ── Init ── */
 async function init() {
   document.getElementById('footer-ts').textContent = 'Beta · v' + VERSION;
@@ -267,7 +277,7 @@ async function init() {
 async function loadAudits() {
   const wrap = document.getElementById('table-wrap');
   try {
-    const res = await fetch(`${API}/single-audits/`);
+    const res = await adminFetch(`${API}/single-audits/`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     _audits = await res.json();
     updateCounts();
@@ -353,7 +363,7 @@ async function confirmDelete() {
   const id = _deleteId;
   closeDeleteModal();
   try {
-    const res = await fetch(`${API}/single-audits/${id}`, { method: 'DELETE' });
+    const res = await adminFetch(`${API}/single-audits/${id}`, { method: 'DELETE' });
     if (!res.ok && res.status !== 204) throw new Error(`HTTP ${res.status}`);
     _audits = _audits.filter(a => a.id !== id);
     updateCounts();
