@@ -109,7 +109,7 @@
     }
 
     /* ── Main layout ── */
-    main { max-width: 1100px; margin: 0 auto; padding: 88px 20px 52px; }
+    main { max-width: 1200px; margin: 0 auto; padding: 88px 20px 52px; }
     @media(min-width:768px){main{padding-bottom:152px;}}
 
     /* ── Project summary card ── */
@@ -194,6 +194,7 @@
       font-weight: normal;
       white-space: nowrap;
     }
+    .proj-table-wrap th:first-child, .proj-table-wrap td[data-label="Projektname"] { min-width: 200px; }
     tbody tr {
       border-bottom: 1px solid var(--border);
       cursor: pointer;
@@ -369,7 +370,7 @@
 </div>
 
 <script>
-const VERSION='260519-1049';
+const VERSION='260519-1247';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';

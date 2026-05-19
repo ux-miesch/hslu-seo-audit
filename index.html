@@ -30,7 +30,7 @@ body{background:#fff;font-family:'Verdana',sans-serif;font-size:13px;overflow-x:
 .flyout-item:hover{background:#f0f0f0;}
 .flyout-item.active{font-weight:700;background:#f0fafd;}
 .main{margin-top:64px;}
-.step{display:none;max-width:1100px;margin:0 auto;padding:32px 24px 40px;}
+.step{display:none;max-width:1200px;margin:0 auto;padding:32px 24px 40px;}
 .step.active{display:block;}
 .step-label{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:#aaa;text-transform:uppercase;margin-bottom:6px;}
 .step-title{font-family:'Verdana',sans-serif;font-size:20px;font-weight:700;color:#000;margin-bottom:24px;}
@@ -240,7 +240,7 @@ input[type=text]:focus,select:focus{outline:none;border-color:#77C5D8;}
 
 function logout(){localStorage.removeItem('seo_token');location.reload();}
 if (localStorage.getItem('seo_token')) document.getElementById('logout-item').style.display = '';
-const VERSION='260519-1049';
+const VERSION='260519-1247';
 const API_URL='https://hslu-seo-audit.onrender.com';
 const ANLEITUNG_URL='https://hsluzern.sharepoint.com/sites/hslu_intranet_rs_mk/SitePages/SEO.aspx';
 const ANLEITUNG_URLS={
