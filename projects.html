@@ -352,6 +352,18 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
   </div>
 </div>
 
+<!-- ── Audit Done Modal ── -->
+<div class="modal-overlay" id="audit-done-modal">
+  <div class="modal-box">
+    <h2 style="color:#1a1a1a;">Audit abgeschlossen</h2>
+    <p id="audit-done-msg"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeAuditDoneModal()">Schliessen</button>
+      <button class="btn-confirm-ok" onclick="openReportFromModal()">Audit öffnen</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Abort Crawl Modal ── -->
 <div class="modal-overlay" id="abort-modal">
   <div class="modal-box">
@@ -499,7 +511,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260519-1346';
+const VERSION='260519-1510';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -742,6 +754,16 @@ async function loadProjects() {
   }
 }
 
+function closeAuditDoneModal() {
+  document.getElementById('audit-done-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function openReportFromModal() {
+  const tokenParam = _auditDoneToken ? `&token=${encodeURIComponent(_auditDoneToken)}` : '';
+  window.open(`report.html?project=${_auditDoneSlug}${tokenParam}`, '_blank');
+  closeAuditDoneModal();
+}
+
 /* ── Create project → crawl → audit → redirect ── */
 function showFieldError(id, msg) {
   const el = document.getElementById(id);
@@ -852,15 +874,16 @@ async function createProject() {
     // 5. Poll until audit has results
     await pollAudit(slug);
 
-    // 6. Redirect to report
+    // 6. Show completion modal and refresh project list
     crawlRunning = false;
-    setProgress("Fertig – Rapport wird geöffnet…");
-    const tokenParam = projectToken ? `&token=${encodeURIComponent(projectToken)}` : '';
-    window.open(`report.html?project=${slug}${tokenParam}`, '_blank');
-    setTimeout(() => {
-      loaderWrap.style.display = "none";
-      btn.disabled = false;
-    }, 2000);
+    loaderWrap.style.display = "none";
+    btn.disabled = false;
+    _auditDoneSlug = slug;
+    _auditDoneToken = projectToken;
+    document.getElementById('audit-done-msg').textContent = `Der Audit «${name}» wurde erfolgreich abgeschlossen.`;
+    document.getElementById('audit-done-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    await loadProjects();
 
   } catch (err) {
     crawlRunning = false;
@@ -1317,6 +1340,8 @@ async function confirmDelete() {
 
 /* ── Init ── */
 let crawlRunning = false;
+let _auditDoneSlug = null;
+let _auditDoneToken = null;
 
 function abortCrawl() {
   crawlRunning = false;
