@@ -21,6 +21,8 @@ _SKIP_RULE_IDS = {
     "AUSLASSUNGSPUNKTE_LEERZEICHEN",
     "LEERZEICHEN_VOR_AUSRUFEZEICHEN_ETC",
     "EINHEIT_LEERZEICHEN",
+    "DE_CASE",
+    "DE_CH_COMPOUNDS",
 }
 
 
@@ -267,6 +269,10 @@ def check_spelling(soup: BeautifulSoup, url: str = "", language: Optional[str] =
             error_text = "Leerzeichen vor Satzzeichen"
         else:
             error_text = full_text[o:min(o + l, len(full_text))]
+
+        # Abkürzungen in Grossbuchstaben bei SWISS_GERMAN_SPELLER überspringen
+        if rule_id.startswith("SWISS_GERMAN_SPELLER_") and error_text.isupper():
+            continue
 
         # Zu kurze oder satzzeichenbehaftete Treffer filtern
         if len(error_text.strip()) < 2:
