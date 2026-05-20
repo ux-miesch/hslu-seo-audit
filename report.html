@@ -71,16 +71,14 @@
     .filter-bar { display: flex; align-items: center; gap: 8px; padding: 0 0 12px 0; flex-wrap: wrap; }
     .filter-label { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; }
     .filter-bar-sep { display: flex; align-items: center; gap: 8px; }
-    .filter-bar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-    .url-search { padding: 5px 10px 5px 28px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 8px center; color: #1a1a1a; border-radius: 0; outline: none; width: 180px; }
+    .filter-bar-right { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+    .url-search { padding: 5px 10px 5px 28px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 8px center; color: #1a1a1a; border-radius: 0; outline: none; flex: 1; min-width: 0; }
     .url-search::placeholder { color: #999; opacity: 1; }
     .url-search:focus { background-color: #f5f5f5; }
     @media (max-width: 815px) {
       .filter-label-ansicht { display: none; }
       .view-toggle-expert, .view-toggle-editor { display: none; }
       .btn-anleitung { display: none; }
-      .url-search { width: auto; flex: 1; min-width: 0; }
-      .filter-bar-right { flex: 1; min-width: 0; }
     }
     thead th.th-sort { cursor: pointer; user-select: none; }
     thead th.th-sort:hover { opacity: 0.75; }
@@ -376,7 +374,7 @@
 </div>
 
 <script>
-const VERSION='260520-0810';
+const VERSION='260520-0834';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -988,6 +986,13 @@ function render(data) {
     </div>`;
 
   document.getElementById("app").innerHTML = summaryHtml + skalaHtml + filterBar + tableHtml;
+
+  function updateSearchPlaceholder() {
+    const input = document.querySelector(".url-search");
+    if (input) input.placeholder = window.innerWidth <= 815 ? "filtern" : "URLs filtern";
+  }
+  updateSearchPlaceholder();
+  window.addEventListener("resize", updateSearchPlaceholder);
 
   /* ── Row click → detail ── */
   _openIdx = null;
