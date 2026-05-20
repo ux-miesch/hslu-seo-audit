@@ -58,8 +58,7 @@
     .view-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; border-radius: 0; }
     .view-btn.active { background: #1a1a1a; color: #fff; }
     .view-btn:hover:not(.active) { opacity: 0.7; }
-    .copy-link-text { font-family: 'Verdana', sans-serif; font-size: 11px; color: #555; cursor: pointer; background: none; border: none; padding: 0; }
-    @media(max-width:767px){.copy-link-text{display:none;}}
+    .btn-anleitung { text-decoration: none; line-height: 1; }
     .depth-btn { padding: 5px 10px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent; color: #1a1a1a; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px; position: relative; }
     .depth-btn:hover:not(.active) { opacity: 0.7; }
     #depth-flyout { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #ddd; z-index:300; box-shadow:0 4px 14px rgba(0,0,0,.18); min-width:100px; padding:4px 0; }
@@ -74,7 +73,7 @@
     .filter-bar-sep { border-left: 1px solid #ddd; margin-left: 8px; padding-left: 16px; display: flex; align-items: center; gap: 8px; }
     .filter-bar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
     .url-search { padding: 5px 10px 5px 28px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 8px center; color: #1a1a1a; border-radius: 0; outline: none; width: 180px; }
-    .url-search::placeholder { color: #1a1a1a; opacity: 1; }
+    .url-search::placeholder { color: #999; opacity: 1; }
     .url-search:focus { background-color: #f5f5f5; }
     @media (max-width: 768px) {
       .filter-label-ansicht { display: none; }
@@ -377,7 +376,7 @@
 </div>
 
 <script>
-const VERSION='260520-0729';
+const VERSION='260520-0740';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -527,19 +526,6 @@ function setView(view) {
 }
 
 
-function copyLink() {
-  const params = new URLSearchParams(window.location.search);
-  if (_openIdx !== null && _pages[_openIdx]) {
-    params.set("page", _pages[_openIdx].url);
-  } else {
-    params.delete("page");
-  }
-  const url = location.origin + location.pathname + "?" + params.toString();
-  navigator.clipboard.writeText(url).then(() => {
-    const fb = document.getElementById("copy-feedback");
-    if (fb) { fb.style.opacity = "1"; setTimeout(() => { fb.style.opacity = "0"; }, 1500); }
-  });
-}
 
 /* ── Helpers ── */
 function scoreClass(s) {
@@ -878,7 +864,6 @@ function renderDetail(page) {
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button class="view-btn view-toggle-expert${currentView === 'expert' ? ' active' : ''}" onclick="setView('expert')">Expert</button>
         <button class="view-btn view-toggle-editor${currentView === 'editor' ? ' active' : ''}" onclick="setView('editor')">Editor</button>
-        <button class="copy-link-text" onclick="copyLink()">Link kopieren</button>
       </div>
     </div>`;
 
@@ -967,13 +952,11 @@ function render(data) {
         <span class="filter-label filter-label-ansicht">Ansicht:</span>
         <button class="view-btn view-toggle-expert${currentView === 'expert' ? ' active' : ''}" onclick="setView('expert')">Expert</button>
         <button class="view-btn view-toggle-editor${currentView === 'editor' ? ' active' : ''}" onclick="setView('editor')">Editor</button>
-        <button class="copy-link-text" onclick="copyLink()">Link kopieren</button>
-        <span id="copy-feedback" style="font-size:11px;color:#555;opacity:0;transition:opacity 0.3s;">Kopiert!</span>
       </span>
       <span class="filter-bar-right">
         <input class="url-search" type="search" placeholder="URLs einschränken" oninput="setSearch(this.value)">
         <button class="view-btn btn-getestet" onclick="openGetestetModal()">Wie wird getestet?</button>
-        <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn btn-anleitung" style="text-decoration:none;line-height:1;">Zur Anleitung →</a>
+        <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn btn-anleitung">Zur Anleitung →</a>
       </span>
     </div>`;
 
