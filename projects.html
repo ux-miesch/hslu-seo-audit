@@ -218,7 +218,12 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 
 /* ── Seitentests Panel ── */
 .test-panel{border:1px solid #e0e0e0;border-radius:2px;padding:16px;background:#fafafa;margin-bottom:40px;}
-.test-panel-title{font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;margin-bottom:14px;}
+.test-panel-title{font-family:'Verdana',sans-serif;font-size:12px;font-weight:700;color:#000;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+.test-panel-title:hover{color:#555;}
+.test-panel-body{display:none;margin-top:14px;}
+.test-panel-body.open{display:block;}
+.flyout-arrow{display:inline-block;transition:transform 0.2s;font-size:10px;}
+.flyout-arrow.open{transform:rotate(180deg);}
 .test-group{margin-bottom:12px;}
 .test-group:last-child{margin-bottom:0;}
 .test-group-label{font-family:'Verdana',sans-serif;font-size:11px;font-weight:700;color:#555;margin-bottom:8px;}
@@ -485,14 +490,19 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 
   <!-- ── Seitentests Panel ── -->
   <div class="test-panel">
-    <div class="test-panel-title">Seitentests manuell anpassen</div>
-    <div class="test-group">
-      <div class="test-group-label">Basis-Tests <span class="test-group-hint">(immer aktiv)</span></div>
-      <div class="test-checks" id="test-base"></div>
+    <div class="test-panel-title" onclick="toggleTestPanel()">
+      <span class="flyout-arrow" id="test-panel-arrow">▼</span>
+      <span>Seitentests manuell anpassen</span>
     </div>
-    <div class="test-group">
-      <div class="test-group-label">Seitenanalyse</div>
-      <div class="test-checks" id="test-specific"></div>
+    <div class="test-panel-body" id="test-panel-body">
+      <div class="test-group">
+        <div class="test-group-label">Basis-Tests <span class="test-group-hint">(immer aktiv)</span></div>
+        <div class="test-checks" id="test-base"></div>
+      </div>
+      <div class="test-group">
+        <div class="test-group-label">Seitenanalyse</div>
+        <div class="test-checks" id="test-specific"></div>
+      </div>
     </div>
   </div>
 
@@ -511,7 +521,7 @@ th.th-drag-over{background:#444;outline:2px dashed #77C5D8;}
 </div>
 
 <script>
-const VERSION='260519-1510';
+const VERSION='260520-0729';
 const API = "https://hslu-seo-audit.onrender.com";
 const REPORT_BASE_URL = "https://ux-miesch.github.io/hslu-seo-audit";
 
@@ -1376,6 +1386,12 @@ function openLogoutModal() {
   document.getElementById('logout-modal').classList.add('lm-open');
   document.body.style.overflow = 'hidden';
 }
+function toggleTestPanel() {
+  const body = document.getElementById('test-panel-body');
+  const arrow = document.getElementById('test-panel-arrow');
+  arrow.classList.toggle('open', body.classList.toggle('open'));
+}
+
 function closeLogoutModal() {
   document.getElementById('logout-modal').classList.remove('lm-open');
   document.body.style.overflow = '';
