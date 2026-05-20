@@ -75,7 +75,7 @@
     .url-search { padding: 5px 10px 5px 28px; font-family: 'Verdana', sans-serif; font-size: 11px; font-weight: 700; border: 1px solid #1a1a1a; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 8px center; color: #1a1a1a; border-radius: 0; outline: none; width: 180px; }
     .url-search::placeholder { color: #999; opacity: 1; }
     .url-search:focus { background-color: #f5f5f5; }
-    @media (max-width: 768px) {
+    @media (max-width: 815px) {
       .filter-label-ansicht { display: none; }
       .view-toggle-expert, .view-toggle-editor { display: none; }
       .btn-anleitung { display: none; }
@@ -376,7 +376,7 @@
 </div>
 
 <script>
-const VERSION='260520-0740';
+const VERSION='260520-0801';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -416,7 +416,7 @@ const _depthParam = new URLSearchParams(window.location.search).get("depth");
 let currentDepth = _depthParam ? parseInt(_depthParam) : null;
 let currentSort = new URLSearchParams(window.location.search).get("sort") || "score";
 let currentSortDir = new URLSearchParams(window.location.search).get("sortdir") || "asc";
-let _searchTerm = "";
+let _searchTerm = new URLSearchParams(window.location.search).get("search") || "";
 
 function getUrlDepth(url) {
   const languageTags = ['de-ch', 'fr-ch', 'it-ch', 'en-us', 'de', 'fr', 'en', 'it'];
@@ -462,6 +462,9 @@ function setSort(col) {
 
 function setSearch(val) {
   _searchTerm = val.toLowerCase();
+  const params = new URLSearchParams(window.location.search);
+  if (_searchTerm) params.set("search", _searchTerm); else params.delete("search");
+  history.replaceState(null, "", "?" + params.toString());
   applyDepthFilter();
 }
 
@@ -954,7 +957,7 @@ function render(data) {
         <button class="view-btn view-toggle-editor${currentView === 'editor' ? ' active' : ''}" onclick="setView('editor')">Editor</button>
       </span>
       <span class="filter-bar-right">
-        <input class="url-search" type="search" placeholder="URLs einschränken" oninput="setSearch(this.value)">
+        <input class="url-search" type="search" placeholder="URLs filtern" value="${_searchTerm}" oninput="setSearch(this.value)">
         <button class="view-btn btn-getestet" onclick="openGetestetModal()">Wie wird getestet?</button>
         <a href="${ANLEITUNG_BASE}" target="_blank" class="view-btn btn-anleitung">Zur Anleitung →</a>
       </span>
