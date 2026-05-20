@@ -374,7 +374,7 @@
 </div>
 
 <script>
-const VERSION='260520-0834';
+const VERSION='260520-0840';
 const API_URL = "https://hslu-seo-audit.onrender.com";
 (function(){
   document.body.style.display = 'block';
@@ -986,13 +986,6 @@ function render(data) {
     </div>`;
 
   document.getElementById("app").innerHTML = summaryHtml + skalaHtml + filterBar + tableHtml;
-
-  function updateSearchPlaceholder() {
-    const input = document.querySelector(".url-search");
-    if (input) input.placeholder = window.innerWidth <= 815 ? "filtern" : "URLs filtern";
-  }
-  updateSearchPlaceholder();
-  window.addEventListener("resize", updateSearchPlaceholder);
 
   /* ── Row click → detail ── */
   _openIdx = null;
